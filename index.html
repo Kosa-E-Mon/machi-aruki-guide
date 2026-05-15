@@ -1,0 +1,3283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1C1A16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="まち歩き">
+<title>まち歩きガイド</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Kaisei+Decol:wght@400;700&family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- ══ Google Analytics 4 ══
+     取得したMeasurement IDに "G-XXXXXXXXXX" を置き換えてください
+     例: G-ABC1234567
+-->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FTBE4VS05D"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-FTBE4VS05D');
+</script>
+
+<!-- ══ Google Identity Services (OAuth2) ══ -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+/* ══ CSS変数（configから動的に上書き） ══ */
+:root {
+  --bg: #F4EFE4;
+  --paper: #FAF7F1;
+  --ink: #1C1A16;
+  --primary: #B83232;
+  --gold: #9A7A3A;
+  --muted: #7A7060;
+  --border: #D4C9B0;
+  --green: #3A7A4A;
+  --orange: #C87020;
+  --radius: 12px;
+  --font-title: 'Noto Serif JP', serif;
+  --font-body: 'Noto Sans JP', sans-serif;
+  /* configから上書き可能なフォントサイズ */
+  --font-size-base: 14px;
+  --font-size-heading: 20px;
+  --font-size-explain: 14px;
+  --app-title-color: #FAF7F1;
+  --app-title-font-size: 30px;
+  --app-title-font-family: var(--font-title);
+  --app-subtitle-color: rgba(250,247,241,.35);
+  --app-subtitle-font-size: 11px;
+  --app-subtitle-font-family: var(--font-body);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ══ LOADING ══ */
+#screen-loading {
+  background: var(--ink);
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 20px;
+}
+.loading-logo { font-family: var(--font-title); font-size: 30px; font-weight: 700; color: #FAF7F1; letter-spacing: .08em; }
+.loading-sub { font-size: 10px; color: rgba(250,247,241,.35); letter-spacing: .2em; }
+.loading-dots { display: flex; gap: 8px; }
+.loading-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: dotPulse 1.2s ease-in-out infinite; }
+.loading-dot:nth-child(2){animation-delay:.2s} .loading-dot:nth-child(3){animation-delay:.4s}
+@keyframes dotPulse { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+.loading-msg { font-size: 11px; color: rgba(250,247,241,.3); letter-spacing: .08em; }
+.loading-error { background: rgba(184,50,50,.15); border: 1px solid rgba(184,50,50,.3); border-radius: 8px; padding: 16px 20px; text-align: center; font-size: 12px; color: rgba(250,247,241,.7); line-height: 1.8; max-width: 300px; display: none; }
+.btn-retry { margin-top: 12px; background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+
+/* ══ HOME ══ */
+#screen-home { background: var(--ink); }
+
+.home-header {
+  padding: 40px 24px 24px;
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #1C1A16 0%, #241E18 100%);
+  min-height: 180px; display: flex; flex-direction: column; justify-content: flex-end;
+}
+.home-header-bg {
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,.018) 20px, rgba(255,255,255,.018) 21px);
+  pointer-events: none;
+}
+.home-header-img { position: absolute; inset: 0; object-fit: cover; width: 100%; height: 100%; opacity: .35; }
+.home-header-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(28,26,22,.95) 0%, rgba(28,26,22,.3) 100%); }
+.home-badge { display: inline-block; border: 1px solid var(--primary); color: var(--primary); font-size: 9px; letter-spacing: .25em; padding: 3px 10px; margin-bottom: 12px; position: relative; z-index: 1; }
+.home-title { font-family: var(--app-title-font-family); font-size: var(--app-title-font-size); font-weight: 700; color: var(--app-title-color); line-height: 1.2; letter-spacing: .05em; position: relative; z-index: 1; margin-bottom: 3px; }
+.home-subtitle { font-family: var(--app-subtitle-font-family); font-size: var(--app-subtitle-font-size); color: var(--app-subtitle-color); letter-spacing: .1em; position: relative; z-index: 1; }
+
+.home-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+.home-section-label { font-size: 10px; color: rgba(250,247,241,.3); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 8px; margin-top: 16px; }
+.home-section-label:first-child { margin-top: 0; }
+
+/* ══ ホーム画面 ライト／ダーク切替 ══ */
+#screen-home {
+  background: var(--home-bg, var(--ink));
+}
+
+.home-theme-toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--home-toggle-border, rgba(255,255,255,.18));
+  background: var(--home-toggle-bg, rgba(0,0,0,.25));
+  color: var(--home-toggle-color, #fff);
+  font-size: 16px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.home-theme-toggle:active {
+  opacity: .75;
+}
+
+.home-title,
+.course-card-name,
+.area-card-name {
+  color: var(--home-text, #FAF7F1);
+}
+
+.home-subtitle,
+.course-card-meta,
+.course-card-type,
+.home-section-label,
+.area-card-desc,
+.area-card-arrow,
+.cloud-login-hint,
+.cloud-status-text,
+.like-bar-text,
+.like-bar-val,
+.credit {
+  color: var(--home-subtext, rgba(250,247,241,.4));
+}
+
+.course-card {
+  background: var(--home-card-bg, rgba(255,255,255,.05));
+  border-color: var(--home-card-border, rgba(255,255,255,.08));
+}
+
+.area-card {
+  background: var(--home-card-bg, rgba(255,255,255,.04));
+  border-color: var(--home-card-border, rgba(255,255,255,.06));
+}
+
+/* コースカード */
+.course-card {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 8px;
+  cursor: pointer; transition: border-color .2s, background .2s; position: relative; overflow: hidden;
+}
+.course-card:active { background: rgba(255,255,255,.1); }
+.course-card.recommended { border-color: rgba(184,50,50,.45); }
+.course-card.completed { border-color: rgba(154,122,58,.4); }
+.course-card.masuda-recommend { border-color: rgba(154,122,58,.3); background: rgba(154,122,58,.05); }
+
+.course-card-tag { position: absolute; top: 0; right: 0; font-size: 9px; letter-spacing: .1em; padding: 3px 10px; border-radius: 0 var(--radius) 0 6px; }
+.tag-rec { background: var(--primary); color: white; }
+.tag-done { background: var(--gold); color: white; }
+.tag-masuda { background: rgba(154,122,58,.6); color: white; }
+
+.course-card-type { font-size: 10px; color: rgba(250,247,241,.35); letter-spacing: .1em; margin-bottom: 4px; }
+.course-card-name { font-family: var(--font-title); font-size: 17px; font-weight: 700; color: #FAF7F1; margin-bottom: 6px; }
+.course-card-meta { display: flex; gap: 12px; font-size: 11px; color: rgba(250,247,241,.4); }
+.course-card-period { font-size: 10px; color: var(--orange); margin-top: 5px; }
+
+/* エリア切り替えカード */
+.area-card {
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  transition: background .2s;
+}
+.area-card:active { background: rgba(255,255,255,.09); }
+.area-card-icon { font-size: 24px; }
+.area-card-info { flex: 1; }
+.area-card-name { font-size: 14px; color: rgba(250,247,241,.8); font-weight: 500; margin-bottom: 2px; }
+.area-card-desc { font-size: 10px; color: rgba(250,247,241,.3); letter-spacing: .04em; }
+.area-card-arrow { font-size: 14px; color: rgba(250,247,241,.2); }
+.area-card.home-area { border-color: rgba(154,122,58,.3); }
+.area-card.fav-area { border-color: rgba(58,122,74,.25); }
+
+.btn-prizes-home {
+  width: 100%; background: transparent; border: 1px solid rgba(250,247,241,.15);
+  color: rgba(250,247,241,.45); padding: 12px; font-size: 12px;
+  letter-spacing: .1em; border-radius: 4px; cursor: pointer; margin-top: 4px;
+  transition: all .2s;
+}
+.btn-prizes-home:active { border-color: var(--gold); color: var(--gold); }
+
+.credit { text-align: center; padding: 16px 0 4px; font-size: 10px; color: rgba(250,247,241,.18); letter-spacing: .06em; line-height: 1.8; }
+
+/* ホーム画面内の見えにくい文字をテーマ色に寄せる */
+#screen-home .home-section-label,
+#screen-home .course-card-type,
+#screen-home .course-card-meta,
+#screen-home .course-card-period,
+#screen-home .area-card-desc,
+#screen-home .area-card-arrow,
+#screen-home .cloud-login-hint,
+#screen-home .cloud-status-text,
+#screen-home .like-bar-text,
+#screen-home .like-bar-val,
+#screen-home .credit,
+#screen-home .btn-prizes-home {
+  color: var(--home-subtext, rgba(250,247,241,.4));
+}
+
+#screen-home .course-card-name,
+#screen-home .area-card-name {
+  color: var(--home-text, #FAF7F1);
+}
+
+#screen-home .cloud-bar,
+#screen-home .like-bar {
+  border-color: var(--home-line, rgba(255,255,255,.07));
+}
+
+#screen-home .btn-prizes-home {
+  border-color: var(--home-card-border, rgba(255,255,255,.15));
+}
+
+/* ヘッダー内のタイトル・サブタイトル・地域名はテーマ切替の影響を受けない */
+#screen-home .home-header .home-title {
+  color: var(--app-title-color, #FAF7F1);
+}
+
+#screen-home .home-header .home-subtitle {
+  color: var(--app-subtitle-color, rgba(250,247,241,.35));
+}
+
+#screen-home .home-header .home-area-name {
+  color: rgba(250,247,241,.22);
+}
+
+/* ホームバッジの自由配置 */
+#screen-home .home-badge {
+  position: absolute;
+  left: var(--home-badge-left, 24px);
+  right: var(--home-badge-right, auto);
+  top: var(--home-badge-top, 40px);
+  bottom: var(--home-badge-bottom, auto);
+  z-index: 4;
+}
+
+/* ══ NAV ══ */
+#screen-nav { background: var(--bg); }
+
+.nav-header { background: var(--paper); border-bottom: 1px solid var(--border); padding: 12px 20px 10px; }
+.nav-progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
+.nav-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width .5s ease; }
+.nav-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.nav-step-label { font-size: 10px; color: var(--muted); letter-spacing: .15em; }
+.gps-status { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.gps-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; transition: background .3s; }
+.gps-dot.searching { background: #f0a040; animation: blink 1s infinite; }
+.gps-dot.active { background: var(--green); }
+.gps-dot.error { background: var(--primary); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.nav-spot-name { font-family: var(--font-title); font-size: 20px; font-weight: 700; color: var(--ink); }
+
+/* 距離パネル */
+.distance-panel { margin: 10px 20px 0; background: #fffdf7; border: 1px solid #b7aa90; border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 3px 12px rgba(28,26,22,.08); transition: border-color .4s, background .4s, box-shadow .4s; }
+.distance-panel.near { border-color: #c87020; background: #fff7e5; box-shadow: 0 4px 16px rgba(200,112,32,.16); }
+.distance-panel.arrived { border-color: var(--green); background: #effff3; box-shadow: 0 4px 16px rgba(58,122,74,.16); }
+.dist-icon { font-size: 24px; }
+.dist-info { flex: 1; }
+.dist-number { font-family: var(--font-title); font-size: 28px; font-weight: 900; color: #0b0a08; line-height: .95; letter-spacing: .03em; text-shadow: 0 1px 0 #fff, 0 0 1px rgba(28,26,22,.7); }
+.dist-number span { font-size: 12px; font-weight: 800; margin-left: 3px; color: #3b352b; }
+.dist-status { font-size: 10px; color: #5d5346; margin-top: 4px; letter-spacing: .04em; font-weight: 600; }
+.ring-wrap { position: relative; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: radial-gradient(circle, #fffef8 45%, #efe4cf 46%, #fffaf0 68%); box-shadow: inset 0 0 0 1px rgba(28,26,22,.08), 0 2px 8px rgba(28,26,22,.12); }
+.ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.ring-bg { fill: none; stroke: #c8b992; stroke-width: 4; }
+.ring-fill { fill: none; stroke: var(--primary); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 113; stroke-dashoffset: 113; transition: stroke-dashoffset .6s ease, stroke .4s; filter: drop-shadow(0 0 2px rgba(184,50,50,.35)); }
+.ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #1c1a16; font-weight: 800; letter-spacing: .02em; }
+.distance-panel.near .ring-wrap { animation: distancePulse var(--distance-pulse-speed, 1.6s) ease-in-out infinite; }
+.distance-panel.arrived .ring-wrap { animation: distancePulse .95s ease-in-out infinite; }
+@keyframes distancePulse { 0%,100%{transform:scale(1); box-shadow: inset 0 0 0 1px rgba(28,26,22,.08), 0 2px 8px rgba(28,26,22,.12)} 50%{transform:scale(1.045); box-shadow: inset 0 0 0 1px rgba(28,26,22,.1), 0 0 0 5px rgba(184,50,50,.08), 0 4px 14px rgba(184,50,50,.18)} }
+@media (prefers-reduced-motion: reduce) { .distance-panel.near .ring-wrap, .distance-panel.arrived .ring-wrap { animation: none; } }
+
+/* 歩行距離 */
+.walk-bar { margin: 8px 20px 0; background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+.walk-val { font-family: var(--font-title); font-size: 14px; color: var(--ink); font-weight: 600; margin-left: auto; }
+
+/* 施設トースト */
+.facility-toast { margin: 7px 20px 0; background: rgba(200,112,32,.1); border: 1px solid rgba(200,112,32,.3); border-radius: 8px; padding: 8px 13px; font-size: 11px; color: var(--orange); display: none; align-items: center; gap: 8px; line-height: 1.5; }
+.facility-toast.show { display: flex; animation: fadeIn .3s ease; }
+
+/* 音声ログ */
+.voice-log { margin: 7px 20px 0; background: rgba(58,122,74,.07); border: 1px solid rgba(58,122,74,.18); border-radius: 8px; padding: 8px 13px; font-size: 11px; color: var(--green); min-height: 32px; display: flex; align-items: center; gap: 8px; letter-spacing: .04em; line-height: 1.5; }
+
+/* マップ */
+.map-container { margin: 8px 20px 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); height: 320px; position: relative; }
+#leaflet-map { width: 100%; height: 100%; }
+
+/* ARボタン */
+.btn-ar {
+  position: absolute; top: 8px; right: 8px; z-index: 1000;
+  background: var(--ink); color: white; border: none;
+  padding: 6px 12px; border-radius: 20px; font-size: 11px;
+  letter-spacing: .08em; cursor: pointer; display: none;
+  align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+.btn-ar.show { display: flex; }
+
+/* スポットドット */
+.spots-row { display: flex; justify-content: center; align-items: flex-start; padding: 10px 14px 0; }
+.spot-dot-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.dot-line-row { display: flex; align-items: center; width: 100%; }
+.dot-line { height: 2px; background: var(--border); flex: 1; transition: background .4s; }
+.dot-line.done { background: var(--primary); }
+.spot-dot { width: 26px; height: 26px; border-radius: 50%; background: #C8C0B0; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-size: 11px; font-weight: 600; color: white; flex-shrink: 0; transition: background .3s, transform .3s; position: relative; z-index: 1; }
+.spot-dot.done { background: var(--gold); }
+.spot-dot.current { background: var(--primary); transform: scale(1.15); }
+.spot-dot-label { font-size: 9px; color: var(--muted); margin-top: 3px; text-align: center; max-width: 52px; line-height: 1.3; }
+
+.arrive-section { padding: 10px 20px 20px; display: flex; flex-direction: column; gap: 7px; margin-top: auto; }
+.btn-arrived { background: var(--paper); border: 2px solid var(--ink); color: var(--ink); padding: 13px; font-family: var(--font-title); font-size: 14px; letter-spacing: .12em; border-radius: var(--radius); cursor: pointer; width: 100%; transition: background .2s, color .2s; }
+.btn-arrived:active { background: var(--ink); color: var(--paper); }
+.manual-hint { font-size: 10px; color: var(--muted); text-align: center; }
+.btn-arrived:disabled { opacity: .45; cursor: default; background: var(--border); color: var(--muted); border-color: var(--border); }
+
+/* 次スポット表示 */
+.nav-next-spot { font-size: 10px; color: var(--muted); letter-spacing: .06em; margin-top: 3px; padding-left: 2px; min-height: 14px; }
+.nav-next-spot span { color: var(--primary); font-weight: 500; }
+
+/* ARキャリブレーションオーバーレイ */
+.ar-calib-overlay {
+  position: absolute; inset: 0; z-index: 20; background: rgba(0,0,0,.72);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 32px; animation: fadeIn .3s ease;
+}
+.ar-calib-icon { font-size: 48px; }
+.ar-calib-title { font-family: var(--font-title); font-size: 17px; font-weight: 700; color: white; letter-spacing: .08em; text-align: center; }
+.ar-calib-desc { font-size: 12px; color: rgba(255,255,255,.65); text-align: center; line-height: 1.9; letter-spacing: .04em; }
+.ar-calib-bar { width: 200px; height: 3px; background: rgba(255,255,255,.15); border-radius: 2px; overflow: hidden; }
+.ar-calib-bar-fill { height: 100%; background: var(--primary); border-radius: 2px; animation: calibProgress 3s ease forwards; }
+@keyframes calibProgress { from{width:0} to{width:100%} }
+.ar-calib-skip { background: transparent; border: 1px solid rgba(255,255,255,.25); color: rgba(255,255,255,.5); padding: 7px 20px; border-radius: 20px; font-size: 11px; cursor: pointer; letter-spacing: .08em; }
+
+/* 精度警告バナー */
+.ar-accuracy-warn { position: absolute; bottom: 70px; left: 16px; right: 16px; z-index: 15; background: rgba(200,112,32,.85); border: 1px solid rgba(200,112,32,.9); border-radius: 8px; padding: 8px 13px; font-size: 11px; color: white; text-align: center; letter-spacing: .04em; display: none; }
+.ar-accuracy-warn.show { display: block; animation: fadeIn .3s ease; }
+
+/* ══ AR画面 ══ */
+#screen-ar { background: #000; position: relative; }
+#ar-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ar-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+/* 方位コンパス針 */
+.ar-dir-outer { width: 140px; height: 140px; border-radius: 50%; background: rgba(0,0,0,.35); border: 2px solid rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 24px rgba(0,0,0,.5); }
+.ar-dir-inner { width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; transition: transform .25s ease; }
+.ar-dir-svg { display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+.ar-dir-hint { font-size: 11px; color: rgba(255,255,255,.45); letter-spacing: .06em; margin-top: 10px; text-align: center; }
+.ar-info { background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 12px 24px; text-align: center; margin-top: 16px; }
+.ar-spot-name { font-family: var(--font-title); font-size: 20px; font-weight: 700; color: white; margin-bottom: 4px; }
+.ar-dist { font-size: 28px; font-weight: 700; color: var(--primary); font-family: var(--font-title); }
+.ar-dist span { font-size: 14px; color: rgba(255,255,255,.6); }
+.btn-ar-close { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.3); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; pointer-events: all; z-index: 10; }
+.ar-compass { position: absolute; top: 20px; left: 20px; font-size: 11px; color: rgba(255,255,255,.5); background: rgba(0,0,0,.5); padding: 6px 12px; border-radius: 20px; }
+
+/* ══ EXPLAIN ══ */
+#screen-explain { background: var(--bg); }
+.photo-area { width: 100%; aspect-ratio: 16/9; background: #2A2720; position: relative; overflow: hidden; user-select: none; -webkit-user-select: none; }
+.photo-area img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; display: block; }
+.photo-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,.2); font-size: 12px; }
+.photo-placeholder-icon { font-size: 28px; opacity: .2; }
+.photo-protect { position: absolute; inset: 0; background: transparent; z-index: 10; }
+.explain-header { background: var(--ink); color: var(--paper); padding: 18px 22px 16px; position: relative; overflow: hidden; }
+.explain-num-bg { position: absolute; right: 12px; top: 4px; font-family: var(--font-title); font-size: 60px; font-weight: 700; color: rgba(255,255,255,.05); line-height: 1; }
+.explain-badge { font-size: 10px; letter-spacing: .18em; color: var(--primary); border: 1px solid var(--primary); padding: 2px 9px; display: inline-block; margin-bottom: 7px; }
+.explain-title { font-family: var(--font-title); font-size: 22px; font-weight: 700; line-height: 1.3; position: relative; z-index: 1; margin-bottom: 10px; }
+.btn-voice-replay { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); color: rgba(250,247,241,.7); padding: 6px 13px; border-radius: 20px; font-size: 11px; letter-spacing: .07em; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: background .2s; }
+.btn-voice-replay:active { background: rgba(255,255,255,.15); }
+.explain-body { padding: 16px 20px 0; flex: 1; overflow-y: auto; }
+.explain-text { font-size: var(--font-size-explain); line-height: 2.0; color: var(--ink); letter-spacing: .04em; margin-bottom: 16px; white-space: pre-wrap; }
+.explain-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.explain-sub { font-size: 10px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 7px; }
+.explain-keyword { display: inline-block; background: var(--paper); border: 1px solid var(--border); font-size: 11px; color: var(--gold); padding: 2px 9px; border-radius: 20px; margin: 2px 2px 2px 0; }
+.btn-next { margin: 14px 20px 24px; background: var(--primary); color: white; border: none; padding: 14px; font-family: var(--font-title); font-size: var(--font-size-heading); letter-spacing: .15em; border-radius: var(--radius); cursor: pointer; width: calc(100% - 40px); transition: opacity .2s; }
+.btn-next:active { opacity: .8; }
+.btn-next:disabled { opacity: .5; cursor: default; background: var(--muted); letter-spacing: .06em; }
+
+/* ══ 土地名 ══ */
+.home-area-name { font-size: 10px; color: rgba(250,247,241,.22); letter-spacing: .25em; text-align: right; padding: 4px 0 0; position: relative; z-index: 1; }
+
+/* ══ いいねバー ══ */
+.like-bar { padding: 5px 16px 5px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.like-bar-icon { font-size: 12px; opacity: .45; }
+.like-bar-text { font-size: 10px; color: rgba(250,247,241,.28); letter-spacing: .06em; flex: 1; }
+.like-bar-val { font-family: var(--font-title); font-size: 13px; color: rgba(250,247,241,.35); font-weight: 600; letter-spacing: .04em; }
+
+/* ══ 修了書（賞状スタイル） ══ */
+#screen-goal { background: #2A2218; overflow-y: auto; }
+.cert-sho-wrap { min-height: 100vh; padding: 24px 16px 40px; display: flex; align-items: flex-start; justify-content: center; position: relative; overflow: hidden; }
+.cert-sho-wrap::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .32;
+  background:
+    radial-gradient(ellipse at 12% 16%, rgba(251,218,214,.7) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 76% 10%, rgba(251,218,214,.58) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 62% 48%, rgba(251,218,214,.42) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 28% 74%, rgba(251,218,214,.5) 0 2px, transparent 3px);
+  background-size: 220px 260px; animation: certPetals 18s linear infinite;
+}
+.cert-sho { width: 100%; max-width: 440px; background: #FBF5E8; position: relative; border: 3px solid #9A7A3A; box-shadow: 0 0 0 6px #FBF5E8, 0 0 0 8px #9A7A3A, 0 8px 32px rgba(0,0,0,.5); overflow: hidden; }
+.cert-sho::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .42;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(122,92,52,.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 82% 36%, rgba(122,92,52,.07) 0 1px, transparent 1.5px),
+    repeating-linear-gradient(12deg, rgba(122,92,52,.035) 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(96deg, rgba(255,255,255,.32) 0 1px, transparent 1px 11px);
+}
+.cert-sho-inner { padding: 28px 24px 32px; position: relative; z-index: 1; }
+@keyframes certPetals { from{background-position: 0 -260px} to{background-position: 80px 260px} }
+/* 四隅の飾り */
+.cert-sho-corner { position: absolute; width: 24px; height: 24px; }
+.cert-sho-corner.tl { top: 10px; left: 10px; border-top: 2px solid #C9A85C; border-left: 2px solid #C9A85C; }
+.cert-sho-corner.tr { top: 10px; right: 10px; border-top: 2px solid #C9A85C; border-right: 2px solid #C9A85C; }
+.cert-sho-corner.bl { bottom: 10px; left: 10px; border-bottom: 2px solid #C9A85C; border-left: 2px solid #C9A85C; }
+.cert-sho-corner.br { bottom: 10px; right: 10px; border-bottom: 2px solid #C9A85C; border-right: 2px solid #C9A85C; }
+/* タイトル行 */
+.cert-sho-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.cert-sho-rule { flex: 1; height: 1px; background: linear-gradient(to right, transparent, #9A7A3A); }
+.cert-sho-rule.right { background: linear-gradient(to left, transparent, #9A7A3A); }
+.cert-sho-title {
+  font-family: var(--cert-title-font-family, var(--font-title));
+  font-size: var(--cert-title-font-size, 26px);
+  letter-spacing: var(--cert-title-letter-spacing, .35em);
+}
+/* コース名 */
+.cert-sho-course-label { font-size: 9px; color: #9A7A3A; letter-spacing: .25em; text-align: center; margin-bottom: 4px; }
+.cert-sho-course { font-family: var(--font-title); font-size: 15px; font-weight: 700; color: #2A1A0A; text-align: center; border-bottom: 1px solid #D4C9B0; padding-bottom: 14px; margin-bottom: 14px; letter-spacing: .08em; line-height: 1.5; }
+/* 本文 */
+.cert-sho-body { font-family: var(--font-title); font-size: 13px; line-height: 2.2; color: #3A2A1A; text-align: center; letter-spacing: .08em; margin-bottom: 16px; }
+.cert-sho-extra { font-size: 11px; color: #7A6A5A; text-align: center; line-height: 1.9; margin-bottom: 16px; letter-spacing: .04em; }
+/* スポット一覧 */
+.cert-sho-spots-label { font-size: 9px; color: #9A7A3A; letter-spacing: .25em; text-align: center; margin-bottom: 8px; border-top: 1px solid #D4C9B0; padding-top: 12px; }
+.cert-sho-spots { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; margin-bottom: 14px; }
+.cert-sho-spot-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.cert-sho-spot-num { width: 22px; height: 22px; border-radius: 50%; background: #9A7A3A; color: white; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-size: 10px; font-weight: 700; }
+.cert-sho-spot-name { font-size: 9px; color: #3A2A1A; text-align: center; line-height: 1.3; max-width: 72px; }
+/* 統計 */
+.cert-sho-stats { display: flex; justify-content: center; align-items: center; gap: 0; border: 1px solid #D4C9B0; border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+.cert-sho-stat { flex: 1; text-align: center; padding: 8px 4px; }
+.cert-sho-stat + .cert-sho-stat { border-left: 1px solid #D4C9B0; }
+.cert-sho-stat-val { font-family: var(--font-title); font-size: 18px; font-weight: 700; color: #9A7A3A; }
+.cert-sho-stat-unit { font-size: 10px; color: #7A6A5A; margin-left: 1px; }
+.cert-sho-stat-label { font-size: 9px; color: #9A7A5A; letter-spacing: .08em; margin-top: 1px; }
+/* 日付 */
+.cert-sho-date { font-size: 11px; color: #7A6A5A; text-align: center; letter-spacing: .15em; margin-bottom: 18px; font-family: var(--font-title); }
+/* 発行者・印鑑フッター */
+.cert-sho-footer { display: flex; justify-content: flex-end; align-items: center; gap: 14px; padding-top: 10px; border-top: 1px solid #D4C9B0; margin-bottom: 20px; }
+.cert-sho-issuer { font-family: var(--font-title); font-size: 13px; color: #2A1A0A; letter-spacing: .08em; line-height: 1.7; text-align: right; }
+.cert-sho-seal {
+  width: var(--cert-seal-size, 60px);
+  height: var(--cert-seal-size, 60px);
+  border-color: var(--cert-seal-border-color, #B83232);
+  border-width: var(--cert-seal-border-width, 3px);
+  border-style: double;
+  background: var(--cert-seal-bg, rgba(184,50,50,.04));
+}
+.cert-sho-seal-text {
+  font-family: var(--cert-seal-font-family, var(--font-title));
+  font-size: var(--cert-seal-text-size, 10px);
+  color: var(--cert-seal-text-color, #B83232);
+  line-height: var(--cert-seal-line-height, 1.4);
+}
+/* ボタン */
+.cert-sho-buttons { display: flex; flex-direction: column; gap: 8px; }
+.cert-sho-btn-primary { background: #9A7A3A; color: white; border: none; padding: 13px; font-family: var(--font-title); font-size: 13px; letter-spacing: .12em; border-radius: 4px; cursor: pointer; transition: opacity .2s; width: 100%; }
+.cert-sho-btn-primary:active { opacity: .8; }
+.cert-sho-btn-secondary { background: transparent; border: 1px solid #D4C9B0; color: #9A7A5A; padding: 11px; font-size: 12px; letter-spacing: .1em; border-radius: 4px; cursor: pointer; width: 100%; }
+.cert-sho-screenshot { font-size: 10px; color: #B8A890; text-align: center; margin-bottom: 10px; letter-spacing: .06em; }
+.cert-sho-seal { position: relative; display: flex; align-items: center; justify-content: center; transform-origin: center; }
+.cert-sho.goal-animate .cert-sho-seal { animation: certStamp .72s cubic-bezier(.2,1.25,.25,1) .28s both; }
+.cert-sho-seal::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; opacity: 0; background: radial-gradient(circle, rgba(184,50,50,.18), rgba(184,50,50,.06) 42%, transparent 70%); transform: scale(.65); pointer-events: none; }
+.cert-sho.goal-animate .cert-sho-seal::after { animation: certInkBleed 1.2s ease-out .45s both; }
+.cert-sho-seal-text { text-align: center; }
+@keyframes certStamp { 0%{opacity:0; transform:scale(1.65) rotate(-7deg)} 55%{opacity:1; transform:scale(.9) rotate(1deg)} 78%{transform:scale(1.04) rotate(0)} 100%{transform:scale(1) rotate(0)} }
+@keyframes certInkBleed { 0%{opacity:.6; transform:scale(.58)} 100%{opacity:0; transform:scale(1.28)} }
+.cert-sho-btn-primary, .cert-sho-btn-download, .cert-sho-btn-secondary { position: relative; overflow: hidden; transition: transform .16s, opacity .2s; }
+.cert-sho-btn-primary:active, .cert-sho-btn-download:active, .cert-sho-btn-secondary:active { transform: translateY(1px) scale(.99); }
+.cert-sho-btn-primary::after, .cert-sho-btn-download::after, .cert-sho-btn-secondary::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: 18px; height: 18px; border-radius: 50%; background: rgba(184,50,50,.16); opacity: 0; transform: translate(-50%,-50%) scale(.4); }
+.cert-sho-btn-primary:active::after, .cert-sho-btn-download:active::after, .cert-sho-btn-secondary:active::after { animation: certButtonInk .48s ease-out; }
+.cert-sho-btn-download { background: #B83232; color: white; border: none; padding: 13px; font-family: var(--font-title); font-size: 13px; letter-spacing: .12em; border-radius: 4px; cursor: pointer; width: 100%; }
+@keyframes certButtonInk { 0%{opacity:.5; transform:translate(-50%,-50%) scale(.4)} 100%{opacity:0; transform:translate(-50%,-50%) scale(12)} }
+@media (prefers-reduced-motion: reduce) { .cert-sho-wrap::before, .cert-sho.goal-animate .cert-sho-seal, .cert-sho.goal-animate .cert-sho-seal::after { animation: none; } }
+
+/* ══ PRIZES ══ */
+#screen-prizes { background: var(--bg); }
+.prizes-header { background: var(--ink); color: var(--paper); padding: 24px 22px 18px; }
+.prizes-header-badge { font-size: 10px; letter-spacing: .2em; color: var(--gold); border: 1px solid rgba(154,122,58,.4); padding: 2px 9px; display: inline-block; margin-bottom: 7px; }
+.prizes-header-title { font-family: var(--font-title); font-size: 22px; font-weight: 700; }
+.prizes-body { padding: 18px; flex: 1; overflow-y: auto; }
+.prizes-section-label { font-size: 10px; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 9px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+.prize-card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 11px; position: relative; overflow: hidden; }
+.prize-card.completed { border-color: var(--gold); }
+.prize-card.locked { opacity: .55; }
+.prize-card-bar { position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--gold); border-radius: var(--radius) 0 0 var(--radius); }
+.prize-card-icon { font-size: 28px; flex-shrink: 0; }
+.prize-card-info { flex: 1; }
+.prize-card-name { font-family: var(--font-title); font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.prize-card-desc { font-size: 12px; color: var(--muted); line-height: 1.65; }
+.prize-card-date { font-size: 12px; color: var(--gold); margin-top: 4px; }
+.prize-card-status { flex-shrink: 0; text-align: center; }
+.prize-status-icon { font-size: 20px; }
+.prize-status-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.empty-prizes { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; line-height: 2.0; }
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .3; }
+.btn-back { margin: 0 20px 24px; background: var(--ink); color: var(--paper); border: none; padding: 13px; font-family: var(--font-title); font-size: 13px; letter-spacing: .12em; border-radius: var(--radius); cursor: pointer; width: calc(100% - 40px); }
+.btn-back:active { opacity: .8; }
+
+/* ══ STAMPS（御朱印帳） ══ */
+#screen-stamps { background: var(--bg); }
+.stamps-header { background: var(--ink); color: var(--paper); padding: 24px 22px 18px; }
+.stamps-header-badge { font-size: 10px; letter-spacing: .2em; color: var(--primary); border: 1px solid rgba(184,50,50,.4); padding: 2px 9px; display: inline-block; margin-bottom: 7px; }
+.stamps-header-title { font-family: var(--font-title); font-size: 22px; font-weight: 700; }
+.stamps-header-sub { font-size: 11px; color: rgba(250,247,241,.3); margin-top: 4px; letter-spacing: .06em; }
+.stamps-body { padding: 20px 16px; flex: 1; overflow-y: auto; }
+.stamps-book {
+  background: var(--paper); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 16px;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(212,201,176,.4) 39px, rgba(212,201,176,.4) 40px);
+  position: relative;
+}
+.stamps-book::before {
+  content: ''; position: absolute; left: 44px; top: 0; bottom: 0; width: 1px;
+  background: rgba(184,50,50,.12);
+}
+.stamps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.stamp-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.stamp-circle {
+  width: 100px; height: 100px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; gap: 2px;
+}
+.stamp-circle.done {
+  background: radial-gradient(circle, rgba(184,50,50,.15) 0%, rgba(184,50,50,.05) 70%, transparent 100%);
+  border: 3px solid var(--primary);
+  box-shadow: inset 0 0 12px rgba(184,50,50,.1);
+}
+.stamp-circle.done::after {
+  content: ''; position: absolute; inset: 4px;
+  border: 1px solid rgba(184,50,50,.25); border-radius: 50%;
+}
+.stamp-circle.locked {
+  border: 2px dashed rgba(212,201,176,.6);
+  background: transparent;
+}
+.stamp-icon { font-size: 28px; position: relative; z-index: 1; }
+.stamp-icon.locked-icon { font-size: 20px; opacity: .2; }
+.stamp-date-in { font-size: 10px; color: var(--primary); letter-spacing: .06em; font-family: var(--font-title); position: relative; z-index: 1; line-height: 1.3; text-align: center; }
+.stamp-name { font-family: var(--font-title); font-size: 12px; font-weight: 600; color: var(--ink); text-align: center; line-height: 1.45; max-width: 122px; }
+.stamp-name.locked-name { color: var(--muted); opacity: .4; }
+.stamp-where { font-size: 10px; color: var(--muted); text-align: center; line-height: 1.45; }
+.stamps-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; line-height: 2.0; }
+.stamps-total { text-align: center; margin-top: 16px; font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+.stamps-total span { font-family: var(--font-title); font-size: 18px; font-weight: 700; color: var(--primary); margin: 0 2px; }
+/* プライズカード「どこで」 */
+.prize-card-where { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+/* プライズヘッダータブ */
+.prizes-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.1); margin-top: 10px; }
+.prizes-tab { flex: 1; padding: 8px; text-align: center; font-size: 11px; letter-spacing: .1em; color: rgba(250,247,241,.35); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; }
+.prizes-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+/* 地域フィルターチップ */
+.prizes-filter { padding: 10px 16px 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+.prizes-filter-chip { background: transparent; border: 1px solid rgba(250,247,241,.2); color: rgba(250,247,241,.4); padding: 4px 11px; border-radius: 20px; font-size: 10px; letter-spacing: .06em; cursor: pointer; transition: all .2s; white-space: nowrap; }
+.prizes-filter-chip.active { background: rgba(154,122,58,.2); border-color: var(--gold); color: var(--gold); }
+/* 地域グループラベル */
+.prizes-location-group { margin-top: 14px; margin-bottom: 6px; }
+.prizes-location-pref { font-size: 10px; color: rgba(250,247,241,.32); letter-spacing: .2em; }
+.prizes-location-city { font-size: 12px; color: rgba(250,247,241,.55); letter-spacing: .12em; font-weight: 500; margin-top: 1px; }
+.backup-actions { padding: 10px 16px 2px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.backup-btn { background: rgba(255,255,255,.06); border: 1px solid rgba(250,247,241,.16); color: var(--paper); padding: 10px 8px; border-radius: 8px; font-family: var(--font-title); font-size: 12px; letter-spacing: .08em; cursor: pointer; }
+.backup-btn:active { background: rgba(255,255,255,.12); }
+.visited-list { display: flex; flex-direction: column; gap: 10px; }
+.visited-card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 15px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
+.visited-pref { font-size: 11px; color: var(--muted); letter-spacing: .16em; margin-bottom: 3px; }
+.visited-city { font-family: var(--font-title); font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.45; }
+.visited-area { font-size: 12px; color: var(--muted); line-height: 1.55; margin-top: 2px; }
+.visited-date { text-align: right; font-size: 10px; color: var(--gold); letter-spacing: .08em; line-height: 1.6; min-width: 74px; }
+.visited-date span { display: block; font-size: 12px; font-family: var(--font-title); color: var(--ink); letter-spacing: 0; }
+
+/* ══ カスタムモーダル ══ */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(28,26,22,.78); z-index: 9999; align-items: center; justify-content: center; padding: 24px; }
+.modal-overlay.show { display: flex; animation: fadeIn .2s ease; }
+.modal-box { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px 20px; width: 100%; max-width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,.25); }
+.modal-title { font-family: var(--font-title); font-size: 15px; font-weight: 700; color: var(--ink); text-align: center; margin-bottom: 10px; }
+.modal-message { font-size: 13px; line-height: 1.9; color: var(--muted); text-align: center; margin-bottom: 20px; }
+.modal-buttons { display: flex; flex-direction: column; gap: 8px; }
+.modal-btn-primary { background: var(--primary); color: white; border: none; padding: 13px; font-family: var(--font-title); font-size: 13px; letter-spacing: .1em; border-radius: 8px; cursor: pointer; transition: opacity .2s; }
+.modal-btn-primary:active { opacity: .8; }
+.modal-btn-secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 11px; font-size: 12px; letter-spacing: .08em; border-radius: 8px; cursor: pointer; }
+.modal-btn-secondary:active { background: var(--border); }
+
+/* ══ ナビ ホームボタン ══ */
+.nav-name-row { display: flex; justify-content: space-between; align-items: center; }
+.btn-nav-home { background: transparent; border: 1px solid var(--border); color: var(--muted); width: 30px; height: 30px; border-radius: 8px; font-size: 15px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+.btn-nav-home:active { background: var(--border); }
+
+/* ══ クラウド同期バー ══ */
+.cloud-bar {
+  background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.07);
+  padding: 9px 16px; display: flex; align-items: center; gap: 10px; min-height: 42px;
+}
+.cloud-login-area { display: flex; align-items: center; gap: 8px; flex: 1; }
+.btn-cloud-login {
+  background: var(--primary); color: white; border: none;
+  padding: 5px 13px; border-radius: 20px; font-size: 11px; letter-spacing: .06em;
+  cursor: pointer; display: flex; align-items: center; gap: 5px; transition: opacity .2s;
+  white-space: nowrap;
+}
+.btn-cloud-login:active { opacity: .8; }
+.cloud-login-hint { font-size: 10px; color: rgba(250,247,241,.3); letter-spacing: .04em; line-height: 1.4; }
+.cloud-user-area { display: none; align-items: center; gap: 8px; flex: 1; }
+.cloud-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; flex-shrink: 0; transition: background .3s; }
+.cloud-dot.ok { background: var(--green); }
+.cloud-dot.syncing { background: #f0a040; animation: blink 1s infinite; }
+.cloud-dot.error { background: var(--primary); }
+.cloud-dot.idle { background: rgba(250,247,241,.25); }
+.cloud-status-text { font-size: 10px; color: rgba(250,247,241,.4); flex: 1; letter-spacing: .04em; }
+.btn-cloud-sync {
+  background: transparent; border: 1px solid rgba(255,255,255,.15); color: rgba(250,247,241,.5);
+  padding: 4px 10px; border-radius: 20px; font-size: 10px; cursor: pointer; letter-spacing: .06em;
+  white-space: nowrap; transition: all .2s;
+}
+.btn-cloud-sync:active { border-color: var(--green); color: var(--green); }
+.btn-cloud-signout {
+  background: transparent; border: none; color: rgba(250,247,241,.2);
+  font-size: 16px; cursor: pointer; padding: 2px; line-height: 1; flex-shrink: 0;
+}
+.btn-cloud-signout:active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- ① ローディング -->
+<div id="screen-loading" class="screen active">
+  <div class="loading-logo" id="loading-logo">まち歩き</div>
+  <div class="loading-sub">local-walk-guide</div>
+  <div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>
+  <div class="loading-msg" id="loading-msg">データを読み込んでいます…</div>
+  <div class="loading-error" id="loading-error">
+    データの読み込みに失敗しました。<br>ネットワーク接続を確認してください。<br>
+    <button class="btn-retry" onclick="initApp()">再試行</button>
+  </div>
+</div>
+
+<!-- ② ホーム -->
+<div id="screen-home" class="screen">
+  <div class="home-header" id="home-header">
+    <button class="home-theme-toggle" id="home-theme-toggle" onclick="toggleHomeTheme()" aria-label="ホームテーマ切替">🌙</button>
+    <div class="home-header-bg"></div>
+    <div class="home-header-overlay"></div>
+    <div class="home-badge" id="home-badge">MACHI ARUKI GUIDE</div>
+    <div class="home-title" id="home-title">まち歩き</div>
+    <div class="home-subtitle" id="home-subtitle">コースを選んでください</div>
+    <div class="home-area-name" id="home-area-name"></div>
+  </div>
+  <!-- クラウド同期バー -->
+  <div class="cloud-bar" id="cloud-bar">
+    <div class="cloud-login-area" id="cloud-login-area">
+      <button class="btn-cloud-login" onclick="signIn()">☁ Googleでバックアップ</button>
+      <div class="cloud-login-hint">御朱印帳・履歴をクラウドに保存<br>機種変更時に復元できます</div>
+    </div>
+    <div class="cloud-user-area" id="cloud-user-area">
+      <div class="cloud-dot idle" id="cloud-status-dot"></div>
+      <div class="cloud-status-text" id="cloud-status-text">待機中</div>
+      <button class="btn-cloud-sync" onclick="syncCloud()">↻ 今すぐ同期</button>
+      <button class="btn-cloud-signout" onclick="confirmSignOut()" title="ログアウト">✕</button>
+    </div>
+  </div>
+  <!-- いいねバー -->
+  <div class="like-bar" id="like-bar">
+    <span class="like-bar-icon">🩷</span>
+    <span class="like-bar-text">累計いいね</span>
+    <span class="like-bar-val" id="like-bar-val">0 いいね</span>
+  </div>
+  <div class="home-body" id="home-body"></div>
+</div>
+
+<!-- ③ ナビ -->
+<div id="screen-nav" class="screen">
+  <div class="nav-header">
+    <div class="nav-progress-bar"><div class="nav-progress-fill" id="progress-fill"></div></div>
+    <div class="nav-top-row">
+      <div class="nav-step-label" id="nav-step-label"></div>
+      <div class="gps-status"><div class="gps-dot searching" id="gps-dot"></div><span id="gps-label">GPS取得中</span></div>
+    </div>
+    <div class="nav-name-row">
+      <div class="nav-spot-name" id="nav-spot-name"></div>
+      <button class="btn-nav-home" onclick="confirmGoHome()" title="ホームへ戻る">⌂</button>
+    </div>
+    <div class="nav-next-spot" id="nav-next-spot"></div>
+  </div>
+  <div class="distance-panel" id="distance-panel">
+    <div class="dist-icon" id="dist-icon">🚶</div>
+    <div class="dist-info">
+      <div class="dist-number" id="dist-number">--<span>m</span></div>
+      <div class="dist-status" id="dist-status">GPS位置情報を取得しています…</div>
+    </div>
+    <div class="ring-wrap">
+      <svg class="ring-svg" width="44" height="44" viewBox="0 0 44 44">
+        <circle class="ring-bg" cx="22" cy="22" r="18"/>
+        <circle class="ring-fill" id="ring-fill" cx="22" cy="22" r="18"/>
+      </svg>
+      <div class="ring-label" id="ring-label">--</div>
+    </div>
+  </div>
+  <div class="walk-bar"><span>🦶 歩行距離</span><span class="walk-val" id="walk-val">0 m</span></div>
+  <div class="facility-toast" id="facility-toast"><span>🏢</span><span id="facility-toast-text"></span></div>
+  <div class="voice-log" id="voice-log"><span id="voice-wave">🔇</span><span id="voice-log-text">音声ガイド待機中</span></div>
+  <div class="map-container">
+    <div id="leaflet-map"></div>
+    <button class="btn-ar" id="btn-ar" onclick="openAR()">📷 ARで見る</button>
+  </div>
+  <div class="spots-row" id="spots-row"></div>
+  <div class="arrive-section">
+    <button class="btn-arrived" onclick="manualArrive()">📍 着いた！（手動）</button>
+    <div class="manual-hint">GPSが届かない場合などに使用</div>
+  </div>
+</div>
+
+<!-- ④ AR -->
+<div id="screen-ar" class="screen">
+  <video id="ar-video" autoplay playsinline muted></video>
+  <!-- キャリブレーションオーバーレイ -->
+  <div class="ar-calib-overlay" id="ar-calib-overlay">
+    <div class="ar-calib-icon">📱</div>
+    <div class="ar-calib-title">コンパスを校正してください</div>
+    <div class="ar-calib-desc">スマホを持ったまま<br>8の字を描くように<br>3〜5回ゆっくり動かしてください</div>
+    <div class="ar-calib-bar"><div class="ar-calib-bar-fill"></div></div>
+    <button class="ar-calib-skip" onclick="dismissCalib()">スキップ</button>
+  </div>
+  <!-- 精度警告バナー -->
+  <div class="ar-accuracy-warn" id="ar-accuracy-warn">⚠️ コンパスの精度が低下しています。端末を8の字に振って校正してください。</div>
+  <div class="ar-overlay">
+    <div class="ar-dir-outer">
+      <div class="ar-dir-inner" id="ar-dir-inner">
+        <svg class="ar-dir-svg" viewBox="0 0 100 100" width="110" height="110">
+          <circle cx="50" cy="50" r="47" fill="rgba(0,0,0,0.1)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+          <!-- 目的地方向（赤） -->
+          <polygon points="50,10 58,47 50,54 42,47" fill="#FF3B30" opacity="0.92"/>
+          <!-- 後方（白・薄） -->
+          <polygon points="50,54 58,47 50,90 42,47" fill="rgba(255,255,255,0.22)"/>
+          <!-- 中心 -->
+          <circle cx="50" cy="50" r="5" fill="rgba(255,255,255,0.85)"/>
+          <!-- 方位ラベル -->
+          <text x="50" y="7" text-anchor="middle" fill="#FF6B6B" font-size="6" font-weight="bold" font-family="sans-serif">目的地</text>
+        </svg>
+      </div>
+    </div>
+    <div class="ar-dir-hint" id="ar-dir-hint">赤い矢印がスポットの方向</div>
+    <div class="ar-info">
+      <div class="ar-spot-name" id="ar-spot-name"></div>
+      <div class="ar-dist" id="ar-dist">--<span>m</span></div>
+    </div>
+  </div>
+  <div class="ar-compass" id="ar-compass">方位取得中…</div>
+  <button class="btn-ar-close" onclick="closeAR()">✕ 地図に戻る</button>
+</div>
+
+<!-- ⑤ 解説 -->
+<div id="screen-explain" class="screen">
+  <div class="photo-area" id="photo-area">
+    <div class="photo-protect" oncontextmenu="return false;"></div>
+    <div class="photo-placeholder" id="photo-placeholder"><div class="photo-placeholder-icon">📷</div><div>写真準備中</div></div>
+  </div>
+  <div class="explain-header">
+    <div class="explain-num-bg" id="explain-num-bg"></div>
+    <div class="explain-badge" id="explain-badge"></div>
+    <div class="explain-title" id="explain-title"></div>
+    <button class="btn-voice-replay" onclick="replayVoice()">🔊 もう一度聴く</button>
+  </div>
+  <div class="explain-body">
+    <div class="explain-text" id="explain-text"></div>
+    <hr class="explain-divider">
+    <div class="explain-sub">キーワード</div>
+    <div id="explain-keywords"></div>
+  </div>
+  <button class="btn-next" id="btn-next" onclick="nextSpot()"></button>
+</div>
+
+<!-- ⑥ 修了書（賞状） -->
+<div id="screen-goal" class="screen">
+  <div class="cert-sho-wrap">
+    <div class="cert-sho">
+      <div class="cert-sho-corner tl"></div><div class="cert-sho-corner tr"></div>
+      <div class="cert-sho-corner bl"></div><div class="cert-sho-corner br"></div>
+      <div class="cert-sho-inner">
+        <!-- タイトル -->
+        <div class="cert-sho-title-row">
+          <div class="cert-sho-rule"></div>
+          <div class="cert-sho-title" id="cert-sho-title">修了証</div>
+          <div class="cert-sho-rule right"></div>
+        </div>
+        <!-- コース名 -->
+        <div class="cert-sho-course-label">コース</div>
+        <div class="cert-sho-course" id="cert-course"></div>
+        <!-- 本文 -->
+        <div class="cert-sho-body">
+          あなたは上記のまち歩きコースを<br>
+          見事完走されましたことを<br>
+          ここに証し、表彰いたします。
+        </div>
+        <div class="cert-sho-extra" id="cert-body-extra"></div>
+        <!-- スポット一覧 -->
+        <div class="cert-sho-spots-label">訪問スポット</div>
+        <div class="cert-sho-spots" id="cert-spots"></div>
+        <!-- 統計 -->
+        <div class="cert-sho-stats">
+          <div class="cert-sho-stat">
+            <div><span class="cert-sho-stat-val" id="cert-dist">0</span><span class="cert-sho-stat-unit">m</span></div>
+            <div class="cert-sho-stat-label">歩行距離</div>
+          </div>
+          <div class="cert-sho-stat">
+            <div><span class="cert-sho-stat-val" id="cert-like">0</span><span class="cert-sho-stat-unit">いいね</span></div>
+            <div class="cert-sho-stat-label">今回の獲得</div>
+          </div>
+          <div class="cert-sho-stat">
+            <div><span class="cert-sho-stat-val" id="cert-count">0</span><span class="cert-sho-stat-unit">箇所</span></div>
+            <div class="cert-sho-stat-label">訪問スポット</div>
+          </div>
+        </div>
+        <!-- 日付 -->
+        <div class="cert-sho-date" id="cert-date"></div>
+        <!-- 発行者・印鑑 -->
+        <div class="cert-sho-footer">
+          <div class="cert-sho-issuer" id="cert-issuer"></div>
+          <div class="cert-sho-seal"><div class="cert-sho-seal-text" id="cert-seal-text"></div></div>
+        </div>
+        <!-- スクショヒント -->
+        <div class="cert-sho-screenshot">📸 スクリーンショットで記念に保存できます</div>
+        <!-- ボタン -->
+        <div class="cert-sho-buttons">
+          <button class="cert-sho-btn-download" onclick="downloadCertificate()">証明書を保存する</button>
+          <button class="cert-sho-btn-primary" onclick="showScreen('screen-prizes');switchPrizesTab('prizes')">🖌️ 御朱印帳を確認する</button>
+          <button class="cert-sho-btn-secondary" onclick="goHome()">コース選択に戻る</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ 御朱印帳 -->
+<div id="screen-prizes" class="screen">
+  <div class="prizes-header">
+    <div class="prizes-header-badge">GOSHUIN BOOK</div>
+    <div class="prizes-header-title">御朱印帳</div>
+    <div class="prizes-tabs">
+      <div class="prizes-tab active" id="tab-prizes" onclick="switchPrizesTab('prizes')">🖌️ 御朱印帳</div>
+      <div class="prizes-tab" id="tab-stamps" onclick="switchPrizesTab('stamps')">訪れたまち歩き</div>
+    </div>
+    <div class="backup-actions">
+      <button class="backup-btn" onclick="exportBackup()">データを保存</button>
+      <button class="backup-btn" onclick="document.getElementById('backup-file').click()">データを復元</button>
+      <input type="file" id="backup-file" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+    </div>
+  </div>
+  <div class="prizes-filter" id="prizes-filter"></div>
+  <div class="prizes-body" id="prizes-body"></div>
+  <button class="btn-back" onclick="goHome()">← ホームへ戻る</button>
+</div>
+
+<!-- モーダル（共通） -->
+<div id="modal-overlay" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-message" id="modal-message"></div>
+    <div class="modal-buttons">
+      <button class="modal-btn-primary" id="modal-confirm"></button>
+      <button class="modal-btn-secondary" id="modal-cancel"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════
+// 定数
+// ══════════════════════════════════════
+const DEFAULT_SHEET_ID = '1fugAECsnEQIHXgQh1qyPOaLJL-6wMuW0B4dA6Ac6k24';
+const MASUDA_SHEET_ID  = '1fugAECsnEQIHXgQh1qyPOaLJL-6wMuW0B4dA6Ac6k24';
+
+// DriveのURLを音声・ダウンロード用に変換
+function driveUrl(url) {
+  if (!url) return null;
+  const m = url.match(/\/file\/d\/([^/]+)/);
+  if (m) return `https://drive.google.com/uc?export=download&id=${m[1]}`;
+  if (url.includes('drive.google.com')) return url;
+  return url;
+}
+
+// DriveのURLを写真表示用（thumbnail）に変換
+function drivePhotoUrl(url) {
+  if (!url) return null;
+  const m = url.match(/\/file\/d\/([^/]+)/);
+  if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w800`;
+  const m2 = url.match(/[?&]id=([^&]+)/);
+  if (m2 && url.includes('drive.google.com')) return `https://drive.google.com/thumbnail?id=${m2[1]}&sz=w800`;
+  if (url.includes('drive.google.com')) return url;
+  return url;
+}
+
+// ══════════════════════════════════════
+// データ
+// ══════════════════════════════════════
+let cfg = {};
+let allCourses = [], allSpots = [], allCourseSpots = [], allFacilities = [];
+let currentSheetId = DEFAULT_SHEET_ID;
+
+// ツアー状態
+let currentCourse = null, courseSpots = [], currentIdx = 0;
+let watchId = null, approachNotified = false, arrivedDetected = false;
+let lastVoiceText = '', lastVoiceUrl = null, announcedFacilities = new Set();
+let leafletMap = null, userMarker = null, destMarker = null, destCircle = null;
+let totalWalkDist = 0, lastWalkPos = null;
+let facilityTimer = null;
+let arStream = null, arWatchId = null, arLastDist = 0;
+let voicePlaying = false; // 音声重複再生ロック
+let gpsLocked = false;   // スタートアナウンス中のGPS到着判定ロック
+let explainCurrentSpot = null; // 解説画面で現在表示中のスポット（「もう一度聴く」用）
+let nextButtonLocked = false;  // 「次へ」ボタンロック中フラグ
+let nextLockTimer = null;      // 「次へ」タイマー解除用
+
+// ══════════════════════════════════════
+// ローカルストレージ
+// ══════════════════════════════════════
+const STORAGE_PREFIX = 'lwg_';
+function storageKey(key) { return key.startsWith(STORAGE_PREFIX) ? key : STORAGE_PREFIX + key; }
+function lsGet(key, def) { try { return JSON.parse(localStorage.getItem(storageKey(key)) ?? 'null') ?? def; } catch { return def; } }
+function lsSet(key, val) { try { localStorage.setItem(storageKey(key), JSON.stringify(val)); } catch {} }
+
+function loadPrizes() { return lsGet('lwg_prizes', {}); }
+function coursePrizeId(courseOrId, sheetId = currentSheetId) {
+  const courseId = typeof courseOrId === 'object' ? courseOrId.course_id : courseOrId;
+  return `course_${sheetId}_${courseId}`;
+}
+function legacyPrizeId(courseOrId) {
+  const courseId = typeof courseOrId === 'object' ? courseOrId.course_id : courseOrId;
+  return 'course_' + courseId;
+}
+function prizeForCourse(prizes, course) {
+  const scoped = prizes[coursePrizeId(course)];
+  if (scoped) return scoped;
+  // 旧保存形式は地域IDを持たないため、既定地域だけの救済として読む。
+  return currentSheetId === DEFAULT_SHEET_ID ? prizes[legacyPrizeId(course)] : null;
+}
+function savePrize(id, date, area, course, courseId = '') {
+  const p = loadPrizes();
+  p[id] = {
+    date, area: area || '', course: course || '',
+    course_id: courseId || '',
+    sheet_id: currentSheetId || '',
+    prefecture: cfg.prefecture || '',
+    city: cfg.city || '',
+    area_name: cfg.area_name || area || ''
+  };
+  lsSet('lwg_prizes', p);
+}
+// 後方互換：旧形式（文字列）と新形式（オブジェクト）両対応
+function prizeDate(val) { return val ? (typeof val === 'string' ? val : val.date) : null; }
+function prizeArea(val) { return (val && typeof val === 'object') ? (val.area || '') : ''; }
+function prizeCourse(val) { return (val && typeof val === 'object') ? (val.course || '') : ''; }
+function prizePref(val) { return (val && typeof val === 'object') ? (val.prefecture || '') : ''; }
+function prizeCity(val) { return (val && typeof val === 'object') ? (val.city || '') : ''; }
+function prizeAreaName(val) { return (val && typeof val === 'object') ? (val.area_name || val.area || '') : ''; }
+
+// ── 生涯歩行いいねカウンター ──
+function loadLifetimeWalk() { return lsGet('lwg_lifetime_walk_m', 0); }
+function saveLifetimeWalk(m) { lsSet('lwg_lifetime_walk_m', Math.round(m)); }
+// セッション内でまだ加算していない分をDriveバックアップ対象に含める
+let sessionWalkCredited = 0; // 今セッションでlifetimeに加算済みのm数
+
+function creditWalk(currentSessionDist) {
+  const delta = currentSessionDist - sessionWalkCredited;
+  if (delta <= 0) return;
+  saveLifetimeWalk(loadLifetimeWalk() + delta);
+  sessionWalkCredited = currentSessionDist;
+  updateLikeBar();
+}
+
+function updateLikeBar() {
+  const el = document.getElementById('like-bar-val');
+  if (el) el.textContent = `${loadLifetimeWalk().toLocaleString()} いいね`;
+}
+
+// ── ホーム画面テーマ切替 ──
+const HOME_THEME_KEY = 'lwg_home_theme';
+let homeThemeAutoStarted = false;
+
+function isNightHours() {
+  const hour = new Date().getHours();
+  return hour >= 17 || hour < 6;
+}
+
+function getSystemHomeTheme() {
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return (prefersDark || isNightHours()) ? 'dark' : 'light';
+}
+
+function getStoredHomeTheme() {
+  const stored = localStorage.getItem(HOME_THEME_KEY);
+  return stored === 'light' || stored === 'dark' ? stored : null;
+}
+
+function getHomeTheme() {
+  return getStoredHomeTheme() || getSystemHomeTheme();
+}
+
+function setHomeTheme(mode) {
+  localStorage.setItem(HOME_THEME_KEY, mode);
+  applyHomeTheme(mode);
+}
+
+function toggleHomeTheme() {
+  const current = getHomeTheme();
+  const next = current === 'light' ? 'dark' : 'light';
+  setHomeTheme(next);
+}
+
+function initHomeThemeAuto() {
+  applyHomeTheme(getHomeTheme());
+  if (homeThemeAutoStarted) return;
+  homeThemeAutoStarted = true;
+
+  if (window.matchMedia) {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => { if (!getStoredHomeTheme()) applyHomeTheme(getSystemHomeTheme()); };
+    if (media.addEventListener) media.addEventListener('change', onChange);
+    else if (media.addListener) media.addListener(onChange);
+  }
+
+  setInterval(() => {
+    if (!getStoredHomeTheme()) applyHomeTheme(getSystemHomeTheme());
+  }, 10 * 60 * 1000);
+}
+
+function applyHomeTheme(mode) {
+  const home = document.getElementById('screen-home');
+  if (!home) return;
+
+  const suffix = mode === 'light' ? '_light' : '_dark';
+
+  home.style.setProperty('--home-bg',
+    cfg['home_bg' + suffix] || (mode === 'light' ? '#F7F3EA' : '#1C1A16')
+  );
+
+  home.style.setProperty('--home-card-bg',
+    cfg['home_card_bg' + suffix] || (mode === 'light' ? 'rgba(255,255,255,.75)' : 'rgba(255,255,255,.05)')
+  );
+
+  home.style.setProperty('--home-card-border',
+    cfg['home_card_border' + suffix] || (mode === 'light' ? 'rgba(28,26,22,.12)' : 'rgba(255,255,255,.08)')
+  );
+
+  home.style.setProperty('--home-text',
+    cfg['home_text' + suffix] || (mode === 'light' ? '#1C1A16' : '#FAF7F1')
+  );
+
+  home.style.setProperty('--home-subtext',
+    cfg['home_subtext' + suffix] || (mode === 'light' ? 'rgba(28,26,22,.55)' : 'rgba(250,247,241,.4)')
+  );
+
+  home.style.setProperty('--home-line',
+    cfg['home_line' + suffix] || (mode === 'light' ? 'rgba(28,26,22,.12)' : 'rgba(255,255,255,.07)')
+  );
+
+  home.style.setProperty('--home-toggle-bg',
+    cfg['home_toggle_bg' + suffix] || (mode === 'light' ? 'rgba(255,255,255,.75)' : 'rgba(0,0,0,.25)')
+  );
+
+  home.style.setProperty('--home-toggle-border',
+    cfg['home_toggle_border' + suffix] || (mode === 'light' ? 'rgba(28,26,22,.18)' : 'rgba(255,255,255,.18)')
+  );
+
+  home.style.setProperty('--home-toggle-color',
+    cfg['home_toggle_color' + suffix] || (mode === 'light' ? '#1C1A16' : '#FFFFFF')
+  );
+
+  const btn = document.getElementById('home-theme-toggle');
+  if (btn) {
+    btn.textContent = mode === 'light' ? '☀️' : '🌙';
+    btn.title = mode === 'light' ? 'ライトモード' : 'ダークモード';
+  }
+}
+
+function loadAreas() { return lsGet('lwg_areas', { home: null, favorites: [], visited: [] }); }
+function saveAreas(areas) { lsSet('lwg_areas', areas); }
+function loadProgressMap() {
+  const progress = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('lwg_progress_')) continue;
+    try { progress[key] = JSON.parse(localStorage.getItem(key)); } catch {}
+  }
+  return progress;
+}
+function saveProgressMap(progress = {}) {
+  Object.entries(progress).forEach(([key, val]) => {
+    if (key.startsWith('lwg_progress_')) lsSet(key, val);
+  });
+}
+
+function recordVisit(sheetId, name) {
+  const areas = loadAreas();
+  const visit = {
+    sid: sheetId,
+    name,
+    date: new Date().toISOString(),
+    prefecture: cfg.area_pref || cfg.prefecture || '',
+    city: cfg.area_city || cfg.city || '',
+    area: cfg.area_name || cfg.area_town || name || ''
+  };
+  if (!areas.home) { areas.home = { sid: sheetId, name }; }
+  const alreadyVisited = areas.visited.find(v => v.sid === sheetId);
+  if (!alreadyVisited) areas.visited.push(visit);
+  else Object.assign(alreadyVisited, visit);
+  saveAreas(areas);
+}
+
+// ══════════════════════════════════════
+// CSVパーサー
+// ══════════════════════════════════════
+function parseCSV(text) {
+  const rows = []; const lines = text.split('\n');
+  if (lines.length < 2) return rows;
+  const headers = splitLine(lines[0]);
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim(); if (!line) continue;
+    const vals = splitLine(line); const obj = {};
+    headers.forEach((h, idx) => { obj[h.trim()] = (vals[idx] || '').trim(); });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function splitLine(line) {
+  const r = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+    else if (c === ',' && !inQ) { r.push(cur); cur = ''; }
+    else cur += c;
+  }
+  r.push(cur); return r;
+}
+
+// ══════════════════════════════════════
+// シート取得
+// ══════════════════════════════════════
+function sheetURL(sid, sheet) {
+  return `https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
+}
+
+async function fetchSheet(sid, sheet) {
+  const res = await fetch(sheetURL(sid, sheet));
+  if (!res.ok) throw new Error(`fetch failed: ${sheet}`);
+  const text = await res.text();
+  return text.replace(/^\uFEFF/, ''); // BOM除去
+}
+
+// ══════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════
+async function initApp() {
+  checkAndResetIfSheetChanged();
+  document.getElementById('loading-error').style.display = 'none';
+  document.getElementById('loading-msg').textContent = 'データを読み込んでいます…';
+
+  // URLパラメータからsid取得
+  const params = new URLSearchParams(location.search);
+  currentSheetId = params.get('sid') || DEFAULT_SHEET_ID;
+
+  try {
+    const [cfgCSV, coursesCSV, spotsCSV, csCSV, facCSV] = await Promise.all([
+      fetchSheet(currentSheetId, 'config'),
+      fetchSheet(currentSheetId, 'courses'),
+      fetchSheet(currentSheetId, 'spots'),
+      fetchSheet(currentSheetId, 'course_spots'),
+      fetchSheet(currentSheetId, 'facilities'),
+    ]);
+
+    // config（縦並びのkey/value形式。area_nameはプライズ・御朱印帳の「どこで」に使用）
+    cfg = {};
+    parseCSV(cfgCSV).forEach(r => { if (r.key) cfg[r.key] = r.value; });
+    applyConfig();
+
+    // データ
+    allCourses = parseCSV(coursesCSV).map(c => ({
+      ...c,
+      display_order: parseInt(c.display_order) || 99,
+      recommended: c.recommended === 'TRUE',
+      duration_min: parseInt(c.duration_min) || 0,
+      distance_m: parseInt(c.distance_m) || 0,
+    }));
+
+    allSpots = parseCSV(spotsCSV).map(s => ({
+      ...s,
+      lat: parseFloat(s.lat),
+      lng: parseFloat(s.lng),
+      approach_dist: parseInt(s.approach_dist) || 50,
+      arrive_dist: parseInt(s.arrive_dist) || 15,
+      audio_explain_url: s.audio_explain_url || null,
+    }));
+
+    allCourseSpots = parseCSV(csCSV).map(cs => ({
+      ...cs,
+      order: parseInt(cs.order) || 99,
+    }));
+
+    allFacilities = parseCSV(facCSV).map(f => ({
+      ...f,
+      lat: parseFloat(f.lat),
+      lng: parseFloat(f.lng),
+      trigger_dist: parseInt(f.trigger_dist) || 30,
+    }));
+
+    // 訪問記録
+    recordVisit(currentSheetId, cfg.app_title || 'まち歩き');
+
+    showScreen('screen-home');
+    renderHome();
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loading-msg').textContent = '';
+    document.getElementById('loading-error').style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════
+// コンフィグ適用
+// ══════════════════════════════════════
+function loadGoogleFont(name) {
+  if (!name) return;
+  const id = 'gf-' + String(name).replace(/\s+/g, '-');
+  if (document.getElementById(id)) return;
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
+  document.head.appendChild(link);
+}
+
+function applyConfig() {
+
+  const r = document.documentElement;
+  if (cfg.color_bg) r.style.setProperty('--bg', cfg.color_bg);
+  if (cfg.color_paper) r.style.setProperty('--paper', cfg.color_paper);
+  if (cfg.color_ink) r.style.setProperty('--ink', cfg.color_ink);
+  if (cfg.color_primary) r.style.setProperty('--primary', cfg.color_primary);
+  if (cfg.color_gold) r.style.setProperty('--gold', cfg.color_gold);
+  if (cfg.color_muted) r.style.setProperty('--muted', cfg.color_muted);
+  if (cfg.color_border) r.style.setProperty('--border', cfg.color_border);
+  if (cfg.font_title) {
+    loadGoogleFont(cfg.font_title);
+    r.style.setProperty('--font-title', `'${cfg.font_title}', serif`);
+  }
+  if (cfg.font_body) {
+    loadGoogleFont(cfg.font_body);
+    r.style.setProperty('--font-body', `'${cfg.font_body}', sans-serif`);
+  }
+  if (cfg.app_title_color) r.style.setProperty('--app-title-color', cfg.app_title_color);
+  if (cfg.app_title_font_size) r.style.setProperty('--app-title-font-size', cfg.app_title_font_size);
+  if (cfg.app_title_font) {
+    loadGoogleFont(cfg.app_title_font);
+    r.style.setProperty('--app-title-font-family', `'${cfg.app_title_font}', serif`);
+  }
+  if (cfg.app_subtitle_color) r.style.setProperty('--app-subtitle-color', cfg.app_subtitle_color);
+  if (cfg.app_subtitle_font_size) r.style.setProperty('--app-subtitle-font-size', cfg.app_subtitle_font_size);
+  if (cfg.app_subtitle_font) {
+    loadGoogleFont(cfg.app_subtitle_font);
+    r.style.setProperty('--app-subtitle-font-family', `'${cfg.app_subtitle_font}', sans-serif`);
+  }
+
+  // 文字サイズ（configから上書き可能）
+  if (cfg.font_size_base)    r.style.setProperty('--font-size-base',    cfg.font_size_base);
+  if (cfg.font_size_heading) r.style.setProperty('--font-size-heading', cfg.font_size_heading);
+  if (cfg.font_size_explain) r.style.setProperty('--font-size-explain', cfg.font_size_explain);
+
+  // 証明書タイトル・印鑑デザイン（configから上書き可能）
+  if (cfg.cert_title_font_family) {
+    loadGoogleFont(cfg.cert_title_font_family);
+    r.style.setProperty('--cert-title-font-family', cfg.cert_title_font_family);
+  }
+  if (cfg.cert_title_font_size) {
+    r.style.setProperty('--cert-title-font-size', cfg.cert_title_font_size);
+  }
+  if (cfg.cert_title_letter_spacing) {
+    r.style.setProperty('--cert-title-letter-spacing', cfg.cert_title_letter_spacing);
+  }
+
+  if (cfg.cert_seal_size) {
+    r.style.setProperty('--cert-seal-size', cfg.cert_seal_size);
+  }
+  if (cfg.cert_seal_border_color) {
+    r.style.setProperty('--cert-seal-border-color', cfg.cert_seal_border_color);
+  }
+  if (cfg.cert_seal_border_width) {
+    r.style.setProperty('--cert-seal-border-width', cfg.cert_seal_border_width);
+  }
+  if (cfg.cert_seal_bg) {
+    r.style.setProperty('--cert-seal-bg', cfg.cert_seal_bg);
+  }
+  if (cfg.cert_seal_font_family) {
+    loadGoogleFont(cfg.cert_seal_font_family);
+    r.style.setProperty('--cert-seal-font-family', cfg.cert_seal_font_family);
+  }
+  if (cfg.cert_seal_text_size) {
+    r.style.setProperty('--cert-seal-text-size', cfg.cert_seal_text_size);
+  }
+  if (cfg.cert_seal_text_color) {
+    r.style.setProperty('--cert-seal-text-color', cfg.cert_seal_text_color);
+  }
+  if (cfg.cert_seal_line_height) {
+    r.style.setProperty('--cert-seal-line-height', cfg.cert_seal_line_height);
+  }
+
+  const title = cfg.app_title || 'まち歩き';
+  document.title = title;
+  document.getElementById('loading-logo').textContent = title;
+  document.getElementById('home-title').textContent = title;
+  document.getElementById('home-subtitle').textContent = cfg.app_subtitle || 'コースを選んでください';
+
+  // ホームバッジ
+  const badge = document.getElementById('home-badge');
+  
+  if (badge) {
+    if (cfg.home_badge_text) badge.textContent = cfg.home_badge_text;
+    if (cfg.home_badge_font_size) badge.style.fontSize = cfg.home_badge_font_size;
+    if (cfg.home_badge_color) badge.style.color = cfg.home_badge_color;
+    if (cfg.home_badge_border_color) badge.style.borderColor = cfg.home_badge_border_color;
+    if (cfg.home_badge_border_width) badge.style.borderWidth = cfg.home_badge_border_width;
+    if (cfg.home_badge_border_radius) badge.style.borderRadius = cfg.home_badge_border_radius;
+    if (cfg.home_badge_border) badge.style.border = cfg.home_badge_border;
+  
+    badge.style.left = cfg.home_badge_left || '24px';
+    badge.style.right = cfg.home_badge_right || 'auto';
+    badge.style.top = cfg.home_badge_top || '40px';
+    badge.style.bottom = cfg.home_badge_bottom || 'auto';
+  }
+
+  // エリア表示（area_display で組み合わせを選択）
+  const areaEl = document.getElementById('home-area-name');
+  if (areaEl) areaEl.textContent = buildAreaLabel();
+
+  // ヘッダー画像
+  const headerImgSrc = cfg.header_image_url || null;
+
+  if (cfg.header_type === 'image' && headerImgSrc) {
+    const img = document.createElement('img');
+    img.className = 'home-header-img';
+    img.src = headerImgSrc;
+    document.getElementById('home-header').prepend(img);
+    img.onload = applyHeaderStyle;
+    applyHeaderStyle();
+  }
+
+  initHomeThemeAuto();
+}
+
+// ── エリア表示ラベル生成 ──
+function buildAreaLabel() {
+  const pref   = cfg.area_pref   || cfg.prefecture || '';
+  const city   = cfg.area_city   || cfg.city       || '';
+  const town   = cfg.area_town   || '';
+  const custom = cfg.area_name   || '';
+  const mode   = cfg.area_display || 'custom';
+  const map = {
+    pref:           [pref],
+    city:           [city],
+    town:           [town],
+    'pref+city':    [pref, city],
+    'pref+town':    [pref, town],
+    'city+town':    [city, town],
+    'pref+city+town': [pref, city, town],
+  };
+  if (map[mode]) return map[mode].filter(Boolean).join('');
+  // custom or fallback
+  return custom || [pref, city, town].filter(Boolean).join('　');
+}
+
+// ── ヘッダースタイル適用（A/B/C） ──
+function applyHeaderStyle() {
+  const style   = cfg.header_style || 'A';
+  const header  = document.getElementById('home-header');
+  const overlay = header.querySelector('.home-header-overlay');
+  const img     = header.querySelector('.home-header-img');
+  if (!img) return;
+
+  if (style === 'A') {
+    // デフォルト: 画像を明るく、下半分だけにグラデーション
+    img.style.opacity = '0.65';
+    overlay.style.background = 'linear-gradient(to top, rgba(28,26,22,.88) 0%, rgba(28,26,22,.15) 55%, transparent 100%)';
+  } else if (style === 'B') {
+    // 写真ゾーン独立: 画像鮮明、テキストエリアは不透明背景
+    img.style.opacity = '0.88';
+    overlay.style.background = 'linear-gradient(to top, rgba(28,26,22,1) 0%, rgba(28,26,22,.95) 28%, rgba(28,26,22,.1) 60%, transparent 100%)';
+  } else if (style === 'C') {
+    // text-shadow方式: 画像そのまま、テキストに影
+    img.style.opacity = '0.78';
+    overlay.style.background = 'none';
+    header.querySelectorAll('.home-badge,.home-title,.home-subtitle,.home-area-name').forEach(el => {
+      el.style.textShadow = '0 1px 8px rgba(0,0,0,.95), 0 2px 24px rgba(0,0,0,.8)';
+    });
+  }
+}
+
+// ══════════════════════════════════════
+// ホーム描画
+// ══════════════════════════════════════
+function renderHome() {
+  const body = document.getElementById('home-body');
+  body.innerHTML = '';
+  const prizes = loadPrizes();
+  const areas = loadAreas();
+  const today = new Date(); today.setHours(0,0,0,0);
+  // いいねバー更新
+  updateLikeBar();
+
+  // アクティブコース
+  const activeCourses = allCourses.filter(c => isActive(c))
+    .sort((a,b) => { if (a.recommended && !b.recommended) return -1; if (!a.recommended && b.recommended) return 1; return a.display_order - b.display_order; });
+
+  const recCourses = activeCourses.filter(c => c.recommended);
+  const normalCourses = activeCourses.filter(c => !c.recommended);
+
+  if (recCourses.length > 0) {
+    body.appendChild(sectionLabel('おすすめ ★'));
+    recCourses.forEach(c => body.appendChild(makeCourseCard(c, prizes)));
+  }
+  if (normalCourses.length > 0) {
+    const lbl = sectionLabel('コース一覧');
+    if (recCourses.length > 0) lbl.style.marginTop = '14px';
+    body.appendChild(lbl);
+    normalCourses.forEach(c => body.appendChild(makeCourseCard(c, prizes)));
+  }
+
+  // 他のまち歩き（訪れた町）
+  const otherAreas = areas.visited.filter(v => v.sid !== currentSheetId);
+  if (otherAreas.length > 0) {
+    const lbl = sectionLabel('訪れたまち歩き'); lbl.style.marginTop = '14px';
+    body.appendChild(lbl);
+    otherAreas.forEach(a => body.appendChild(makeAreaCard(a, '📍', '')));
+  }
+
+  // 増田をさりげなく表示（増田以外のシートで、増田を訪れていない場合）
+  if (currentSheetId !== MASUDA_SHEET_ID) {
+    const visitedMasuda = areas.visited.find(v => v.sid === MASUDA_SHEET_ID);
+    if (!visitedMasuda) {
+      const lbl = sectionLabel('こんなまち歩きも'); lbl.style.marginTop = '14px';
+      body.appendChild(lbl);
+      const masudaCard = makeAreaCard({ sid: MASUDA_SHEET_ID, name: '増田まち歩き', desc: '秋田県横手市増田町 ／ 重要伝統的建造物群保存地区' }, '🖌️', 'masuda');
+      body.appendChild(masudaCard);
+    }
+  }
+
+  // プライズ・スタンプボタン
+  const btnPrizes = document.createElement('button');
+  btnPrizes.className = 'btn-prizes-home';
+  btnPrizes.style.marginTop = '14px';
+  btnPrizes.textContent = '🖌️ 御朱印帳を見る';
+  btnPrizes.onclick = () => { showScreen('screen-prizes'); switchPrizesTab('prizes'); };
+  body.appendChild(btnPrizes);
+
+  // クレジット（固定）
+  const credit = document.createElement('div');
+  credit.className = 'credit';
+  credit.innerHTML = '企画・ディレクション：小坂将人<br>増田町観光協会理事 ／ 増田町観光ガイドの会理事';
+  body.appendChild(credit);
+}
+
+function sectionLabel(text) {
+  const el = document.createElement('div');
+  el.className = 'home-section-label';
+  el.textContent = text;
+  return el;
+}
+
+function makeCourseCard(course, prizes) {
+  const done = !!prizeForCourse(prizes, course);
+  const card = document.createElement('div');
+  card.className = 'course-card' + (course.recommended ? ' recommended' : '') + (done ? ' completed' : '');
+
+  let tag = '';
+  if (done) tag = '<div class="course-card-tag tag-done">✓ 完了</div>';
+  else if (course.recommended) tag = '<div class="course-card-tag tag-rec">★ おすすめ</div>';
+
+  let period = '';
+  if (course.start_date || course.end_date) {
+    const s = course.start_date ? course.start_date.replace(/-/g,'/') : '';
+    const e = course.end_date ? course.end_date.replace(/-/g,'/') : '';
+    period = `<div class="course-card-period">🗓 ${s}${e ? ' 〜 '+e : ''} 限定</div>`;
+  }
+
+  card.innerHTML = `${tag}<div class="course-card-type">${course.course_type}</div><div class="course-card-name">${course.course_name}</div><div class="course-card-meta"><span>🕐 約${course.duration_min}分</span><span>📍 約${course.distance_m}m</span></div>${period}`;
+  card.onclick = () => selectCourse(course);
+  return card;
+}
+
+function makeAreaCard(area, icon, type) {
+  const card = document.createElement('div');
+  card.className = 'area-card' + (type === 'masuda' ? ' masuda-recommend' : '');
+  card.innerHTML = `
+    <div class="area-card-icon">${icon}</div>
+    <div class="area-card-info">
+      <div class="area-card-name">${area.name}</div>
+      <div class="area-card-desc">${area.desc || ''}</div>
+    </div>
+    <div class="area-card-arrow">›</div>
+  `;
+  card.onclick = () => {
+    const url = `${location.pathname}?sid=${area.sid}`;
+    location.href = url;
+  };
+  return card;
+}
+
+// ══════════════════════════════════════
+// 日付チェック
+// ══════════════════════════════════════
+function isActive(item) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (item.start_date) { const s = new Date(item.start_date); if (!isNaN(s) && today < s) return false; }
+  if (item.end_date) { const e = new Date(item.end_date); if (!isNaN(e) && today > e) return false; }
+  return true;
+}
+
+function isSpecialActive() {
+  if (cfg.special_enabled !== 'TRUE') return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (cfg.special_start_date) { const s = new Date(cfg.special_start_date); if (!isNaN(s) && today < s) return false; }
+  if (cfg.special_end_date) { const e = new Date(cfg.special_end_date); if (!isNaN(e) && today > e) return false; }
+  return true;
+}
+
+// ══════════════════════════════════════
+// コース開始
+// ══════════════════════════════════════
+function selectCourse(course) {
+  unlockAudio();
+  currentCourse = course;
+  // GA4: コース選択イベント
+  trackEvent('course_select', { course_id: course.course_id, course_name: course.course_name });
+
+  const csRows = allCourseSpots
+    .filter(cs => cs.course_id === course.course_id)
+    .sort((a,b) => a.order - b.order);
+
+  courseSpots = csRows.map(cs => {
+    const spot = allSpots.find(s => s.spot_id === cs.spot_id);
+    return spot ? { ...spot, order: cs.order } : null;
+  }).filter(Boolean);
+
+  if (courseSpots.length === 0) { alert('スポットデータがありません'); return; }
+
+  // 前回の進行状況を確認
+  const saved = loadProgress();
+  if (saved && saved.course_id === course.course_id && saved.currentIdx > 0 && saved.currentIdx < courseSpots.length) {
+    const spotName = courseSpots[saved.currentIdx]?.spot_name || '';
+    const savedDate = formatDate(saved.savedAt);
+    showModal(
+      '途中から再開しますか？',
+      `スポット ${saved.currentIdx + 1} / ${courseSpots.length}\n${spotName} へ向かう途中\n（${savedDate} 保存）`,
+      '続きから再開', '最初から始める',
+      () => {
+        currentIdx = saved.currentIdx;
+        totalWalkDist = saved.totalWalkDist || 0;
+        startWalk(false);
+      },
+      () => { clearProgress(); currentIdx = 0; totalWalkDist = 0; startWalk(true); }
+    );
+    return;
+  }
+
+  currentIdx = 0;
+  totalWalkDist = 0;
+  startWalk(true);
+}
+
+function startWalk(playStartAnnounce) {
+  lastWalkPos = null;
+  announcedFacilities = new Set();
+  updateNavScreen();
+  pushNavHistory();
+  showScreen('screen-nav');
+  initMap();
+  startGPS();
+
+  if (!playStartAnnounce) return;
+
+  gpsLocked = true; // スタートアナウンス中はGPS到着判定をロック
+  updateArrivedButton(); // 即座にボタンを無効化（音声開始前から制限）
+  setTimeout(() => {
+    const startSpot = courseSpots[0];
+    const specialActive = isSpecialActive();
+    // cautionはstartTextから除去（テーマナレーションまたはcaution音声で流すため重複しない）
+    const startText = `最初の目的地は${startSpot.spot_name}です。`;
+
+    // ③ 第1スポットへ出発
+    function playStart() {
+      if (startSpot.audio_start_url) {
+        playVoice(startSpot.audio_start_url, startText, () => { gpsLocked = false; }, true);
+      } else {
+        speakTTS(startText, () => { gpsLocked = false; });
+      }
+    }
+
+    // ② テーマナレーション（なければ汎用caution）→ playStart へ
+    // audio_theme_url または theme_text があればテーマを流す（cautionはスキップ）。
+    // どちらもなければ汎用cautionにフォールバック。
+    function playThemeOrCaution(onDone) {
+      const themeUrl  = currentCourse.audio_theme_url;
+      const themeText = currentCourse.theme_text;
+      const caution    = getCaution(currentCourse.course_type);
+      const cautionUrl = getCautionUrl(currentCourse.course_type);
+
+      if (themeUrl) {
+        // テーマあり → cautionは一切流さない（MP3失敗時のTTSフォールバックもtheme_textのみ）
+        playVoice(themeUrl, themeText || '', () => setTimeout(onDone, 300), true);
+      } else if (themeText) {
+        speakTTS(themeText, () => setTimeout(onDone, 300));
+      } else if (cautionUrl) {
+        playVoice(cautionUrl, caution, () => setTimeout(onDone, 300), true);
+      } else if (caution) {
+        speakTTS(caution, () => setTimeout(onDone, 300));
+      } else {
+        onDone();
+      }
+    }
+
+    // ① イベント（special_start）→ ② テーマ/caution → ③ 第1スポット
+    if (specialActive && cfg.audio_special_start_url) {
+      playVoice(cfg.audio_special_start_url, '特別アナウンスです。', () => {
+        setTimeout(() => playThemeOrCaution(playStart), 300);
+      }, true);
+    } else {
+      playThemeOrCaution(playStart);
+    }
+  }, 800);
+}
+
+function getCaution(type) {
+  if (type === '市街地') return cfg.caution_shigaichi || '交通規則にしたがって歩いてください。歩きスマホにならないようご注意ください。';
+  if (type === '公園')  return cfg.caution_koen      || '園内の段差や凹凸にお気をつけながら、景色をお楽しみください。';
+  if (type === '混在')  return cfg.caution_konzai    || '交通規則にしたがって歩いてください。歩きスマホや足元にもご注意ください。';
+  return '';
+}
+
+function getCautionUrl(type) {
+  if (type === '市街地') return cfg.caution_shigaichi_url || null;
+  if (type === '公園')  return cfg.caution_koen_url      || null;
+  if (type === '混在')  return cfg.caution_konzai_url    || null;
+  return null;
+}
+
+// ══════════════════════════════════════
+// ユーティリティ
+// ══════════════════════════════════════
+function haversine(la1,lo1,la2,lo2) {
+  const R=6371000, φ1=la1*Math.PI/180, φ2=la2*Math.PI/180;
+  const Δφ=(la2-la1)*Math.PI/180, Δλ=(lo2-lo1)*Math.PI/180;
+  const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function bearing(la1,lo1,la2,lo2) {
+  const φ1=la1*Math.PI/180, φ2=la2*Math.PI/180, Δλ=(lo2-lo1)*Math.PI/180;
+  const y=Math.sin(Δλ)*Math.cos(φ2), x=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const screen = document.getElementById(id);
+  screen.classList.add('active');
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  screen.scrollTop = 0;
+  if (id === 'screen-nav' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100);
+  // GA4 スクリーン計測
+  trackScreen(id);
+}
+
+function formatDist(m) { return m < 1000 ? `${Math.round(m)} m` : `${(m/1000).toFixed(1)} km`; }
+function formatDate(iso) { const d=new Date(iso); return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`; }
+
+function goHome() { stopGPS(); closeAR(); showScreen('screen-home'); renderHome(); }
+
+// ══════════════════════════════════════
+// カスタムモーダル
+// ══════════════════════════════════════
+function showModal(title, message, confirmLabel, cancelLabel, onConfirm, onCancel) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-message').innerHTML = message.replace(/\n/g,'<br>');
+  document.getElementById('modal-confirm').textContent = confirmLabel;
+  document.getElementById('modal-cancel').textContent = cancelLabel;
+  document.getElementById('modal-confirm').onclick = () => { hideModal(); onConfirm(); };
+  document.getElementById('modal-cancel').onclick = () => { hideModal(); if (onCancel) onCancel(); };
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function hideModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+
+// ══════════════════════════════════════
+// JSONバックアップ／復元
+// ══════════════════════════════════════
+function createBackupPayload() {
+  return {
+    app: 'local-walk-guide',
+    version: '1.0',
+    saved_at: new Date().toISOString(),
+    current_sheet_id: currentSheetId,
+    lwg_prizes: loadPrizes(),
+    lwg_areas: loadAreas(),
+    lwg_lifetime_walk_m: loadLifetimeWalk(),
+    lwg_progress: loadProgressMap()
+  };
+}
+
+function exportBackup() {
+  const payload = createBackupPayload();
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `local-walk-guide-backup-${date}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+  showModal(
+    'データを保存しました',
+    'JSONファイルを端末に保存しました。\nサイトデータを削除しても、このファイルから復元できます。',
+    'OK', '閉じる',
+    () => {},
+    null
+  );
+}
+
+function importBackup(event) {
+  const input = event.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = normalizeBackupPayload(JSON.parse(reader.result));
+      const counts = backupCounts(data);
+      showModal(
+        'データを復元しますか？',
+        `御朱印 ${counts.prizes}件\n訪れたまち歩き ${counts.areas}件\n途中再開データ ${counts.progress}件\n\n現在の端末データと統合して復元します。`,
+        '復元する', 'キャンセル',
+        () => {
+          applyBackupData(data);
+          showModal('復元しました', '御朱印帳・訪問履歴・途中再開データを復元しました。', 'OK', '閉じる', () => {}, null);
+        },
+        null
+      );
+    } catch(e) {
+      showModal('復元できませんでした', 'バックアップJSONの形式を確認してください。', 'OK', '閉じる', () => {}, null);
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.onerror = () => {
+    input.value = '';
+    showModal('復元できませんでした', 'ファイルを読み込めませんでした。', 'OK', '閉じる', () => {}, null);
+  };
+  reader.readAsText(file);
+}
+
+function normalizeBackupPayload(data) {
+  if (!data || typeof data !== 'object') throw new Error('invalid_backup');
+  const normalized = {
+    lwg_prizes: data.lwg_prizes || data.prizes || {},
+    lwg_areas: data.lwg_areas || data.areas || { home: null, favorites: [], visited: [] },
+    lwg_lifetime_walk_m: data.lwg_lifetime_walk_m || data.lifetime_walk_m || 0,
+    lwg_progress: data.lwg_progress || data.progress || {}
+  };
+  if (
+    typeof normalized.lwg_prizes !== 'object' ||
+    typeof normalized.lwg_areas !== 'object' ||
+    typeof normalized.lwg_progress !== 'object'
+  ) throw new Error('invalid_backup');
+  return normalized;
+}
+
+function backupCounts(data) {
+  return {
+    prizes: Object.keys(data.lwg_prizes || {}).length,
+    areas: (data.lwg_areas?.visited || []).length,
+    progress: Object.keys(data.lwg_progress || {}).length
+  };
+}
+
+function applyBackupData(imported) {
+  const merged = mergeBackup(imported, createBackupPayload());
+  lsSet('lwg_prizes', merged.lwg_prizes);
+  lsSet('lwg_areas', merged.lwg_areas);
+  saveLifetimeWalk(merged.lwg_lifetime_walk_m || 0);
+  saveProgressMap(merged.lwg_progress || {});
+  updateLikeBar();
+  if (document.getElementById('screen-prizes').classList.contains('active')) switchPrizesTab('prizes');
+  if (document.getElementById('screen-home').classList.contains('active')) renderHome();
+}
+
+function confirmGoHome() {
+  showModal(
+    'まち歩きを中断しますか？',
+    '進行状況は保存されます。\n次回同じコースを選ぶと再開できます。',
+    'ホームへ戻る', '続ける',
+    () => { saveProgress(); goHome(); },
+    null
+  );
+}
+
+// ══════════════════════════════════════
+// ブラウザバック制御（History API）
+// ══════════════════════════════════════
+function pushNavHistory() {
+  history.pushState({ screen: 'walk' }, '');
+}
+
+window.addEventListener('popstate', () => {
+  const active = document.querySelector('.screen.active');
+  if (!active) return;
+  // 常に再pushして実際のページ遷移を防ぐ
+  history.pushState({ screen: 'walk' }, '');
+  const id = active.id;
+  if (id === 'screen-nav' || id === 'screen-explain') {
+    confirmGoHome();
+  } else if (id === 'screen-ar') {
+    closeAR();
+  } else if (id === 'screen-goal' || id === 'screen-prizes') {
+    goHome();
+  }
+});
+
+// ══════════════════════════════════════
+// 進行状況の保存・読み込み・クリア
+// ══════════════════════════════════════
+function saveProgress() {
+  if (!currentCourse || currentIdx === 0) return;
+  creditWalk(totalWalkDist); // 中断時もここまでの歩行を記録
+  lsSet(`lwg_progress_${currentSheetId}`, {
+    course_id: currentCourse.course_id,
+    currentIdx,
+    totalWalkDist,
+    savedAt: new Date().toISOString()
+  });
+}
+function loadProgress() { return lsGet(`lwg_progress_${currentSheetId}`, null); }
+function clearProgress() { localStorage.removeItem(`lwg_progress_${currentSheetId}`); }
+
+// ══════════════════════════════════════
+// シートID変更時のリセット
+// ══════════════════════════════════════
+function checkAndResetIfSheetChanged() {
+  const storedId = localStorage.getItem('lwg_home_sid');
+  if (storedId && storedId !== DEFAULT_SHEET_ID) {
+    localStorage.removeItem('lwg_areas');
+    localStorage.removeItem('lwg_prizes');
+    localStorage.removeItem(`lwg_progress_${storedId}`);
+  }
+  localStorage.setItem('lwg_home_sid', DEFAULT_SHEET_ID);
+}
+
+// ══════════════════════════════════════
+// 音声
+// ══════════════════════════════════════
+let currentAudio = null;
+
+// iOS音声ロック解除（無音を一度再生してブラウザの許可を取る）
+const SILENT_AUDIO = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  const a = new Audio(SILENT_AUDIO);
+  a.play().then(() => { audioUnlocked = true; }).catch(() => {});
+}
+
+
+// ── 「次へ」ボタンのロック・解除 ──
+function lockNextButton() {
+  nextButtonLocked = true;
+  const btn = document.getElementById('btn-next');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.dataset.origText = btn.textContent;
+  btn.textContent = '🔊 音声ガイド再生中…';
+}
+
+function unlockNextButton() {
+  if (!nextButtonLocked) return;
+  nextButtonLocked = false;
+  if (nextLockTimer) { clearTimeout(nextLockTimer); nextLockTimer = null; }
+  const btn = document.getElementById('btn-next');
+  if (!btn) return;
+  btn.disabled = false;
+  if (btn.dataset.origText) { btn.textContent = btn.dataset.origText; }
+}
+
+function playVoice(url, fallback, onEnd, force) {
+  // 再生中はスキップ（forceフラグで上書き可）
+  if (voicePlaying && !force) return;
+  // TTS・MP3 どちらに進むかに関わらず、先に既存の再生を停止する
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  const resolved = driveUrl(url);
+  if (resolved) {
+    try {
+      voicePlaying = true;
+      updateArrivedButton();
+      const audio = new Audio(resolved);
+      audio.addEventListener('error', () => {
+        voicePlaying = false; lastVoiceUrl = null;
+        updateArrivedButton();
+        speakTTS(fallback, onEnd);
+      });
+      audio.addEventListener('ended', () => {
+        voicePlaying = false;
+        updateArrivedButton();
+        if (onEnd) onEnd();
+      });
+      audio.play().then(() => {
+        currentAudio = audio;
+        setVoiceLog('🔊', fallback || url);
+        lastVoiceText = fallback;
+        lastVoiceUrl = resolved;
+      }).catch(() => {
+        voicePlaying = false;
+        lastVoiceUrl = null;
+        updateArrivedButton();
+        speakTTS(fallback, onEnd);
+      });
+      return;
+    } catch(e) { voicePlaying = false; updateArrivedButton(); }
+  }
+  lastVoiceUrl = null;
+  speakTTS(fallback, onEnd);
+}
+
+function speakTTS(text, onEnd) {
+  if (!text || !('speechSynthesis' in window)) { voicePlaying = false; updateArrivedButton(); if (onEnd) onEnd(); return; }
+  speechSynthesis.cancel();
+  lastVoiceText = text;
+  voicePlaying = true;
+  updateArrivedButton();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='ja-JP'; u.rate=0.88; u.pitch=1.0; u.volume=1.0;
+  const v = speechSynthesis.getVoices().find(v => v.lang.startsWith('ja'));
+  if (v) u.voice = v;
+  u.onend = () => { voicePlaying = false; updateArrivedButton(); if (onEnd) onEnd(); };
+  u.onerror = () => { voicePlaying = false; updateArrivedButton(); };
+  if (onEnd) u.onend = () => { voicePlaying = false; updateArrivedButton(); onEnd(); };
+  setVoiceLog('🔊', text);
+  speechSynthesis.speak(u);
+}
+
+// mp3があればmp3を、なければTTSで再生（ロック強制解除して再生）
+function replayVoice() {
+  voicePlaying = false;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+
+  if (explainCurrentSpot) {
+    const spot = explainCurrentSpot;
+    const explainText = spot.description ? spot.description.slice(0, 120) : '';
+    const arriveText  = `${spot.spot_name}に到着しました。`;
+    // 優先順位: audio_explain_url → audio_arrive_url → TTS（解説 or 到着テキスト）
+    const replayUrl  = spot.audio_explain_url || spot.audio_arrive_url || null;
+    const replayText = explainText || arriveText;
+    playVoice(replayUrl, replayText, null, true);
+  } else if (lastVoiceUrl) {
+    voicePlaying = true;
+    const audio = new Audio(lastVoiceUrl);
+    audio.addEventListener('error', () => { voicePlaying = false; speakTTS(lastVoiceText); });
+    audio.addEventListener('ended', () => { voicePlaying = false; });
+    audio.play().then(() => { currentAudio = audio; }).catch(() => { voicePlaying = false; speakTTS(lastVoiceText); });
+  } else {
+    speakTTS(lastVoiceText);
+  }
+}
+function setVoiceLog(icon, text) {
+  document.getElementById('voice-wave').textContent = icon;
+  document.getElementById('voice-log-text').textContent = text.length > 28 ? text.slice(0,28)+'…' : text;
+}
+
+// ══════════════════════════════════════
+// GPS
+// ══════════════════════════════════════
+function startGPS() {
+  if (!navigator.geolocation) { setGPSStatus('error','GPS非対応'); return; }
+  setGPSStatus('searching','GPS取得中');
+  watchId = navigator.geolocation.watchPosition(onGPSUpdate, onGPSError,
+    { enableHighAccuracy:true, maximumAge:3000, timeout:15000 });
+}
+
+function stopGPS() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId=null; }
+}
+
+function onGPSUpdate(pos) {
+  const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+  setGPSStatus('active', `精度 ±${Math.round(accuracy)}m`);
+
+  // 歩行距離
+  if (lastWalkPos) {
+    const d = haversine(lastWalkPos.lat, lastWalkPos.lng, lat, lng);
+    if (d < 50) {
+      totalWalkDist += d;
+      document.getElementById('walk-val').textContent = formatDist(totalWalkDist);
+      // 50m刻みでいいねを加算
+      if (Math.floor(totalWalkDist / 50) > Math.floor((totalWalkDist - d) / 50)) {
+        creditWalk(totalWalkDist);
+      }
+    }
+  }
+  lastWalkPos = { lat, lng };
+
+  // 地図現在地
+  if (leafletMap) {
+    if (!userMarker) {
+      userMarker = L.circleMarker([lat,lng], { radius:8, fillColor:'#3A7A4A', fillOpacity:.9, color:'white', weight:2 }).addTo(leafletMap);
+      fitMapBounds(); // 初回GPS取得時に現在地+目的地でフィット
+    } else {
+      userMarker.setLatLng([lat,lng]);
+      fitMapBounds(); // 位置更新ごとに調整
+    }
+  }
+
+  // 施設チェック
+  allFacilities.filter(isActive).forEach(f => {
+    if (announcedFacilities.has(f.facility_id)) return;
+    const d = haversine(lat,lng,f.lat,f.lng);
+    if (d <= f.trigger_dist) {
+      announcedFacilities.add(f.facility_id);
+      showFacilityToast(f);
+      playVoice(f.audio_url, f.announce_text);
+    }
+  });
+
+  // スポット距離
+  const spot = courseSpots[currentIdx];
+  if (!spot) return;
+  const dist = Math.round(haversine(lat,lng,spot.lat,spot.lng));
+  arLastDist = dist;
+  updateDistanceUI(dist, spot);
+
+  // AR距離更新
+  if (document.getElementById('screen-ar').classList.contains('active')) {
+    document.getElementById('ar-dist').innerHTML = `${dist}<span>m</span>`;
+  }
+
+  // ARボタン表示
+  const btnAR = document.getElementById('btn-ar');
+  if (dist <= spot.approach_dist) { btnAR.classList.add('show'); }
+
+  // 到着判定（スタートアナウンス中はスキップ）
+  if (!arrivedDetected && !gpsLocked && dist <= spot.arrive_dist) { arrivedDetected = true; autoArrive(); return; }
+  if (!approachNotified && !gpsLocked && dist <= spot.approach_dist && dist > spot.arrive_dist) {
+    approachNotified = true;
+    playVoice(spot.audio_approach_url, `まもなく${spot.spot_name}です。あと少しです。`);
+  }
+}
+
+function onGPSError(err) {
+  const m = {1:'位置情報が許可されていません',2:'位置を取得できません',3:'タイムアウト'};
+  setGPSStatus('error', m[err.code]||'GPS Error');
+  setVoiceLog('⚠️','手動「着いた！」ボタンをご利用ください');
+}
+
+function setGPSStatus(s,l) {
+  document.getElementById('gps-dot').className='gps-dot '+s;
+  document.getElementById('gps-label').textContent=l;
+}
+
+// ══════════════════════════════════════
+// 施設トースト
+// ══════════════════════════════════════
+function showFacilityToast(f) {
+  const t = document.getElementById('facility-toast');
+  document.getElementById('facility-toast-text').textContent = `${f.facility_name}：${f.announce_text}`;
+  t.classList.add('show');
+  if (facilityTimer) clearTimeout(facilityTimer);
+  facilityTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
+
+// ══════════════════════════════════════
+// 距離UI
+// ══════════════════════════════════════
+function updateDistanceUI(dist, spot) {
+  const panel = document.getElementById('distance-panel');
+  document.getElementById('dist-number').innerHTML = `${dist}<span>m</span>`;
+  const ratio = Math.min(1,(500-dist)/500);
+  const ringFill = document.getElementById('ring-fill');
+  ringFill.style.strokeDashoffset = 113-(ratio*113);
+  document.getElementById('ring-label').textContent = dist<=999?dist+'m':'遠';
+  panel.classList.remove('near','arrived');
+  panel.style.removeProperty('--distance-pulse-speed');
+  if (dist <= spot.arrive_dist) {
+    panel.classList.add('arrived');
+    document.getElementById('dist-icon').textContent='🎯';
+    document.getElementById('dist-status').textContent='到着しました！';
+    ringFill.style.stroke='var(--green)';
+  } else if (dist <= spot.approach_dist) {
+    panel.classList.add('near');
+    document.getElementById('dist-icon').textContent='🏃';
+    document.getElementById('dist-status').textContent=`もうすぐです！（到着判定: ${spot.arrive_dist}m以内）`;
+    panel.style.setProperty('--distance-pulse-speed', dist <= spot.arrive_dist * 2 ? '1.05s' : '1.45s');
+    ringFill.style.stroke='#c87020';
+  } else {
+    document.getElementById('dist-icon').textContent='🚶';
+    document.getElementById('dist-status').textContent=`${spot.spot_name} まで（到着判定: ${spot.arrive_dist}m以内）`;
+    ringFill.style.stroke='var(--primary)';
+  }
+}
+
+// ══════════════════════════════════════
+// Leafletマップ
+// ══════════════════════════════════════
+function initMap() {
+  if (leafletMap) { leafletMap.remove(); leafletMap=null; userMarker=null; destMarker=null; destCircle=null; }
+  const spot = courseSpots[currentIdx];
+  leafletMap = L.map('leaflet-map',{zoomControl:false,attributionControl:false}).setView([spot.lat,spot.lng],16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(leafletMap);
+
+  // ルート線
+  const coords = courseSpots.map(s=>[s.lat,s.lng]);
+  L.polyline(coords,{color:'#B83232',weight:2,dashArray:'5 5',opacity:.45}).addTo(leafletMap);
+
+  // 全スポットにミニピン
+  courseSpots.forEach((s,i) => {
+    L.circleMarker([s.lat,s.lng],{
+      radius:i===courseSpots.length-1?7:5,
+      fillColor:i===courseSpots.length-1?'#9A7A3A':'#B83232',
+      fillOpacity:.65, color:'white', weight:1.5
+    }).addTo(leafletMap).bindPopup(s.spot_name);
+  });
+
+  updateMapDest();
+  setTimeout(()=>leafletMap.invalidateSize(),200);
+}
+
+function updateMapDest() {
+  if (!leafletMap) return;
+  const spot = courseSpots[currentIdx];
+  if (destMarker) leafletMap.removeLayer(destMarker);
+  if (destCircle) leafletMap.removeLayer(destCircle);
+  const icon = L.divIcon({ html:`<div style="background:var(--primary,#B83232);width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`, iconSize:[18,18], iconAnchor:[9,18], className:'' });
+  destMarker = L.marker([spot.lat,spot.lng],{icon}).addTo(leafletMap).bindPopup(spot.spot_name);
+  destCircle = L.circle([spot.lat,spot.lng],{ radius:spot.arrive_dist, color:'#B83232', fillColor:'#B83232', fillOpacity:.07, weight:1, dashArray:'4 4' }).addTo(leafletMap);
+  fitMapBounds();
+}
+
+// 現在地と目的地の両方が収まるようにフィット
+function fitMapBounds() {
+  if (!leafletMap) return;
+  const spot = courseSpots[currentIdx];
+  const points = [[spot.lat, spot.lng]];
+  if (lastWalkPos) points.push([lastWalkPos.lat, lastWalkPos.lng]);
+  if (points.length === 1) {
+    leafletMap.setView(points[0], 17);
+  } else {
+    leafletMap.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 17 });
+  }
+}
+
+// ══════════════════════════════════════
+// AR
+// ══════════════════════════════════════
+let arAbsoluteSupported = false;
+
+async function openAR() {
+  showScreen('screen-ar');
+  const spot = courseSpots[currentIdx];
+  document.getElementById('ar-spot-name').textContent = spot.spot_name;
+  document.getElementById('ar-dist').innerHTML = `${arLastDist}<span>m</span>`;
+  document.getElementById('ar-compass').textContent = '方位取得中…';
+
+  // キャリブレーションオーバーレイを表示し、3秒後に自動非表示
+  const calib = document.getElementById('ar-calib-overlay');
+  if (calib) {
+    calib.style.display = 'flex';
+    // バーアニメーションをリセット
+    const bar = calib.querySelector('.ar-calib-bar-fill');
+    if (bar) { bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = 'calibProgress 3s ease forwards'; }
+    setTimeout(() => dismissCalib(), 3000);
+  }
+
+  try {
+    arStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment' } });
+    document.getElementById('ar-video').srcObject = arStream;
+  } catch(e) { document.getElementById('ar-compass').textContent = 'カメラ非対応'; }
+
+  // Android: deviceorientationabsolute（真北基準）を優先
+  arAbsoluteSupported = false;
+  window.addEventListener('deviceorientationabsolute', onDeviceOrientationAbsolute, true);
+  // 200ms後に絶対方位が来なければ相対方位にフォールバック
+  setTimeout(() => {
+    if (!arAbsoluteSupported) {
+      window.addEventListener('deviceorientation', onDeviceOrientationRelative);
+      document.getElementById('ar-compass').textContent = '端末を8の字に振ってコンパスを校正してください';
+    }
+  }, 200);
+}
+
+function dismissCalib() {
+  const calib = document.getElementById('ar-calib-overlay');
+  if (calib) calib.style.display = 'none';
+}
+
+function onDeviceOrientationAbsolute(e) {
+  if (e.alpha === null) return;
+  arAbsoluteSupported = true;
+  const heading = 360 - e.alpha;
+  updateARDirection(heading, e.webkitCompassAccuracy);
+}
+
+function onDeviceOrientationRelative(e) {
+  if (arAbsoluteSupported) return;
+  const heading = e.webkitCompassHeading ?? (e.alpha !== null ? 360 - e.alpha : null);
+  if (heading === null) return;
+  updateARDirection(heading, e.webkitCompassAccuracy);
+}
+
+function updateARDirection(deviceHeading, accuracy) {
+  if (!lastWalkPos) return;
+  const spot = courseSpots[currentIdx];
+  const targetBearing = bearing(lastWalkPos.lat, lastWalkPos.lng, spot.lat, spot.lng);
+  const relative = (targetBearing - deviceHeading + 360) % 360;
+
+  // SVGコンパス針を回転
+  const inner = document.getElementById('ar-dir-inner');
+  if (inner) inner.style.transform = `rotate(${relative}deg)`;
+  document.getElementById('ar-compass').textContent = `目標方位: ${Math.round(targetBearing)}°`;
+
+  // 精度警告（iOSのwebkitCompassAccuracyが使える場合）
+  const warnEl = document.getElementById('ar-accuracy-warn');
+  if (warnEl && accuracy !== undefined) {
+    warnEl.classList.toggle('show', accuracy > 20);
+  }
+}
+
+// iOS用（既存のdeviceorientationイベント、webkitCompassHeading対応）
+function onDeviceOrientation(e) { onDeviceOrientationRelative(e); }
+
+function closeAR() {
+  if (arStream) { arStream.getTracks().forEach(t=>t.stop()); arStream=null; }
+  window.removeEventListener('deviceorientationabsolute', onDeviceOrientationAbsolute, true);
+  window.removeEventListener('deviceorientation', onDeviceOrientationRelative);
+  window.removeEventListener('deviceorientation', onDeviceOrientation);
+  showScreen('screen-nav');
+  setTimeout(()=>{ if(leafletMap) leafletMap.invalidateSize(); },100);
+}
+
+// ══════════════════════════════════════
+// スポットドット
+// ══════════════════════════════════════
+function buildSpotsRow() {
+  const row = document.getElementById('spots-row');
+  row.innerHTML = '';
+  courseSpots.forEach((spot,i) => {
+    const wrap = document.createElement('div'); wrap.className='spot-dot-wrap';
+    const lineRow = document.createElement('div'); lineRow.className='dot-line-row';
+    if (i>0) { const l=document.createElement('div'); l.className='dot-line'+(i<=currentIdx?' done':''); lineRow.appendChild(l); }
+    const dot = document.createElement('div');
+    let cls = 'spot-dot';
+    if (i<currentIdx) cls+=' done'; else if (i===currentIdx) cls+=' current';
+    dot.className=cls; dot.textContent=spot.order;
+    lineRow.appendChild(dot);
+    if (i<courseSpots.length-1) { const l2=document.createElement('div'); l2.className='dot-line'+(i<currentIdx?' done':''); lineRow.appendChild(l2); }
+    const label=document.createElement('div'); label.className='spot-dot-label'; label.textContent=spot.spot_name;
+    wrap.appendChild(lineRow); wrap.appendChild(label); row.appendChild(wrap);
+  });
+}
+
+function updateNavScreen() {
+  const spot = courseSpots[currentIdx];
+  const progress = courseSpots.length>1 ? (currentIdx/(courseSpots.length-1))*100 : 100;
+  document.getElementById('progress-fill').style.width = progress+'%';
+  document.getElementById('nav-step-label').textContent = `STEP ${currentIdx+1} / ${courseSpots.length}`;
+  document.getElementById('nav-spot-name').textContent = spot.spot_name+' へ';
+
+  // 次スポット表示
+  const nextEl = document.getElementById('nav-next-spot');
+  if (nextEl) {
+    const nextIdx = currentIdx + 1;
+    if (nextIdx < courseSpots.length) {
+      const isGoal = nextIdx === courseSpots.length - 1;
+      const nextSpotName = courseSpots[nextIdx].spot_name;
+      nextEl.innerHTML = `次→ <span>${nextSpotName}</span>${isGoal ? '（ゴール）' : ''}`;
+    } else {
+      nextEl.innerHTML = '<span>このスポットがゴールです</span>';
+    }
+  }
+
+  buildSpotsRow();
+  approachNotified=false; arrivedDetected=false;
+  document.getElementById('dist-number').innerHTML='--<span>m</span>';
+  document.getElementById('dist-status').textContent=`GPS確認中（到着判定: ${spot.arrive_dist}m以内）`;
+  document.getElementById('ring-fill').style.strokeDashoffset=113;
+  document.getElementById('ring-label').textContent='--';
+  document.getElementById('distance-panel').className='distance-panel';
+  document.getElementById('distance-panel').style.removeProperty('--distance-pulse-speed');
+  document.getElementById('btn-ar').classList.remove('show');
+  updateArrivedButton();
+}
+
+// 音声再生中は「着いた！」ボタンを無効化
+function updateArrivedButton() {
+  const btn = document.getElementById('btn-arrived');
+  if (!btn) return;
+  const locked = voicePlaying || gpsLocked;
+  btn.disabled = locked;
+  btn.textContent = locked ? '🔊 音声ガイド再生中…' : '📍 着いた！（手動）';
+}
+
+// ══════════════════════════════════════
+// 到着
+// ══════════════════════════════════════
+function autoArrive() {
+  // GA4: スポット自動到着イベント
+  trackEvent('spot_arrive', { spot_name: courseSpots[currentIdx].spot_name, spot_order: courseSpots[currentIdx].order, method: 'auto', course_name: currentCourse?.course_name });
+  const spot = courseSpots[currentIdx];
+  showExplain(spot);
+  startArriveWithLock(spot);
+}
+function manualArrive() {
+  // GA4: スポット手動到着イベント
+  trackEvent('spot_arrive', { spot_name: courseSpots[currentIdx].spot_name, spot_order: courseSpots[currentIdx].order, method: 'manual', course_name: currentCourse?.course_name });
+  const spot = courseSpots[currentIdx];
+  showExplain(spot);
+  startArriveWithLock(spot);
+}
+
+// 到着時の「次へ」ボタンロック → 音声シーケンス開始
+function startArriveWithLock(spot) {
+  // 「次へ」ボタンを即ロック
+  lockNextButton();
+
+  // config の next_lock_sec（秒）が設定されていればタイマー解除を保険としてセット
+  const lockSec = parseInt(cfg.next_lock_sec) || 0;
+  if (lockSec > 0) {
+    nextLockTimer = setTimeout(unlockNextButton, lockSec * 1000);
+  }
+
+  // 音声シーケンス再生（完了時にボタン解除）
+  playArriveSequence(spot, unlockNextButton);
+}
+
+// 到着音声 → 解説音声 の順に再生（MP3優先、なければTTS）
+// onComplete: 音声シーケンス全完了時に呼ぶコールバック（「次へ」ボタン解除に使用）
+function playArriveSequence(spot, onComplete) {
+  const arriveText = `${spot.spot_name}に到着しました。`;
+  const explainText = spot.description ? spot.description.slice(0, 120) : '';
+
+  // suppressTTS=true のとき、解説はMP3のみ（TTSフォールバックなし）
+  function playExplain(suppressTTS) {
+    const fallback = suppressTTS ? null : explainText;
+    if (spot.audio_explain_url || (!suppressTTS && explainText)) {
+      playVoice(spot.audio_explain_url, fallback, () => {
+        if (onComplete) onComplete(); // 解説音声完了 → 「次へ」解除
+      }, true);
+    } else {
+      if (onComplete) onComplete(); // 再生なし → 即解除
+    }
+  }
+
+  // 到着音声：audio_arrive_url があればMP3を直接制御し再生結果でTTS抑制フラグを切り替える
+  const resolved = driveUrl(spot.audio_arrive_url);
+  if (resolved) {
+    // MP3再生を試みる
+    voicePlaying = true;
+    updateArrivedButton();
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    const audio = new Audio(resolved);
+    audio.addEventListener('error', () => {
+      // MP3失敗 → TTSで到着告知 → 解説もTTS許可
+      voicePlaying = false; lastVoiceUrl = null; updateArrivedButton();
+      speakTTS(arriveText, () => setTimeout(() => playExplain(false), 400));
+    });
+    audio.addEventListener('ended', () => {
+      // MP3成功再生完了 → 解説のTTSを抑制
+      voicePlaying = false; updateArrivedButton();
+      setTimeout(() => playExplain(true), 400);
+    });
+    audio.play().then(() => {
+      currentAudio = audio;
+      setVoiceLog('🔊', arriveText || spot.audio_arrive_url);
+      lastVoiceText = arriveText;
+      lastVoiceUrl = resolved;
+    }).catch(() => {
+      // 再生拒否（ユーザー操作前など）→ TTSで到着告知 → 解説もTTS許可
+      voicePlaying = false; lastVoiceUrl = null; updateArrivedButton();
+      speakTTS(arriveText, () => setTimeout(() => playExplain(false), 400));
+    });
+  } else if (arriveText) {
+    // arrive URLなし → TTSで到着告知 → 解説もTTS許可
+    speakTTS(arriveText, () => setTimeout(() => playExplain(false), 400));
+  } else {
+    playExplain(false);
+  }
+}
+
+function showExplain(spot) {
+  const isLast = currentIdx === courseSpots.length-1;
+  document.getElementById('explain-num-bg').textContent = spot.order;
+  document.getElementById('explain-badge').textContent = `SPOT ${spot.order} ／ ${currentCourse.course_name}`;
+  document.getElementById('explain-title').textContent = spot.spot_name;
+  document.getElementById('explain-text').textContent = spot.description;
+
+  // 写真
+  const pa = document.getElementById('photo-area');
+  const ph = document.getElementById('photo-placeholder');
+  const ei = pa.querySelector('img'); if (ei) ei.remove();
+  if (spot.photo_url) {
+    const img=document.createElement('img');
+    img.src=drivePhotoUrl(spot.photo_url);
+    img.alt=spot.spot_name; img.draggable=false; img.oncontextmenu=()=>false;
+    ph.style.display='none'; pa.insertBefore(img,pa.firstChild);
+  } else { ph.style.display='flex'; }
+
+  // キーワード
+  const kw = document.getElementById('explain-keywords'); kw.innerHTML='';
+  if (spot.keywords) spot.keywords.split(',').forEach(k => { k=k.trim(); if(!k)return; const s=document.createElement('span'); s.className='explain-keyword'; s.textContent=k; kw.appendChild(s); });
+
+  document.getElementById('btn-next').textContent = isLast ? '🖌️ 表彰状を受け取る' : '次のスポットへ →';
+  explainCurrentSpot = spot; // 「もう一度聴く」用にスポットを保持
+  showScreen('screen-explain');
+  // ※ 音声再生は呼び出し元（playArriveSequence）が到着音声 → 解説音声の順で制御する
+}
+
+// ══════════════════════════════════════
+// ナビゲーション
+// ══════════════════════════════════════
+function nextSpot() {
+  const isLast = currentIdx === courseSpots.length-1;
+
+  if (isLast) {
+    stopGPS();
+    clearProgress();
+    creditWalk(totalWalkDist); // 完走時に残り歩行距離を加算
+    savePrize(coursePrizeId(currentCourse), new Date().toISOString(), cfg.area_name || cfg.app_title || '', currentCourse.course_name, currentCourse.course_id);
+    showGoal();
+    return;
+  }
+
+  currentIdx++;
+  saveProgress();
+  gpsLocked = true; // 次スポットへのアナウンス中はGPS判定をロック（競合防止）
+  updateNavScreen();
+  updateMapDest();
+  showScreen('screen-nav');
+
+  const next = courseSpots[currentIdx];
+  const prevSpot = courseSpots[currentIdx-1];
+  const isNextLast = currentIdx === courseSpots.length-1;
+  const nextText = isNextLast
+    ? `ゴールの${next.spot_name}へ向かいましょう。`
+    : `次は${next.spot_name}です。`;
+
+  if (next.audio_next_url) {
+    console.log(`[audio_next] spot="${next.spot_name}" url="${next.audio_next_url}" fallback="${nextText}"`);
+  }
+  const guideUrl = isNextLast ? next.audio_goal_url : next.audio_next_url;
+
+  setTimeout(() => playVoice(guideUrl, nextText, () => { gpsLocked = false; }), 500);
+}
+
+// ══════════════════════════════════════
+// 修了書（賞状）
+// ══════════════════════════════════════
+function showGoal() {
+  const today = new Date();
+  const specialActive = isSpecialActive();
+  const sessionLike = Math.round(totalWalkDist); // 今回のいいね = 今回歩いたm数
+
+  // configから賞状情報を取得
+  const awardTitle = cfg.cert_award_title || '修了証';
+  const issuer     = cfg.cert_issuer     || cfg.area_name || '';
+  const sealText   = cfg.cert_seal_text  || '';
+  const bodyExtra  = cfg.cert_body_text  || '';
+
+  document.getElementById('cert-sho-title').textContent = awardTitle;
+  document.getElementById('cert-course').textContent    = currentCourse.course_name;
+  document.getElementById('cert-date').textContent =
+    `令和${today.getFullYear()-2018}年　${today.getMonth()+1}月${today.getDate()}日`;
+  document.getElementById('cert-dist').textContent  = Math.round(totalWalkDist).toLocaleString();
+  document.getElementById('cert-like').textContent  = sessionLike.toLocaleString();
+  document.getElementById('cert-count').textContent = courseSpots.length;
+  document.getElementById('cert-issuer').textContent   = issuer;
+  document.getElementById('cert-seal-text').textContent = sealText;
+  document.getElementById('cert-body-extra').textContent = bodyExtra;
+
+  // スポット一覧
+  const cs = document.getElementById('cert-spots'); cs.innerHTML='';
+  courseSpots.forEach(s => {
+    const item = document.createElement('div'); item.className='cert-sho-spot-item';
+    item.innerHTML = `<div class="cert-sho-spot-num">${s.order}</div><div class="cert-sho-spot-name">${s.spot_name}</div>`;
+    cs.appendChild(item);
+  });
+
+  showScreen('screen-goal');
+  const cert = document.querySelector('.cert-sho');
+  if (cert) {
+    cert.classList.remove('goal-animate');
+    void cert.offsetWidth;
+    cert.classList.add('goal-animate');
+  }
+
+  // GA4: コース完走イベント
+  trackEvent('course_complete', {
+    course_id: currentCourse.course_id,
+    course_name: currentCourse.course_name,
+    walk_distance_m: Math.round(totalWalkDist),
+    spot_count: courseSpots.length
+  });
+
+  // ゴールアナウンス
+  const finishText =
+    currentCourse.finish_text ||
+    `おめでとうございます。${currentCourse.course_name}を完走しました。本日の歩行距離は約${Math.round(totalWalkDist)}メートルです。`;
+  
+  const finishUrl = currentCourse.audio_finish_url;
+  
+  if (specialActive && cfg.audio_special_goal_url) {
+    playVoice(finishUrl, finishText, () => {
+      setTimeout(() => playVoice(cfg.audio_special_goal_url, ''), 500);
+    });
+  } else {
+    playVoice(finishUrl, finishText);
+  }
+
+  // クラウド自動同期（完走時）
+  setTimeout(() => syncCloud(), 1500);
+}
+
+// ══════════════════════════════════════
+// プライズ・御朱印帳タブ切り替え
+// ══════════════════════════════════════
+function certText(id, fallback='') {
+  const el = document.getElementById(id);
+  return el ? el.textContent.trim() || fallback : fallback;
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+  const chars = [...text];
+  let line = '';
+  chars.forEach(ch => {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = ch;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  });
+  if (line) ctx.fillText(line, x, y);
+  return y + lineHeight;
+}
+
+function downloadCertificate() {
+  const canvas = document.createElement('canvas');
+  const w = 1200, h = 1700;
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const course = certText('cert-course', currentCourse?.course_name || '');
+  const title = certText('cert-sho-title', '修了証');
+  const date = certText('cert-date');
+  const issuer = certText('cert-issuer', cfg.area_name || '');
+  const seal = certText('cert-seal-text', '済');
+  const dist = certText('cert-dist', '0');
+  const like = certText('cert-like', '0');
+  const count = certText('cert-count', String(courseSpots.length));
+
+  ctx.fillStyle = '#2A2218';
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#FBF5E8';
+  ctx.fillRect(90, 90, w - 180, h - 180);
+
+  ctx.globalAlpha = .22;
+  for (let i = 0; i < 1700; i += 9) {
+    ctx.strokeStyle = i % 27 === 0 ? '#d8c8a4' : '#fffdf5';
+    ctx.beginPath();
+    ctx.moveTo(90, 90 + i);
+    ctx.lineTo(w - 90, 94 + i);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 700; i++) {
+    const x = 110 + ((i * 73) % (w - 220));
+    const y = 110 + ((i * 47) % (h - 220));
+    ctx.fillStyle = i % 2 ? '#8c6f3f' : '#ffffff';
+    ctx.fillRect(x, y, 1.2, 1.2);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = '#9A7A3A';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(105, 105, w - 210, h - 210);
+  ctx.lineWidth = 3;
+  ctx.strokeRect(135, 135, w - 270, h - 270);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2A1A0A';
+  ctx.font = 'bold 82px serif';
+  ctx.fillText(title, w / 2, 260);
+
+  ctx.strokeStyle = '#9A7A3A';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(240, 315); ctx.lineTo(960, 315); ctx.stroke();
+
+  ctx.fillStyle = '#9A7A3A';
+  ctx.font = '28px sans-serif';
+  ctx.fillText('COURSE', w / 2, 390);
+  ctx.fillStyle = '#2A1A0A';
+  ctx.font = 'bold 44px serif';
+  drawWrappedText(ctx, course, w / 2, 455, 780, 58);
+
+  ctx.fillStyle = '#3A2A1A';
+  ctx.font = '34px serif';
+  ctx.fillText('上記のまち歩きコースを', w / 2, 670);
+  ctx.fillText('見事完走されましたことを', w / 2, 730);
+  ctx.fillText('ここに証し、表彰いたします。', w / 2, 790);
+
+  ctx.strokeStyle = '#D4C9B0';
+  ctx.strokeRect(210, 880, 780, 140);
+  ctx.font = 'bold 46px serif';
+  ctx.fillStyle = '#9A7A3A';
+  ctx.fillText(dist, 340, 950);
+  ctx.fillText(like, 600, 950);
+  ctx.fillText(count, 860, 950);
+  ctx.fillStyle = '#7A6A5A';
+  ctx.font = '24px sans-serif';
+  ctx.fillText('歩行距離 m', 340, 990);
+  ctx.fillText('今回の獲得', 600, 990);
+  ctx.fillText('訪問スポット', 860, 990);
+
+  ctx.fillStyle = '#7A6A5A';
+  ctx.font = '30px serif';
+  ctx.fillText(date, w / 2, 1115);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#2A1A0A';
+  ctx.font = '34px serif';
+  ctx.fillText(issuer, 820, 1255);
+
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = '#B83232';
+  ctx.fillStyle = 'rgba(184,50,50,.05)';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.arc(930, 1228, 78, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(930, 1228, 61, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#B83232';
+  ctx.font = 'bold 30px serif';
+  drawWrappedText(ctx, seal, 930, 1218, 86, 34);
+
+  const link = document.createElement('a');
+  const safeName = (course || 'certificate').replace(/[\\/:*?"<>|]/g, '').slice(0, 40);
+  link.download = `${safeName}_certificate.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  trackEvent('certificate_download', { course_name: course });
+}
+
+function switchPrizesTab(tab) {
+  document.getElementById('tab-prizes').classList.toggle('active', tab === 'prizes');
+  document.getElementById('tab-stamps').classList.toggle('active', tab === 'stamps');
+  if (tab === 'prizes') renderPrizes();
+  else renderVisitedWalks();
+}
+
+// ══════════════════════════════════════
+// プライズ
+// ══════════════════════════════════════
+let prizeLocationFilter = 'all'; // 現在のフィルター
+
+function renderPrizes() {
+  const prizes = loadPrizes();
+  const body = document.getElementById('prizes-body'); body.innerHTML='';
+  const filterEl = document.getElementById('prizes-filter'); if (filterEl) filterEl.innerHTML='';
+
+  // 獲得済みは保存データから積み上げ、未達成は現在の地域コースだけ出す
+  const savedItems = Object.entries(prizes).map(([pid, val]) => {
+    const name = prizeCourse(val) || allCourses.find(c => pid === coursePrizeId(c) || pid === legacyPrizeId(c))?.course_name || 'まち歩きコース';
+    return {
+      id: pid, name, icon: '🖌️', desc: `${name}を完走`,
+      done: !!prizeDate(val),
+      date: prizeDate(val),
+      area: prizeArea(val),
+      pref: prizePref(val),
+      city: prizeCity(val),
+      areaName: prizeAreaName(val)
+    };
+  }).filter(i => i.done);
+
+  const lockedItems = allCourses.filter(c => !prizeForCourse(prizes, c)).map(c => {
+    const pid = coursePrizeId(c);
+    return {
+      id: pid, name: c.course_name, icon: '🖌️', desc: `${c.course_name}を完走`,
+      done: false,
+      date: null,
+      area: '',
+      pref: '',
+      city: '',
+      areaName: ''
+    };
+  });
+  const items = [...savedItems, ...lockedItems];
+
+  // フィルターチップを生成（取得済みのものから地域を抽出）
+  const completedItems = items.filter(i => i.done);
+  const locationKeys = [...new Set(completedItems.map(i => [i.pref, i.city, i.areaName].filter(Boolean).join(' ') || i.area || ''))].filter(Boolean);
+
+  if (filterEl && locationKeys.length > 1) {
+    const allChip = makeFilterChip('すべて', 'all');
+    filterEl.appendChild(allChip);
+    locationKeys.forEach(loc => filterEl.appendChild(makeFilterChip(loc, loc)));
+  }
+
+  if (items.length === 0) {
+    body.innerHTML=`<div class="empty-prizes"><div class="empty-icon">🖌️</div>まだ御朱印はありません。<br>まち歩きを完走すると獲得できます。</div>`;
+    return;
+  }
+
+  // フィルター適用
+  const filtered = prizeLocationFilter === 'all' ? items : items.map(i => {
+    const locKey = [i.pref, i.city, i.areaName].filter(Boolean).join(' ') || i.area || '';
+    return (i.done && locKey === prizeLocationFilter) ? i : { ...i, done: false, _hidden: !i.done };
+  });
+
+  // 完了・未達成に分けてグループ表示
+  const completed = filtered.filter(i => i.done).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  const locked    = filtered.filter(i => !i.done && !i._hidden);
+
+  if (completed.length > 0) {
+    const lbl = document.createElement('div'); lbl.className='prizes-section-label';
+    lbl.textContent = `COMPLETED — ${completed.length}件`; body.appendChild(lbl);
+    completed.forEach(p => body.appendChild(makePrizeCard(p, true)));
+  }
+  if (locked.length > 0) {
+    const lbl = document.createElement('div'); lbl.className='prizes-section-label';
+    lbl.style.marginTop='16px'; lbl.textContent=`LOCKED — ${locked.length}件`; body.appendChild(lbl);
+    locked.forEach(p=>body.appendChild(makePrizeCard(p,false)));
+  }
+}
+
+function makeFilterChip(label, key) {
+  const chip = document.createElement('div');
+  chip.className = 'prizes-filter-chip' + (prizeLocationFilter === key ? ' active' : '');
+  chip.textContent = label;
+  chip.onclick = () => { prizeLocationFilter = key; renderPrizes(); };
+  return chip;
+}
+
+function makePrizeCard(prize, done) {
+  const card=document.createElement('div'); card.className='prize-card '+(done?'completed':'locked');
+  const whereText = done && prize.area ? `📍 ${prize.area}` : '';
+  card.innerHTML=`
+    ${done?'<div class="prize-card-bar"></div>':''}
+    <div class="prize-card-icon">${done?prize.icon:'🔒'}</div>
+    <div class="prize-card-info">
+      <div class="prize-card-name">${prize.name}</div>
+      <div class="prize-card-desc">${prize.desc}</div>
+      ${done?`<div class="prize-card-date">✓ ${formatDate(prize.date)} 達成</div>`:''}
+      ${done && whereText?`<div class="prize-card-where">${whereText}</div>`:''}
+    </div>
+    <div class="prize-card-status">
+      <div class="prize-status-icon">${done?'🥇':'🔒'}</div>
+      <div class="prize-status-label">${done?'授与済み':'未達成'}</div>
+    </div>`;
+  return card;
+}
+
+// ══════════════════════════════════════
+// これまで訪れたまち歩き
+// ══════════════════════════════════════
+function renderVisitedWalks() {
+  const body = document.getElementById('prizes-body'); body.innerHTML = '';
+  const filterEl = document.getElementById('prizes-filter'); if (filterEl) filterEl.innerHTML = '';
+  const areas = loadAreas();
+  const visits = (areas.visited || [])
+    .filter(v => v && v.sid)
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+  if (visits.length === 0) {
+    body.innerHTML = `<div class="empty-prizes"><div class="empty-icon">📍</div>訪問履歴はまだありません。</div>`;
+    return;
+  }
+
+  const lbl = document.createElement('div');
+  lbl.className = 'prizes-section-label';
+  lbl.textContent = `VISITED — ${visits.length}件`;
+  body.appendChild(lbl);
+
+  const list = document.createElement('div');
+  list.className = 'visited-list';
+  visits.forEach(v => list.appendChild(makeVisitedCard(v)));
+  body.appendChild(list);
+}
+
+function makeVisitedCard(visit) {
+  const pref = visit.prefecture || visit.pref || '';
+  const city = visit.city || '';
+  const area = visit.area || visit.area_name || visit.name || '';
+  const date = visit.date ? formatDate(visit.date) : '記録なし';
+
+  const card = document.createElement('div');
+  card.className = 'visited-card';
+
+  const info = document.createElement('div');
+  const prefEl = document.createElement('div');
+  prefEl.className = 'visited-pref';
+  prefEl.textContent = pref || '県未設定';
+  const cityEl = document.createElement('div');
+  cityEl.className = 'visited-city';
+  cityEl.textContent = city || visit.name || '市区町村未設定';
+  const areaEl = document.createElement('div');
+  areaEl.className = 'visited-area';
+  areaEl.textContent = area || 'エリア未設定';
+  info.append(prefEl, cityEl, areaEl);
+
+  const dateEl = document.createElement('div');
+  dateEl.className = 'visited-date';
+  dateEl.innerHTML = '最終訪問';
+  const dateValue = document.createElement('span');
+  dateValue.textContent = date;
+  dateEl.appendChild(dateValue);
+
+  card.append(info, dateEl);
+  card.onclick = () => {
+    if (visit.sid && visit.sid !== currentSheetId) location.href = `${location.pathname}?sid=${visit.sid}`;
+  };
+  return card;
+}
+
+// ══════════════════════════════════════
+// 御朱印帳スタンプ
+// ══════════════════════════════════════
+function renderStamps() {
+  const prizes = loadPrizes();
+  const body = document.getElementById('prizes-body'); body.innerHTML='';
+
+  const savedStamps = Object.entries(prizes).map(([pid, val]) => {
+    const name = prizeCourse(val) || allCourses.find(c => pid === coursePrizeId(c) || pid === legacyPrizeId(c))?.course_name || 'まち歩きコース';
+    return { name, val, done: !!prizeDate(val) };
+  }).filter(i => i.done);
+  const lockedStamps = allCourses.filter(c => !prizeForCourse(prizes, c)).map(c => ({ name: c.course_name, val: null, done: false }));
+  const stampItems = [...savedStamps, ...lockedStamps].sort((a, b) => new Date(prizeDate(b.val) || 0) - new Date(prizeDate(a.val) || 0));
+  const completedCount = savedStamps.length;
+  const totalCount = stampItems.length;
+
+  if (totalCount === 0) {
+    body.innerHTML=`<div class="stamps-empty"><div class="empty-icon">🔖</div>コースデータがありません。</div>`;
+    return;
+  }
+
+  const book = document.createElement('div'); book.className='stamps-book';
+  const grid = document.createElement('div'); grid.className='stamps-grid';
+
+  stampItems.forEach(stamp => {
+    const val = stamp.val;
+    const done = stamp.done;
+    const date = done ? prizeDate(val) : null;
+    const area = done ? prizeArea(val) : '';
+    const d = date ? new Date(date) : null;
+    const dateStr = d ? `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}` : '';
+
+    const item = document.createElement('div'); item.className='stamp-item';
+    item.innerHTML=`
+      <div class="stamp-circle ${done?'done':'locked'}">
+        ${done
+          ? `<div class="stamp-icon">🏮</div>
+             <div class="stamp-date-in">${dateStr}</div>`
+          : `<div class="stamp-icon locked-icon">🔒</div>`}
+      </div>
+      <div class="stamp-name ${done?'':'locked-name'}">${stamp.name}</div>
+      ${done && area ? `<div class="stamp-where">📍 ${area}</div>` : ''}
+    `;
+    grid.appendChild(item);
+  });
+
+  book.appendChild(grid);
+  body.appendChild(book);
+
+  const total = document.createElement('div'); total.className='stamps-total';
+  total.innerHTML=`達成 <span>${completedCount}</span> / ${totalCount} コース`;
+  body.appendChild(total);
+}
+
+// ══════════════════════════════════════
+// Google Analytics 4 ユーティリティ
+// ══════════════════════════════════════
+function trackEvent(eventName, params = {}) {
+  if (typeof gtag !== 'function') return;
+  gtag('event', eventName, params);
+}
+function trackScreen(screenName) {
+  trackEvent('screen_view', { screen_name: screenName });
+}
+
+// ══════════════════════════════════════
+// Google OAuth2 + Drive API
+// ══════════════════════════════════════
+
+// ─────────────────────────────────────
+// 【設定】Google Cloud Console で取得した値をここに入力してください
+//
+// 手順:
+// 1. https://console.cloud.google.com/ を開く
+// 2. プロジェクトを作成（または既存を選択）
+// 3. 「APIとサービス」→「認証情報」→「OAuth 2.0 クライアントIDを作成」
+//    種類: ウェブアプリケーション
+//    承認済みのJavaScript生成元: https://kosa-e-mon.github.io
+// 4. 「APIとサービス」→「ライブラリ」→「Google Drive API」を有効化
+// 5. 発行されたクライアントIDを下記に貼り付け
+// ─────────────────────────────────────
+const GOOGLE_CLIENT_ID = '622715087479-pvn2grsei9jnmit3jqlsnbr0d99ede55.apps.googleusercontent.com';
+
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const BACKUP_FILENAME = 'lwg_backup.json';
+
+let gAccessToken = null;
+let gTokenExpiry  = 0;
+let gTokenClient  = null;
+let gUserEmail    = '';
+let gBackupFileId = null;
+
+// ── 初期化 ──
+function initGoogleAuth() {
+  if (!window.google?.accounts?.oauth2) {
+    setTimeout(initGoogleAuth, 500);
+    return;
+  }
+  gTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (resp) => {
+      if (resp.error) { showSyncStatus('error', 'ログインに失敗しました'); return; }
+      gAccessToken = resp.access_token;
+      gTokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
+      await fetchGUserInfo();
+      updateCloudUI();
+      await syncCloud();
+    }
+  });
+  // セッション情報をLocalStorageから復元
+  const saved = lsGet('lwg_cloud_session', null);
+  if (saved?.email) {
+    gUserEmail = saved.email;
+    updateCloudUI();
+    // サイレントでトークンを再取得して自動同期（ユーザー操作不要）
+    showSyncStatus('syncing', '同期中…');
+    const silentClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: async (resp) => {
+        if (!resp.error) {
+          gAccessToken = resp.access_token;
+          gTokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
+          await syncCloud();
+        } else {
+          showSyncStatus('idle', '再ログインで同期できます');
+        }
+      }
+    });
+    try {
+      silentClient.requestAccessToken({ prompt: '' }); // ポップアップなしで試みる
+    } catch(e) {
+      showSyncStatus('idle', '再ログインで同期できます');
+    }
+  }
+}
+
+// ── ユーザー情報取得 ──
+async function fetchGUserInfo() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${gAccessToken}` }
+    });
+    const info = await r.json();
+    gUserEmail = info.email || '';
+    lsSet('lwg_cloud_session', { email: gUserEmail, time: Date.now() });
+  } catch {}
+}
+
+// ── サインイン ──
+function signIn() {
+  if (!gTokenClient) {
+    showModal('設定が必要です', 'GOOGLE_CLIENT_IDをHTMLファイルに設定してください。', '閉じる', '', hideModal, null);
+    return;
+  }
+  gTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+// ── サインアウト確認 ──
+function confirmSignOut() {
+  showModal(
+    'ログアウトしますか？',
+    'Googleアカウントとの連携を解除します。\nローカルのデータは保持されます。',
+    'ログアウト', 'キャンセル',
+    signOut, null
+  );
+}
+
+// ── サインアウト ──
+function signOut() {
+  if (gAccessToken) {
+    try { google.accounts.oauth2.revoke(gAccessToken); } catch {}
+  }
+  gAccessToken = null;
+  gTokenExpiry  = 0;
+  gUserEmail    = '';
+  gBackupFileId = null;
+  lsSet('lwg_cloud_session', null);
+  updateCloudUI();
+}
+
+// ── 状態チェック ──
+function isSignedIn()    { return !!gUserEmail; }
+function hasValidToken() { return !!(gAccessToken && Date.now() < gTokenExpiry); }
+
+// ── トークンを確保（切れていれば再取得） ──
+function ensureToken() {
+  if (hasValidToken()) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: (resp) => {
+        if (resp.error) { resolve(false); return; }
+        gAccessToken = resp.access_token;
+        gTokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
+        resolve(true);
+      }
+    });
+    client.requestAccessToken({ prompt: '' }); // サイレント（ポップアップなし）
+  });
+}
+
+// ── Drive API 共通リクエスト ──
+async function driveReq(path, options = {}) {
+  if (!await ensureToken()) throw new Error('token_unavailable');
+  const res = await fetch(`https://www.googleapis.com/drive/v3/${path}`, {
+    ...options,
+    headers: { Authorization: `Bearer ${gAccessToken}`, ...(options.headers || {}) }
+  });
+  if (!res.ok) throw new Error(`Drive ${res.status}`);
+  return res;
+}
+
+// ── バックアップファイルのID検索 ──
+async function driveFindBackup() {
+  if (gBackupFileId) return gBackupFileId;
+  const res  = await driveReq(`files?spaces=appDataFolder&q=name%3D'${BACKUP_FILENAME}'&fields=files(id)`);
+  const data = await res.json();
+  gBackupFileId = data.files?.[0]?.id || null;
+  return gBackupFileId;
+}
+
+// ── バックアップ読み込み ──
+async function driveLoadBackup() {
+  const fileId = await driveFindBackup();
+  if (!fileId) return null;
+  const res = await driveReq(`files/${fileId}?alt=media`);
+  return await res.json();
+}
+
+// ── バックアップ保存（マルチパートアップロード） ──
+async function driveSaveBackup(payload) {
+  if (!await ensureToken()) throw new Error('token_unavailable');
+  const fileId   = await driveFindBackup();
+  const metadata = JSON.stringify({ name: BACKUP_FILENAME, ...(fileId ? {} : { parents: ['appDataFolder'] }) });
+  const body_str = JSON.stringify(payload);
+  const bound    = 'lwg_bound_' + Date.now();
+  const multipart = `--${bound}\r\nContent-Type: application/json\r\n\r\n${metadata}\r\n--${bound}\r\nContent-Type: application/json\r\n\r\n${body_str}\r\n--${bound}--`;
+  const url  = fileId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&spaces=appDataFolder`;
+  const res = await fetch(url, {
+    method: fileId ? 'PATCH' : 'POST',
+    headers: { Authorization: `Bearer ${gAccessToken}`, 'Content-Type': `multipart/related; boundary=${bound}` },
+    body: multipart
+  });
+  if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+  const saved = await res.json();
+  gBackupFileId = saved.id;
+}
+
+// ── マージロジック（新しい方を優先・全履歴を統合） ──
+function mergeBackup(cloud, local) {
+  // prizes: 両方を統合し、重複は新しい日時を採用
+  const merged_prizes = { ...local.lwg_prizes };
+  for (const [id, cVal] of Object.entries(cloud.lwg_prizes || {})) {
+    if (!merged_prizes[id]) {
+      merged_prizes[id] = cVal;
+    } else {
+      const localDate = new Date(prizeDate(merged_prizes[id]) || 0);
+      const cloudDate = new Date(prizeDate(cVal) || 0);
+      if (cloudDate > localDate) merged_prizes[id] = cVal;
+    }
+  }
+
+  // areas: visited を統合、同一sidは新しい日時を採用
+  const cloudAreas = cloud.lwg_areas || { home: null, favorites: [], visited: [] };
+  const localAreas = local.lwg_areas  || { home: null, favorites: [], visited: [] };
+  const visitedMap = new Map();
+  for (const v of [...(cloudAreas.visited || []), ...(localAreas.visited || [])]) {
+    const ex = visitedMap.get(v.sid);
+    if (!ex || new Date(v.date) > new Date(ex.date)) visitedMap.set(v.sid, v);
+  }
+  const merged_areas = {
+    home:      localAreas.home || cloudAreas.home,
+    favorites: [...new Map([
+      ...(cloudAreas.favorites || []).map(f => [f.sid, f]),
+      ...(localAreas.favorites || []).map(f => [f.sid, f])
+    ].reverse()).values()],
+    visited: [...visitedMap.values()]
+  };
+
+  // いいね（lifetime walk）: 大きい方を採用（マイナスにはならない）
+  const merged_walk = Math.max(
+    local.lwg_lifetime_walk_m || 0,
+    cloud.lwg_lifetime_walk_m || 0
+  );
+
+  // progress: 地域別の途中再開データ。保存日時が新しい方を採用
+  const merged_progress = { ...(local.lwg_progress || {}) };
+  for (const [key, cVal] of Object.entries(cloud.lwg_progress || {})) {
+    if (!key.startsWith('lwg_progress_')) continue;
+    const lVal = merged_progress[key];
+    if (!lVal) {
+      merged_progress[key] = cVal;
+      continue;
+    }
+    const localDate = new Date(lVal.savedAt || 0);
+    const cloudDate = new Date(cVal?.savedAt || 0);
+    if (cloudDate > localDate) merged_progress[key] = cVal;
+  }
+
+  return { lwg_prizes: merged_prizes, lwg_areas: merged_areas, lwg_lifetime_walk_m: merged_walk, lwg_progress: merged_progress };
+}
+
+// ── 同期メイン処理 ──
+async function syncCloud() {
+  if (!isSignedIn()) return; // 未ログインは何もしない
+  showSyncStatus('syncing', '同期中…');
+
+  try {
+    if (!await ensureToken()) {
+      showSyncStatus('idle', '再ログインが必要です');
+      return;
+    }
+
+    const cloudData = await driveLoadBackup();
+    const localData = createBackupPayload();
+
+    let finalData;
+    if (!cloudData) {
+      finalData = localData; // 初回: ローカルをそのままアップロード
+    } else {
+      finalData = mergeBackup(cloudData, localData);
+    }
+
+    // マージ結果をLocalStorageに反映
+    lsSet('lwg_prizes', finalData.lwg_prizes);
+    lsSet('lwg_areas',  finalData.lwg_areas);
+    saveLifetimeWalk(finalData.lwg_lifetime_walk_m || 0);
+    saveProgressMap(finalData.lwg_progress || {});
+    updateLikeBar();
+
+    // Driveに保存
+    await driveSaveBackup({ ...finalData, version: 3, updated_at: new Date().toISOString() });
+
+    const now = new Date();
+    const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+    showSyncStatus('ok', `同期完了 ${timeStr}`);
+    lsSet('lwg_last_sync', now.toISOString());
+
+    // ホーム画面が表示中なら再描画
+    if (document.getElementById('screen-home').classList.contains('active')) renderHome();
+  } catch(e) {
+    console.error('Sync error:', e);
+    const msg = e.message === 'token_unavailable' ? '再ログインが必要です' : '同期に失敗しました';
+    showSyncStatus('error', msg);
+  }
+}
+
+// ── クラウドUIの表示状態を更新 ──
+function updateCloudUI() {
+  const loginArea = document.getElementById('cloud-login-area');
+  const userArea  = document.getElementById('cloud-user-area');
+  if (!loginArea || !userArea) return;
+
+  if (isSignedIn()) {
+    loginArea.style.display = 'none';
+    userArea.style.display  = 'flex';
+    const lastSync = lsGet('lwg_last_sync', null);
+    if (lastSync) {
+      const d = new Date(lastSync);
+      showSyncStatus('ok', `前回同期 ${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`);
+    } else {
+      showSyncStatus('idle', '未同期');
+    }
+  } else {
+    loginArea.style.display = 'flex';
+    userArea.style.display  = 'none';
+  }
+}
+
+// ── 同期ステータス表示 ──
+function showSyncStatus(state, text) {
+  const dot = document.getElementById('cloud-status-dot');
+  const el  = document.getElementById('cloud-status-text');
+  if (!dot || !el) return;
+  dot.className = 'cloud-dot ' + state;
+  el.textContent = text;
+}
+
+// ══════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════
+window.addEventListener('load', () => {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  }
+  // Googleフォントを動的に読み込み
+  const link = document.createElement('link');
+  link.rel='stylesheet';
+  link.href='https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap';
+  document.head.appendChild(link);
+  // Google OAuth初期化
+  initGoogleAuth();
+  initApp();
+
+  // Page Visibility API: バックグラウンドから復帰時に音声状態をリセット
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      voicePlaying = false;
+      gpsLocked = false;
+      updateArrivedButton();
+    }
+  });
+});
+</script>
+</body>
+</html>

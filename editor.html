@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>まち歩きガイド — データエディタ v4</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2EFE9;--surface:#FFFFFF;--raised:#F7F5F1;--border:#E0D9CE;--border2:#C8C2B6;
+  --text:#1A1814;--muted:#6A6258;--dim:#A09888;
+  --accent:#B83232;--accent-l:#FFF0F0;--accent-m:rgba(184,50,50,.14);
+  --gold:#8A6A2A;--gold-l:#FFF8EC;
+  --green:#2A6A3A;--green-l:#F0FFF4;
+  --blue:#2A5A8A;--blue-l:#EFF6FF;
+  --orange:#C06010;--orange-l:#FFF7ED;
+  --changed:#FFF7D0;--changed-b:#C49000;
+  --mono:'IBM Plex Mono',monospace;--sans:'Noto Sans JP',sans-serif;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --sh-lg:0 4px 16px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:13px;}
+
+/* HEADER */
+.hdr{height:56px;background:var(--surface);border-bottom:2px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;box-shadow:var(--sh);}
+.logo{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;white-space:nowrap;}
+.logo-ic{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.hdr-sep{width:1px;height:24px;background:var(--border);flex-shrink:0;}
+.hdr-field{display:flex;flex-direction:column;gap:2px;}
+.hdr-lbl{font-size:9px;color:var(--dim);letter-spacing:.1em;font-weight:500;display:flex;align-items:center;gap:6px;}
+.hdr-in{background:var(--raised);border:1.5px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 9px;outline:none;width:300px;transition:border-color .15s;}
+.hdr-in:focus{border-color:var(--accent);}
+.hdr-in.gas-ok{border-color:var(--green);background:var(--green-l);}
+.spacer{flex:1;}
+.btn{font-family:var(--sans);font-size:12px;font-weight:500;padding:6px 14px;border-radius:6px;border:1.5px solid;cursor:pointer;white-space:nowrap;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn-p{background:var(--accent);border-color:var(--accent);color:#fff;}.btn-p:hover{background:#a02828;}
+.btn-o{background:var(--surface);border-color:var(--border2);color:var(--muted);}.btn-o:hover{border-color:var(--text);color:var(--text);}
+.btn-g{background:var(--green-l);border-color:var(--green);color:var(--green);}.btn-g:hover{background:#D0FFE0;}
+.btn-gold{background:var(--gold-l);border-color:var(--gold);color:var(--gold);}
+.btn-blue{background:var(--blue-l);border-color:var(--blue);color:var(--blue);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-xs{padding:2px 7px;font-size:10px;border-radius:4px;border:1px solid;cursor:pointer;font-family:var(--sans);}
+.btn-ico{background:transparent;border-color:transparent;color:var(--dim);padding:3px 6px;border-radius:4px;cursor:pointer;}.btn-ico:hover{background:var(--raised);color:var(--accent);}
+.btn-play{background:var(--green-l);border:1.5px solid var(--green);color:var(--green);padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap;}.btn-play:hover{background:var(--green);color:#fff;}
+.btn-map{background:var(--blue-l);border:1.5px solid var(--blue);color:var(--blue);padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer;transition:all .15s;}.btn-map:hover,.btn-map.active{background:var(--blue);color:#fff;}
+
+/* MAIN */
+.main{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:160px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sb-grp{font-size:9px;letter-spacing:.2em;color:var(--dim);padding:10px 12px 5px;text-transform:uppercase;font-weight:600;}
+.nav-it{display:flex;align-items:center;gap:7px;padding:8px 12px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .12s;border-left:3px solid transparent;}
+.nav-it:hover{color:var(--text);background:var(--raised);}
+.nav-it.active{color:var(--accent);background:var(--accent-l);border-left-color:var(--accent);font-weight:600;}
+.ni-ic{font-size:12px;width:15px;text-align:center;flex-shrink:0;}
+.ni-badge{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim);background:var(--bg);border:1px solid var(--border);padding:1px 5px;border-radius:9px;}
+.nav-it.active .ni-badge{background:var(--accent-m);border-color:rgba(184,50,50,.2);color:var(--accent);}
+.ni-dot{width:6px;height:6px;background:var(--changed-b);border-radius:50%;display:none;flex-shrink:0;}
+.ni-dot.show{display:block;}
+.sb-div{height:1px;background:var(--border);}
+.sb-foot{padding:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.9;margin-top:auto;}
+.sb-foot strong{color:var(--text);font-weight:600;}
+
+/* EDITOR AREA */
+.ed-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.ed-bar{height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:9px;flex-shrink:0;}
+.ed-bar-title{font-size:11px;font-weight:600;color:var(--muted);}
+.ed-bar-title em{color:var(--text);font-style:normal;}
+.chg-badge{background:var(--changed);border:1px solid var(--changed-b);color:#7A5A00;font-size:10px;font-weight:600;padding:2px 8px;border-radius:9px;display:none;}
+.chg-badge.show{display:inline-block;}
+.ed-body{flex:1;overflow:auto;padding:14px;}
+
+/* CONFIG SPLIT VIEW */
+.cfg-split{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--sh);max-width:860px;}
+.cfg-col-hdr{padding:8px 16px;font-size:10px;letter-spacing:.15em;font-weight:600;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;}
+.cfg-saved-hdr{background:var(--raised);color:var(--muted);}
+.cfg-edit-hdr{background:#FFF9E0;color:#7A5A00;border-left:2px solid var(--border);}
+.cfg-sec-group{display:contents;}
+.cfg-sec-h{padding:6px 16px;font-size:9px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;background:var(--raised);border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600;grid-column:1;}
+.cfg-sec-h.right{grid-column:2;background:#FFFBF0;border-left:2px solid var(--border);}
+.cfg-row{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;min-height:60px;}
+.cfg-row:last-child{border-bottom:none;}
+.cfg-row.edit-col{border-left:2px solid var(--border);}
+.cfg-row.chg{background:var(--changed);}
+.cfg-kl{font-size:12px;color:var(--text);font-weight:500;margin-bottom:2px;}
+.cfg-kn{font-family:var(--mono);font-size:9px;color:var(--gold);}
+.cfg-kd{font-size:9px;color:var(--dim);line-height:1.5;margin-top:2px;}
+.cfg-saved-val{font-family:var(--mono);font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px;}
+.cfg-saved-val.has{color:var(--text);}
+.cfg-color-preview{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.15);vertical-align:middle;margin-right:5px;}
+.cfg-in{width:100%;background:var(--raised);border:1.5px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:5px 9px;outline:none;transition:border-color .12s;margin-top:4px;}
+.cfg-in:focus{border-color:var(--accent);background:var(--surface);}
+.cfg-row.chg .cfg-in{border-color:var(--changed-b);background:var(--changed);}
+.cfg-in-row{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.cfg-in-row .cfg-in{margin-top:0;}
+.color-chip{width:22px;height:22px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;}
+
+/* RIGHT PANEL */
+.right-panel{width:356px;background:var(--surface);border-left:1.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.rp-bar{height:42px;background:var(--raised);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0;}
+.rp-title{font-size:11px;font-weight:600;color:var(--muted);}
+.rp-content{flex:1;overflow:hidden;position:relative;}
+
+/* CONFIG LIVE PREVIEW */
+#rp-config{height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:10px;overflow:hidden;}
+.sim-phone{width:220px;height:460px;border-radius:28px;border:4px solid #1C1A16;box-shadow:0 0 0 1px #3A3530,var(--sh-lg);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0;font-family:var(--sans);}
+.sim-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:56px;height:13px;background:#1C1A16;border-radius:0 0 8px 8px;z-index:5;}
+.sim-hdr{padding:28px 14px 14px;position:relative;min-height:100px;display:flex;flex-direction:column;justify-content:flex-end;flex-shrink:0;}
+.sim-hdr-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(28,26,22,.95) 0%,rgba(28,26,22,.3) 100%);}
+.sim-hdr-img{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.4;}
+.sim-badge{font-size:6.5px;letter-spacing:.2em;border:1px solid;padding:2px 6px;margin-bottom:5px;position:relative;z-index:1;display:inline-block;}
+.sim-title{font-size:14px;font-weight:700;line-height:1.2;position:relative;z-index:1;margin-bottom:2px;}
+.sim-sub{font-size:7px;letter-spacing:.06em;position:relative;z-index:1;opacity:.45;}
+.sim-body{flex:1;overflow:hidden;padding:8px 8px 0;}
+.sim-course{border-radius:6px;padding:8px 9px;margin-bottom:5px;border:1px solid rgba(255,255,255,.08);}
+.sim-course-type{font-size:6.5px;letter-spacing:.08em;margin-bottom:2px;opacity:.45;}
+.sim-course-name{font-size:10px;font-weight:700;}
+.sim-course-meta{font-size:6.5px;margin-top:3px;opacity:.4;}
+.sim-prizes{width:100%;border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:6px;font-size:8px;text-align:center;letter-spacing:.08em;margin-top:6px;opacity:.4;}
+
+/* MAP PANEL */
+#rp-map{height:100%;display:flex;flex-direction:column;}
+#leaflet-map{flex:1;}
+.map-empty{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--dim);font-size:11px;text-align:center;}
+.map-empty-ic{font-size:32px;opacity:.3;}
+.map-legend{padding:7px 12px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+.legend-item{display:flex;align-items:center;gap:4px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.legend-line{width:20px;height:2px;flex-shrink:0;}
+
+/* TABLES */
+.tbl-wrap{overflow:auto;}
+table.dt{border-collapse:collapse;font-size:11px;white-space:nowrap;width:max-content;min-width:100%;}
+table.dt th{position:sticky;top:0;z-index:3;background:var(--raised);padding:7px 11px;font-size:10px;color:var(--muted);border:1px solid var(--border);text-align:left;font-weight:600;}
+table.dt th .thd{font-size:9px;color:var(--dim);font-weight:400;margin-top:1px;}
+table.dt th.th-n{width:36px;text-align:center;color:var(--dim);}
+table.dt th.th-act{width:80px;}
+table.dt td{border:1px solid var(--border);padding:0;background:var(--surface);}
+table.dt td.td-n{text-align:center;color:var(--dim);font-size:10px;background:var(--raised);padding:5px;min-width:36px;user-select:none;}
+table.dt td.td-act{background:var(--raised);text-align:center;padding:4px;}
+table.dt td.chg{background:var(--changed)!important;}
+table.dt tr:hover td{background:#FAF8F5;}
+table.dt tr.sel-row td{background:var(--blue-l)!important;}
+table.dt tr.sel-row td.td-n,table.dt tr.sel-row td.td-act{background:rgba(42,90,138,.12)!important;}
+.c-in{display:block;width:100%;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;outline:none;}
+.c-in:focus{background:var(--accent-l);box-shadow:inset 0 0 0 2px var(--accent);}
+select.c-in{-webkit-appearance:none;cursor:pointer;}
+.td-au{display:flex;align-items:center;gap:5px;padding:4px 7px;}
+.td-au .c-in{flex:1;padding:4px 6px;}
+.add-row-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:8px;margin-top:9px;background:var(--surface);border:2px dashed var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;width:100%;transition:all .15s;font-weight:500;}
+.add-row-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-l);}
+
+/* COURSES MERGED VIEW */
+.course-cards{max-width:860px;}
+.cc-card{border:1.5px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;box-shadow:var(--sh);}
+.cc-card.is-sel{border-color:var(--blue);}
+.cc-head{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);cursor:pointer;transition:background .12s;user-select:none;}
+.cc-head:hover{background:var(--raised);}
+.cc-toggle{font-size:11px;color:var(--dim);width:13px;flex-shrink:0;transition:transform .2s;}
+.cc-toggle.open{transform:rotate(90deg);}
+.cc-name{font-size:13px;font-weight:600;}
+.cc-tag{font-size:9px;color:var(--muted);background:var(--raised);border:1px solid var(--border);padding:1px 7px;border-radius:9px;}
+.cc-rec{font-size:10px;color:var(--gold);}
+.cc-meta{font-size:10px;color:var(--dim);margin-left:auto;white-space:nowrap;}
+.cc-body{display:none;border-top:1px solid var(--border);}
+.cc-body.open{display:block;}
+
+.cc-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:1px;background:var(--border);}
+.cc-field{background:var(--surface);padding:8px 12px;}
+.cc-field.full{grid-column:1/-1;}
+.cc-field-lbl{font-size:9px;color:var(--dim);letter-spacing:.05em;margin-bottom:3px;font-weight:600;}
+.cc-field-lbl code{color:var(--gold);font-size:8px;font-family:var(--mono);}
+.cc-field-in{width:100%;background:var(--raised);border:1.5px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;outline:none;}
+.cc-field-in:focus{border-color:var(--accent);background:var(--surface);}
+.cc-field-in.chg{background:var(--changed);border-color:var(--changed-b);}
+.cc-field-in-row{display:flex;gap:5px;align-items:center;}
+.cc-field-in-row .cc-field-in{margin:0;}
+
+.cc-spots-area{padding:10px 14px;background:var(--raised);border-top:1px solid var(--border);}
+.cc-spots-title{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.spot-row{display:flex;align-items:center;gap:7px;padding:6px 9px;background:var(--surface);border:1px solid var(--border);border-radius:5px;margin-bottom:4px;transition:border-color .12s;}
+.spot-row:hover{border-color:var(--border2);}
+.spot-num{width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;}
+.spot-num.goal{background:var(--gold);}
+.spot-info{flex:1;}
+.spot-name{font-size:12px;font-weight:500;}
+.spot-sub{font-size:9px;color:var(--dim);font-family:var(--mono);}
+.spot-dist{font-size:9px;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:1px 6px;border-radius:9px;white-space:nowrap;}
+.spot-add-row{display:flex;align-items:center;gap:7px;margin-top:6px;}
+.spot-sel{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;outline:none;}
+.spot-sel:focus{border-color:var(--accent);}
+
+/* CHANGES PANEL */
+.chg-panel{background:var(--changed);border:1.5px solid var(--changed-b);border-radius:8px;padding:11px 14px;margin-bottom:12px;}
+.chg-panel-title{font-size:11px;font-weight:600;color:#7A5A00;margin-bottom:6px;}
+.chg-item{font-size:10px;font-family:var(--mono);padding:3px 0;border-bottom:1px solid rgba(196,144,0,.2);display:flex;gap:6px;align-items:baseline;}
+.chg-item:last-child{border-bottom:none;}
+.chg-k{color:var(--gold);min-width:180px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;}
+.chg-old{color:var(--accent);text-decoration:line-through;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+.chg-arr{color:var(--dim);}
+.chg-new{color:var(--green);max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+
+/* BANNER */
+.banner{background:var(--blue-l);border:1px solid #93C5FD;border-radius:6px;padding:9px 13px;font-size:11px;color:var(--blue);line-height:1.8;margin-bottom:12px;display:flex;gap:9px;}
+.banner.warn{background:var(--orange-l);border-color:rgba(192,96,16,.3);color:var(--orange);}
+
+/* STATUS BAR */
+.stat-bar{height:27px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;font-size:10px;color:var(--muted);flex-shrink:0;}
+.s-dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0;}
+.s-dot.ok{background:var(--green);}
+.s-dot.loading{background:var(--gold);animation:blink .8s ease-in-out infinite;}
+.s-dot.error{background:var(--accent);}
+
+/* GAS MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--surface);border-radius:10px;width:700px;max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg);overflow:hidden;}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.modal-title{font-size:15px;font-weight:600;}
+.modal-body{flex:1;overflow-y:auto;padding:20px;}
+.modal-step{margin-bottom:16px;}
+.step-n{display:inline-flex;width:22px;height:22px;background:var(--accent);border-radius:50%;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;margin-right:7px;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:600;margin-bottom:7px;display:flex;align-items:flex-start;gap:4px;}
+.gas-code{background:#1A1814;color:#E5DDD0;font-family:var(--mono);font-size:10.5px;padding:14px;border-radius:6px;overflow:auto;max-height:320px;white-space:pre;line-height:1.65;}
+.modal-note{background:var(--orange-l);border:1px solid rgba(192,96,16,.3);border-radius:6px;padding:10px 14px;font-size:11px;color:var(--orange);line-height:1.8;}
+
+/* AUDIO */
+.audio-bar{display:none;position:fixed;bottom:34px;right:16px;background:var(--surface);border:1.5px solid var(--green);border-radius:10px;padding:10px 14px;box-shadow:var(--sh-lg);z-index:100;min-width:220px;}
+.audio-bar.show{display:block;}
+.ab-prog{height:3px;background:var(--border);border-radius:2px;margin:5px 0;overflow:hidden;}
+.ab-fill{height:100%;background:var(--green);border-radius:2px;width:0;transition:width .5s linear;}
+
+/* UTILS */
+.ld-mask{display:none;position:fixed;inset:0;background:rgba(242,239,233,.82);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:14px;backdrop-filter:blur(2px);}
+.ld-mask.show{display:flex;}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.notif{position:fixed;bottom:38px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:#FAF7F1;padding:9px 20px;border-radius:8px;font-size:11px;opacity:0;transition:opacity .2s,transform .2s;z-index:500;pointer-events:none;white-space:nowrap;box-shadow:var(--sh-lg);}
+.notif.err{background:var(--accent);}
+.notif.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.empty-st{display:flex;flex-direction:column;align-items:center;justify-content:center;height:260px;gap:12px;color:var(--dim);font-size:12px;}
+.empty-ic{font-size:36px;opacity:.35;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ══ RESIZE HANDLE ══ */
+.resize-handle{width:5px;background:var(--border);cursor:col-resize;flex-shrink:0;transition:background .15s;position:relative;z-index:10;}
+.resize-handle:hover,.resize-handle.dragging{background:var(--accent);}
+.resize-handle::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:40px;background:currentColor;opacity:.3;border-radius:1px;}
+
+/* ══ PREVIEW ZOOM ══ */
+.sim-zoom-wrap{display:flex;align-items:center;gap:4px;}
+.sim-zoom-btn{background:var(--raised);border:1px solid var(--border);color:var(--muted);width:22px;height:22px;border-radius:4px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .12s;line-height:1;}
+.sim-zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sim-zoom-val{font-size:10px;color:var(--dim);font-family:var(--mono);min-width:30px;text-align:center;}
+.preview-mode-wrap{display:flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px;}
+.preview-mode-btn{border:0;background:transparent;color:var(--muted);border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer;white-space:nowrap;}
+.preview-mode-btn.active{background:var(--accent);color:white;font-weight:600;}
+#rp-config{transition:background .2s;}
+.sim-phone-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
+
+/* ══ FLASH ANIMATION ══ */
+@keyframes flashPulse{0%{outline:3px solid var(--accent);outline-offset:2px;opacity:.7}50%{outline:5px solid var(--accent);outline-offset:3px;opacity:1}100%{outline:0px solid transparent;outline-offset:0;opacity:1}}
+.sim-flash{animation:flashPulse .7s ease forwards;}
+
+/* ══ LABEL OVERLAY ══ */
+.sim-label-tag{position:absolute;background:rgba(184,50,50,.92);color:white;font-size:7px;font-family:var(--mono);padding:1px 5px;border-radius:3px;z-index:20;pointer-events:none;white-space:nowrap;letter-spacing:.02em;}
+.btn-lbl-toggle{padding:3px 8px;font-size:10px;border-radius:4px;border:1px solid var(--border2);background:var(--raised);color:var(--muted);cursor:pointer;transition:all .12s;white-space:nowrap;}
+.btn-lbl-toggle.active{background:var(--accent);border-color:var(--accent);color:white;}
+
+/* ══ DIFF MODAL ══ */
+.diff-modal{background:var(--surface);border-radius:10px;width:680px;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg);overflow:hidden;}
+.diff-hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--raised);}
+.diff-title{font-size:14px;font-weight:600;}
+.diff-body{flex:1;overflow-y:auto;padding:16px;}
+.diff-table{width:100%;border-collapse:collapse;font-size:11px;}
+.diff-table th{padding:6px 12px;background:var(--raised);border:1px solid var(--border);font-size:10px;color:var(--muted);text-align:left;font-weight:600;}
+.diff-table td{padding:7px 12px;border:1px solid var(--border);vertical-align:top;}
+.diff-table tr:hover td{background:var(--bg);}
+.diff-key{font-family:var(--mono);font-size:10px;color:var(--gold);}
+.diff-old{color:var(--accent);text-decoration:line-through;font-family:var(--mono);font-size:11px;}
+.diff-new{color:var(--green);font-family:var(--mono);font-size:11px;font-weight:600;}
+.diff-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;background:var(--raised);}
+
+/* ══ EDITOR SIZE TOGGLE ══ */
+.size-toggle{display:flex;align-items:center;gap:3px;background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:2px;}
+.size-btn{padding:3px 8px;border-radius:4px;font-size:10px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .12s;white-space:nowrap;}
+.size-btn.active{background:var(--surface);color:var(--text);font-weight:600;box-shadow:var(--sh);}
+
+/* ══ FONT PICKER ══ */
+.font-picker-wrap{display:flex;flex-direction:column;gap:4px;margin-top:4px;}
+.font-picker-sel{width:100%;background:var(--raised);border:1.5px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:5px 9px;outline:none;cursor:pointer;}
+.font-picker-sel:focus{border-color:var(--accent);}
+.font-picker-sel option{font-size:14px;padding:6px 8px;}
+.font-preview{font-size:12px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* QR TOOLS */
+.hdr-qr .hdr-in{width:clamp(210px,24vw,340px);}
+.qr-modal{background:var(--surface);border-radius:10px;width:360px;box-shadow:var(--sh-lg);overflow:hidden;}
+.qr-preview{padding:18px 20px 12px;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.qr-box{width:240px;height:240px;background:#fff;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;padding:14px;}
+.qr-url{width:100%;font-family:var(--mono);font-size:10px;line-height:1.6;color:var(--muted);background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:8px;word-break:break-all;}
+.qr-actions{padding:12px 20px 18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+
+/* v4.1 layout fixes */
+:root{--editor-font-size:13px;}
+html{height:100%;overflow:hidden;}
+body{height:100dvh;overflow:hidden;}
+.hdr{height:auto;min-height:56px;max-height:112px;flex-wrap:wrap;align-content:center;padding:7px 14px;overflow-y:auto;overflow-x:hidden;}
+.hdr-field{min-width:0;}
+.hdr-in{width:clamp(180px,22vw,300px);}
+.hdr>.spacer{display:block;order:19;flex:0 0 100%;height:0;}
+.hdr-qr{order:20;}
+.hdr-qr-btn{order:21;}
+.hdr-size{order:22;align-items:flex-start!important;}
+.hdr-csv-sep{order:23;}
+.hdr-export,.hdr button[onclick="exportAll()"]{order:24;}
+.main{min-height:0;}
+.ed-body{min-height:0;scrollbar-gutter:stable;}
+.cfg-split{width:min(100%,740px);max-width:740px;grid-template-columns:minmax(170px,.82fr) minmax(220px,1fr);overflow:auto;scrollbar-gutter:stable;}
+.cfg-sec-h{padding:5px 10px;}
+.cfg-row{padding:7px 10px;min-height:48px;}
+.cfg-kl{font-size:calc(var(--editor-font-size) - 1px);}
+.cfg-kd{font-size:calc(var(--editor-font-size) - 4px);}
+.cfg-saved-val{overflow:auto;text-overflow:clip;scrollbar-width:thin;}
+.cfg-in,.c-in,.cc-field-in,.spot-sel,.font-picker-sel{font-size:calc(var(--editor-font-size) - 2px);}
+.ed-bar-title,.rp-title,.banner,.chg-panel-title,.cc-name{font-size:calc(var(--editor-font-size) - 1px);}
+.btn,.nav-it,.add-row-btn{font-size:calc(var(--editor-font-size) - 1px);}
+table.dt{font-size:calc(var(--editor-font-size) - 2px);}
+#rp-config{align-items:flex-start;justify-content:flex-start;overflow:auto;cursor:grab;scrollbar-gutter:stable;background:var(--bg);}
+#rp-config.dragging{cursor:grabbing;user-select:none;}
+.sim-phone-wrap{width:max(100%,calc(220px * var(--sim-zoom,1) + 120px));height:max(100%,calc(460px * var(--sim-zoom,1) + 180px));min-width:calc(220px * var(--sim-zoom,1) + 120px);min-height:calc(460px * var(--sim-zoom,1) + 180px);padding:90px 60px;display:flex;align-items:flex-start;justify-content:center;}
+.sim-phone{transform:scale(var(--sim-zoom,1));transform-origin:top center;}
+.config-rail{width:60px;background:var(--surface);border-right:1px solid var(--border);display:none;flex-direction:column;align-items:center;gap:6px;padding:9px 6px;overflow-y:auto;flex-shrink:0;}
+.config-rail.show{display:flex;}
+.cfg-jump-btn{width:46px;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--raised);color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.cfg-jump-btn:hover,.cfg-jump-btn.active{background:var(--accent-l);border-color:var(--accent);color:var(--accent);}
+@media (max-width:1100px){
+  .logo{width:100%;}
+  .hdr-sep{display:none;}
+  .right-panel{width:320px;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="logo"><div class="logo-ic">🗺</div>まち歩きエディタ <span style="font-size:10px;color:var(--dim);font-weight:400;">v4</span></div>
+  <div class="hdr-sep"></div>
+  <div class="hdr-field">
+    <div class="hdr-lbl">スプレッドシートURL または ID</div>
+    <input class="hdr-in" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/...  または  Sheet ID" value="1fugAECsnEQIHXgQh1qyPOaLJL-6wMuW0B4dA6Ac6k24">
+  </div>
+  <button class="btn btn-p" onclick="loadData()">▶ 読み込む</button>
+  <div class="hdr-sep"></div>
+  <div class="hdr-field">
+    <div class="hdr-lbl">GAS ウェブアプリURL（直接書き込み用）<span id="gas-status-lbl" style="margin-left:4px;"></span></div>
+    <input class="hdr-in" id="gas-url" placeholder="https://script.google.com/macros/s/..." oninput="onGasUrlChange()">
+  </div>
+  <button class="btn btn-o btn-sm" onclick="testGas()">接続テスト</button>
+  <button class="btn btn-blue btn-sm" onclick="showGasModal()">📋 GAS設定方法</button>
+  <div class="spacer"></div>
+  <div class="hdr-field hdr-qr">
+    <div class="hdr-lbl">読み取り用スプレッドシートURL または ID</div>
+    <input class="hdr-in" id="qr-sheet-url" placeholder="空欄なら通常URL / ID入力で ?sid=... 付き">
+  </div>
+  <button class="btn btn-blue btn-sm hdr-qr-btn" onclick="showQrModal()">QR表示</button>
+  <div class="hdr-field hdr-size" style="align-items:flex-end;">
+    <div class="hdr-lbl">表示サイズ</div>
+    <div class="size-toggle">
+      <button class="size-btn active" id="sz-s" onclick="setEditorSize('s')">標準</button>
+      <button class="size-btn" id="sz-m" onclick="setEditorSize('m')">大</button>
+      <button class="size-btn" id="sz-l" onclick="setEditorSize('l')">特大</button>
+    </div>
+  </div>
+  <div class="hdr-sep hdr-csv-sep"></div>
+  <button class="btn btn-gold btn-sm" onclick="exportAll()">⬇ 全CSV保存</button>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-grp">データシート</div>
+    <div class="nav-it active" id="nav-config" onclick="showTab('config')">
+      <span class="ni-ic">⚙</span>CONFIG<span class="ni-badge" id="badge-config">—</span><span class="ni-dot" id="dot-config"></span>
+    </div>
+    <div class="nav-it" id="nav-courses" onclick="showTab('courses')">
+      <span class="ni-ic">📋</span>コース+構成<span class="ni-badge" id="badge-courses">—</span><span class="ni-dot" id="dot-courses"></span>
+    </div>
+    <div class="nav-it" id="nav-spots" onclick="showTab('spots')">
+      <span class="ni-ic">📍</span>スポット<span class="ni-badge" id="badge-spots">—</span><span class="ni-dot" id="dot-spots"></span>
+    </div>
+    <div class="nav-it" id="nav-facilities" onclick="showTab('facilities')">
+      <span class="ni-ic">🏛</span>施設<span class="ni-badge" id="badge-facilities">—</span><span class="ni-dot" id="dot-facilities"></span>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-grp">アクション</div>
+    <div class="nav-it" onclick="saveCurrentSheet()"><span class="ni-ic">💾</span>シートを保存</div>
+    <div class="nav-it" onclick="resetChanges()"><span class="ni-ic">↩</span>変更を元に戻す</div>
+    <div class="sb-div"></div>
+    <div class="sb-foot">
+      <strong>保存モード</strong><br>
+      <span id="mode-label" style="color:var(--dim);">CSV出力のみ</span><br><br>
+      GAS URL設定済み時:<br>「シートを保存」で<br>スプレッドシートに<br>直接書き込みます。
+    </div>
+  </nav>
+
+  <div class="config-rail" id="config-rail" title="CONFIG内ショートカット"></div>
+
+  <!-- EDITOR -->
+  <div class="ed-wrap">
+    <div class="ed-bar">
+      <span class="ed-bar-title" id="ed-title">SHEET: <em>CONFIG（設定）</em></span>
+      <span class="chg-badge" id="chg-badge">変更あり</span>
+      <div class="spacer"></div>
+      <button class="btn btn-o btn-sm" onclick="exportCurrentSheet()">⬇ CSVダウンロード</button>
+      <button class="btn btn-g btn-sm" id="save-btn" style="display:none" onclick="saveCurrentSheet()">💾 スプレッドシートに保存</button>
+    </div>
+    <div class="ed-body" id="ed-body">
+      <div class="empty-st"><div class="empty-ic">📂</div>スプレッドシートURLを入力して「▶ 読み込む」をクリック</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="resize-handle" id="resize-handle" title="ドラッグで幅調整 / ダブルクリックでリセット"></div>
+  <div class="right-panel" id="right-panel">
+    <div class="rp-bar">
+      <span class="rp-title" id="rp-title">📱 ライブプレビュー</span>
+      <div class="spacer"></div>
+      <div class="preview-mode-wrap" id="preview-mode-controls" style="display:none;">
+        <button class="preview-mode-btn active" id="pm-dark" onclick="setPreviewMode('dark')">ダーク</button>
+        <button class="preview-mode-btn" id="pm-light" onclick="setPreviewMode('light')">ライト</button>
+        <button class="preview-mode-btn" id="pm-cert" onclick="setPreviewMode('cert')">修了証</button>
+      </div>
+      <div class="sim-zoom-wrap" id="zoom-controls" style="display:none;">
+        <button class="sim-zoom-btn" onclick="changeZoom(-0.1)" title="縮小">－</button>
+        <span class="sim-zoom-val" id="zoom-val">100%</span>
+        <button class="sim-zoom-btn" onclick="changeZoom(0.1)" title="拡大">＋</button>
+      </div>
+      <button class="btn-lbl-toggle" id="btn-lbl-toggle" onclick="toggleLabelOverlay()" style="display:none;" title="設定キーの場所を表示">🏷 ラベル</button>
+      <button class="btn-ico btn-sm" onclick="refreshRightPanel()" title="更新">↺</button>
+    </div>
+    <div class="rp-content">
+      <div id="rp-config" style="height:100%;">
+        <div style="height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--dim);font-size:11px;text-align:center;padding:20px;">読み込み後に<br>ライブプレビューが表示されます</div>
+      </div>
+      <div id="rp-map" style="height:100%;display:none;flex-direction:column;">
+        <div id="leaflet-map" style="flex:1;"></div>
+        <div class="map-legend" id="map-legend">
+          <div class="map-empty" style="height:100%;"><div class="map-empty-ic">🗺</div>行を選択すると地図が表示されます</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="stat-bar">
+  <div class="s-dot" id="s-dot"></div>
+  <span id="s-msg">データ未読み込み ／ Sheet URLを入力して「読み込む」をクリック</span>
+  <div class="spacer"></div>
+  <span id="s-gas" style="font-size:10px;color:var(--dim);"></span>
+</div>
+
+<!-- AUDIO BAR -->
+<div class="audio-bar" id="audio-bar">
+  <div style="font-size:10px;font-weight:600;color:var(--muted);">🔊 音声再生中</div>
+  <div style="font-size:11px;color:var(--text);margin:3px 0;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="ab-name">—</div>
+  <div class="ab-prog"><div class="ab-fill" id="ab-fill"></div></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="stopAudio()" style="background:none;border:1px solid var(--border2);color:var(--muted);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;">■ 停止</button>
+    <span id="ab-time" style="font-size:10px;color:var(--muted);font-family:var(--mono);">0:00</span>
+  </div>
+</div>
+
+<!-- GAS MODAL -->
+<div class="modal-bg" id="gas-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">📋 Google Apps Script の設定方法</span>
+      <div class="spacer"></div>
+      <button class="btn btn-o btn-sm" onclick="closeGasModal()">✕ 閉じる</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-step">
+        <div class="step-title"><span class="step-n">1</span>スプレッドシートを開き、上部メニューの「拡張機能」→「Apps Script」を選択</div>
+      </div>
+      <div class="modal-step">
+        <div class="step-title"><span class="step-n">2</span>エディタのコードを全削除して以下を貼り付け → 保存（Ctrl+S）</div>
+        <button class="btn btn-o btn-sm" onclick="copyGasCode()" style="margin-bottom:8px;">📋 コードをコピー</button>
+        <div class="gas-code" id="gas-code-display"></div>
+      </div>
+      <div class="modal-step">
+        <div class="step-title"><span class="step-n">3</span>「デプロイ」→「新しいデプロイ」→「種類: ウェブアプリ」→「アクセスできるユーザー: 全員」→「デプロイ」</div>
+      </div>
+      <div class="modal-step">
+        <div class="step-title"><span class="step-n">4</span>表示された「ウェブアプリのURL」をコピーして、エディタのGAS URLフィールドに貼り付け → 「接続テスト」</div>
+      </div>
+      <div class="modal-note">
+        ⚠ <strong>注意:</strong> スクリプトを変更した場合は「新しいデプロイ」でバージョンを上げてください。URLは同じまま使い続けられます。初回実行時にGoogleアカウントの認証が求められます。
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ld-mask" id="ld-mask"><div class="spinner"></div><div style="font-size:12px;color:var(--muted);" id="ld-txt">読み込み中…</div></div>
+<div class="notif" id="notif"></div>
+
+<!-- QR MODAL -->
+<div class="modal-bg" id="qr-modal">
+  <div class="qr-modal">
+    <div class="modal-hdr">
+      <span class="modal-title">QRコード</span>
+      <div class="spacer"></div>
+      <button class="btn btn-o btn-sm" onclick="closeQrModal()">✕ 閉じる</button>
+    </div>
+    <div class="qr-preview">
+      <div class="qr-box" id="qr-box"></div>
+      <div class="qr-url" id="qr-url"></div>
+    </div>
+    <div class="qr-actions">
+      <button class="btn btn-gold btn-sm" onclick="downloadQrPng()">PNGダウンロード</button>
+      <button class="btn btn-blue btn-sm" onclick="copyQrPng()">コピー</button>
+      <button class="btn btn-o btn-sm" onclick="copyQrUrl()">URLコピー</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIFF CONFIRM MODAL -->
+<div class="modal-bg" id="diff-modal">
+  <div class="diff-modal">
+    <div class="diff-hdr">
+      <span style="font-size:18px;">📋</span>
+      <div>
+        <div class="diff-title">変更内容の確認</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">以下の変更を保存します。内容を確認してください。</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-o btn-sm" onclick="closeDiffModal()">✕ キャンセル</button>
+    </div>
+    <div class="diff-body">
+      <table class="diff-table">
+        <thead><tr><th>項目</th><th style="min-width:160px;">変更前</th><th style="min-width:160px;">変更後</th></tr></thead>
+        <tbody id="diff-tbody"></tbody>
+      </table>
+    </div>
+    <div class="diff-footer">
+      <button class="btn btn-o" onclick="closeDiffModal()">キャンセル</button>
+      <button class="btn btn-g" id="diff-confirm-btn">💾 この内容で保存する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════
+// GAS SCRIPT CODE (displayed in modal)
+// ═══════════════════════════════════════════════════════
+
+const GAS_CODE = `/**
+ * まち歩きエディタ v3 — Google Apps Script
+ * スプレッドシートの「拡張機能」→「Apps Script」に貼り付けてください。
+ * デプロイ設定: ウェブアプリ / アクセス: 全員
+ */
+
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents);
+    if (body.action === 'write') {
+      writeSheet(body.sheet, body.rows);
+      return out({ok: true});
+    }
+    return out({ok: false, error: 'Unknown action'});
+  } catch(ex) {
+    return out({ok: false, error: ex.toString()});
+  }
+}
+
+function doGet(e) {
+  const cb = e.parameter.callback;
+  try {
+    if (e.parameter.action === 'ping') {
+      return out({ok: true, version: '3.0'}, cb);
+    }
+    return out({ok: false, error: 'GET is for ping only'}, cb);
+  } catch(ex) {
+    return out({ok: false, error: ex.toString()}, cb);
+  }
+}
+
+function writeSheet(sheetName, rows) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) throw new Error('シートが見つかりません: ' + sheetName);
+
+  const lastCol = sheet.getLastColumn();
+  if (lastCol === 0) throw new Error('ヘッダー行がありません');
+  const headers = sheet.getRange(1, 1, 1, lastCol)
+    .getValues()[0].map(h => String(h).trim());
+
+  // ヘッダー行(1行目)を残してデータをクリア
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, lastCol).clearContent();
+  }
+  if (!rows || rows.length === 0) { SpreadsheetApp.flush(); return; }
+
+  const data = rows.map(row => headers.map(h => String(row[h] ?? '')));
+  sheet.getRange(2, 1, data.length, headers.length).setValues(data);
+  SpreadsheetApp.flush();
+}
+
+function out(obj, callback) {
+  const json = JSON.stringify(obj);
+  const text = callback ? callback + '(' + json + ')' : json;
+  const mime = callback
+    ? ContentService.MimeType.JAVASCRIPT
+    : ContentService.MimeType.JSON;
+  return ContentService.createTextOutput(text).setMimeType(mime);
+}`;
+
+// ═══════════════════════════════════════════════════════
+// SCHEMA DEFINITIONS
+// ═══════════════════════════════════════════════════════
+
+const CONFIG_DEFS = [
+  {sec:'🏷 アプリ基本設定'},
+  {key:'app_title',    lbl:'アプリタイトル',       desc:'アプリのメインタイトル。例: 増田まち歩きガイド'},
+  {key:'app_subtitle', lbl:'サブタイトル',          desc:'タイトル下に小さく表示。例: 重要伝統的建造物群保存地区'},
+  {key:'area_name',    lbl:'エリア名（従来）',      desc:'プライズの「どこで達成したか」に使用。area_pref/city/town 未設定時のフォールバック'},
+  {sec:'🎨 カラー設定'},
+  {key:'color_bg',      lbl:'背景色',               desc:'画面全体の背景 (--bg)。例: #F4EFE4', type:'color'},
+  {key:'color_paper',   lbl:'カード背景色',         desc:'カード・白い領域 (--paper)。例: #FAF7F1', type:'color'},
+  {key:'color_ink',     lbl:'文字・暗背景色',       desc:'テキストやホーム画面の背景 (--ink)。例: #1C1A16', type:'color'},
+  {key:'color_primary', lbl:'メインカラー',         desc:'ボタン・アクセント・スポット番号 (--primary)。例: #B83232', type:'color'},
+  {key:'color_gold',    lbl:'ゴールドカラー',       desc:'プライズ・ゴール・装飾 (--gold)。例: #9A7A3A', type:'color'},
+  {key:'color_muted',   lbl:'ミュート色',           desc:'サブテキスト・補助情報 (--muted)。例: #7A7060', type:'color'},
+  {key:'color_border',  lbl:'ボーダー色',           desc:'罫線・区切り線 (--border)。例: #D4C9B0', type:'color'},
+  {sec:'🔤 フォント設定'},
+  {key:'font_title',         lbl:'タイトルフォント',     desc:'見出し用フォント名。例: Noto Serif JP'},
+  {key:'font_body',          lbl:'本文フォント',         desc:'本文用フォント名。例: Noto Sans JP'},
+  {key:'font_size_base',     lbl:'本文フォントサイズ',   desc:'--font-size-base の値。例: 14px'},
+  {key:'font_size_heading',  lbl:'見出しフォントサイズ', desc:'--font-size-heading の値。例: 20px'},
+  {key:'font_size_explain',  lbl:'解説フォントサイズ',   desc:'--font-size-explain の値。例: 14px'},
+  {sec:'🖼 ヘッダー画像'},
+  {key:'header_type',      lbl:'ヘッダータイプ',            desc:'「image」で画像表示 / 「none」で非表示'},
+  {key:'header_style',     lbl:'ヘッダースタイル',          desc:'A: グラデ標準 / B: 写真ゾーン分離 / C: テキストシャドウ（デフォルト: A）'},
+  {key:'header_image_url', lbl:'ヘッダー画像URL（優先）',   desc:'GitHub Pages等の直接URL（こちらが優先）'},
+  {sec:'🏷 ホームバッジ設定'},
+  {key:'home_badge_text',          lbl:'バッジテキスト',        desc:'ヘッダー内バッジに表示するテキスト。例: MACHI ARUKI GUIDE'},
+  {key:'home_badge_font_size',     lbl:'バッジフォントサイズ',  desc:'例: 9px'},
+  {key:'home_badge_color',         lbl:'バッジ文字色',          desc:'例: #B83232', type:'color'},
+  {key:'home_badge_border_color',  lbl:'バッジボーダー色',      desc:'例: #B83232', type:'color'},
+  {key:'home_badge_border_width',  lbl:'バッジボーダー幅',      desc:'例: 1px'},
+  {key:'home_badge_border_radius', lbl:'バッジ角丸',            desc:'例: 0px（デフォルト四角）'},
+  {key:'home_badge_border',        lbl:'バッジボーダー一括',    desc:'例: 1px solid #B83232（個別設定より優先）'},
+  {key:'home_badge_left',          lbl:'バッジ左位置',          desc:'例: 24px（デフォルト）'},
+  {key:'home_badge_right',         lbl:'バッジ右位置',          desc:'例: auto（デフォルト）'},
+  {key:'home_badge_top',           lbl:'バッジ上位置',          desc:'例: 40px（デフォルト）'},
+  {key:'home_badge_bottom',        lbl:'バッジ下位置',          desc:'例: auto（デフォルト）'},
+  {sec:'🗺 エリア表示設定'},
+  {key:'area_pref',    lbl:'都道府県',    desc:'例: 秋田県'},
+  {key:'area_city',    lbl:'市区町村',    desc:'例: 横手市'},
+  {key:'area_town',    lbl:'町名',        desc:'例: 増田町'},
+  {key:'area_display', lbl:'表示モード',  desc:'custom / pref / city / town / pref+city / pref+town / city+town / pref+city+town', type:'sel', opts:['custom','pref','city','town','pref+city','pref+town','city+town','pref+city+town']},
+  {sec:'⚠ 注意アナウンス（省略可・デフォルト文あり）'},
+  {key:'caution_shigaichi',     lbl:'市街地コース 注意テキスト',   desc:'コース開始時に読み上げる注意事項'},
+  {key:'caution_koen',          lbl:'公園コース 注意テキスト',     desc:'コース開始時に読み上げる注意事項'},
+  {key:'caution_konzai',        lbl:'混在コース 注意テキスト',     desc:'コース開始時に読み上げる注意事項'},
+  {key:'caution_shigaichi_url', lbl:'市街地 注意音声URL',         desc:'MP3等のURL（テキストより優先）', type:'audio'},
+  {key:'caution_koen_url',      lbl:'公園 注意音声URL',           desc:'MP3等のURL（テキストより優先）', type:'audio'},
+  {key:'caution_konzai_url',    lbl:'混在 注意音声URL',           desc:'MP3等のURL（テキストより優先）', type:'audio'},
+  {sec:'🎉 特別イベント設定'},
+  {key:'special_enabled',         lbl:'特別イベント有効',          desc:'TRUEで特別アナウンス有効（全コース共通）', type:'bool'},
+  {key:'special_start_date',      lbl:'特別イベント開始日',        desc:'YYYY-MM-DD（空白=常時有効）'},
+  {key:'special_end_date',        lbl:'特別イベント終了日',        desc:'YYYY-MM-DD（空白=常時有効）'},
+  {key:'audio_special_start_url', lbl:'特別スタート音声URL',       desc:'特別期間のスタート時に再生（全コース共通）', type:'audio'},
+  {key:'audio_special_goal_url',  lbl:'特別ゴール音声URL',         desc:'特別期間のゴール到達時に再生（全コース共通）', type:'audio'},
+  {sec:'🏅 賞状（修了書）設定'},
+  {key:'cert_award_title', lbl:'修了証タイトル',     desc:'賞状の大見出し。例: 修了証　（デフォルト: 修了証）'},
+  {key:'cert_issuer',      lbl:'発行者名',            desc:'賞状の発行者欄。例: 増田町観光協会（area_nameがフォールバック）'},
+  {key:'cert_seal_text',   lbl:'印鑑テキスト',        desc:'印鑑（丸印）に表示するテキスト。例: 増田\n観光'},
+  {key:'cert_body_text',   lbl:'本文追加テキスト',    desc:'賞状本文に付け加えるテキスト。例: 今後もまち歩きをお楽しみください。'},
+  {key:'cert_title_font_family',     lbl:'賞状タイトルフォント',   desc:'--cert-title-font-family。例: Yuji Syuku'},
+  {key:'cert_title_font_size',       lbl:'賞状タイトルサイズ',     desc:'--cert-title-font-size。例: 32px'},
+  {key:'cert_title_letter_spacing',  lbl:'賞状タイトル字間',       desc:'--cert-title-letter-spacing。例: 0.3em'},
+  {key:'cert_seal_size',         lbl:'印鑑サイズ',         desc:'--cert-seal-size。例: 80px'},
+  {key:'cert_seal_border_color', lbl:'印鑑ボーダー色',     desc:'--cert-seal-border-color。例: #B83232', type:'color'},
+  {key:'cert_seal_border_width', lbl:'印鑑ボーダー幅',     desc:'--cert-seal-border-width。例: 2px'},
+  {key:'cert_seal_bg',           lbl:'印鑑背景色',         desc:'--cert-seal-bg。例: transparent', type:'color'},
+  {key:'cert_seal_font_family',  lbl:'印鑑フォント',       desc:'--cert-seal-font-family。例: Noto Serif JP'},
+  {key:'cert_seal_text_size',    lbl:'印鑑テキストサイズ', desc:'--cert-seal-text-size。例: 12px'},
+  {key:'cert_seal_text_color',   lbl:'印鑑テキスト色',     desc:'--cert-seal-text-color。例: #B83232', type:'color'},
+  {key:'cert_seal_line_height',  lbl:'印鑑行間',           desc:'--cert-seal-line-height。例: 1.5'},
+  {sec:'🧭 ナビ設定'},
+  {key:'next_lock_sec', lbl:'「次へ」ボタンロック秒数', desc:'到着時に「次へ」ボタンをロックする秒数（保険タイマー）。例: 30（0で無制限待機）'},
+];
+
+const COURSE_FIELDS = [
+  {key:'course_id',               lbl:'コースID',                     desc:'一意の識別子（英数字）', w:140},
+  {key:'course_name',             lbl:'コース名',                     desc:'画面に表示される名前', w:150},
+  {key:'course_type',             lbl:'コースタイプ',                 desc:'注意アナウンスの種別', w:80, type:'sel', opts:['市街地','公園','混在']},
+  {key:'display_order',           lbl:'表示順',                       desc:'数値が小さいほど上', w:45, type:'num'},
+  {key:'recommended',             lbl:'おすすめ★',                   desc:'TRUEで★おすすめ表示', w:70, type:'bool'},
+  {key:'duration_min',            lbl:'所要時間（分）',               desc:'目安の所要時間', w:65, type:'num'},
+  {key:'distance_m',              lbl:'距離（m）',                    desc:'コース全長の目安', w:60, type:'num'},
+  {key:'start_date',              lbl:'公開開始日',                   desc:'YYYY-MM-DD（空白=常時）'},
+  {key:'end_date',                lbl:'公開終了日',                   desc:'YYYY-MM-DD（空白=常時）'},
+  {key:'audio_theme_url',         lbl:'テーマナレーション音声URL',    desc:'コース開始時に流れる音声', type:'audio'},
+  {key:'theme_text',              lbl:'テーマナレーション テキスト',  desc:'音声がない場合に読み上げ'},
+  {key:'audio_finish_url',        lbl:'完走音声URL',                  desc:'ゴール到達時に流れる音声（なければTTS）', type:'audio'},
+  {key:'finish_text',             lbl:'完走テキスト',                 desc:'ゴール時に読み上げるテキスト（音声URLがない場合に使用）'},
+];
+
+const SCHEMAS = {
+  spots:[
+    {key:'spot_id',            lbl:'スポットID',              desc:'一意の識別子（英数字）', w:140},
+    {key:'spot_name',          lbl:'スポット名',              desc:'画面・音声に使われる名称', w:150},
+    {key:'lat',                lbl:'緯度',                    desc:'例: 39.319826', w:95},
+    {key:'lng',                lbl:'経度',                    desc:'例: 140.523891', w:95},
+    {key:'approach_dist',      lbl:'接近距離（m）',           desc:'この距離以内で「まもなく」を再生', w:70, type:'num'},
+    {key:'arrive_dist',        lbl:'到着判定距離（m）',       desc:'この距離以内で到着と判定', w:75, type:'num'},
+    {key:'audio_start_url',    lbl:'出発音声URL',             desc:'このスポットへ向かう時に流れる', w:210, type:'audio'},
+    {key:'audio_approach_url', lbl:'接近音声URL',             desc:'近づいたときに流れる', w:210, type:'audio'},
+    {key:'audio_arrive_url',   lbl:'到着音声URL',             desc:'到着時に流れる', w:210, type:'audio'},
+    {key:'audio_explain_url',  lbl:'解説音声URL',             desc:'到着後の解説（到着音声の次に再生）', w:210, type:'audio'},
+    {key:'audio_next_url',     lbl:'次スポット誘導音声URL',   desc:'次スポットへ移動を促す', w:210, type:'audio'},
+    {key:'audio_goal_url',     lbl:'ゴール音声URL',           desc:'最終スポット到着時に流れる', w:210, type:'audio'},
+    {key:'description',        lbl:'説明テキスト',            desc:'到着画面に表示される説明文', w:250},
+    {key:'keywords',           lbl:'キーワード',              desc:'カンマ区切り。例: 江戸時代,内蔵', w:150},
+    {key:'photo_url',          lbl:'写真URL',                 desc:'Google DriveのURLまたは直接URL', w:210},
+  ],
+  facilities:[
+    {key:'facility_id',   lbl:'施設ID',              desc:'一意の識別子（英数字）', w:140},
+    {key:'facility_name', lbl:'施設名',              desc:'トースト通知に表示される名称', w:150},
+    {key:'lat',           lbl:'緯度',                desc:'施設の緯度', w:95},
+    {key:'lng',           lbl:'経度',                desc:'施設の経度', w:95},
+    {key:'trigger_dist',  lbl:'通知距離（m）',       desc:'この距離以内に近づいたら通知', w:70, type:'num'},
+    {key:'announce_text', lbl:'アナウンステキスト',  desc:'通知バナーと音声フォールバックに使用', w:220},
+    {key:'audio_url',     lbl:'音声URL',             desc:'近づいたときに再生するMP3等', w:210, type:'audio'},
+    {key:'start_date',    lbl:'有効開始日',          desc:'YYYY-MM-DD（空白=常時）', w:95},
+    {key:'end_date',      lbl:'有効終了日',          desc:'YYYY-MM-DD（空白=常時）', w:95},
+  ],
+};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+
+const state={
+  sheetId:null, gasUrl:null, gasConnected:false, loaded:false,
+  config:[], courses:[], spots:[], course_spots:[], facilities:[],
+  originals:{},
+};
+const changes={config:{}, courses:{}, spots:{}, course_spots:{}, facilities:{}};
+let currentTab='config';
+let currentAudio=null, currentPlayBtn=null;
+let leafletMap=null, mapLayerGroup=null;
+let selectedRow={courses:null, spots:null, facilities:null};
+
+// ═══════════════════════════════════════════════════════
+// CSV / UTILITIES
+// ═══════════════════════════════════════════════════════
+
+function parseCSV(text){
+  const rows=[]; const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  if(lines.length<2) return rows;
+  const headers=splitL(lines[0]);
+  for(let i=1;i<lines.length;i++){const ln=lines[i];if(!ln.trim())continue;const vals=splitL(ln),obj={};headers.forEach((h,x)=>{obj[h.trim()]=(vals[x]||'').trim();});rows.push(obj);}
+  return rows;
+}
+function splitL(line){const r=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(c===','&&!inQ){r.push(cur);cur='';}else cur+=c;}r.push(cur);return r;}
+function esc(v){const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`  :s;}
+function buildCSV(hdrs,rows){return[hdrs.map(esc).join(','),...rows.map(r=>hdrs.map(h=>esc(r[h]??'')).join(','))].join('\n');}
+function dc(o){return JSON.parse(JSON.stringify(o));}
+function cleanConfigRows(rows){return (rows||[]).filter(r=>r.key !== 'header_image_id');}
+
+function parseSheetId(input){
+  const m=input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if(m) return m[1];
+  if(/^[a-zA-Z0-9_-]{20,}$/.test(input.trim())) return input.trim();
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════
+// DATA LOADING
+// ═══════════════════════════════════════════════════════
+
+async function fetchGviz(sid,sheet){
+  const res=await fetch(`https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`);
+  if(!res.ok) throw new Error(`シート「${sheet}」の取得に失敗 (${res.status})`);
+  return(await res.text()).replace(/^\uFEFF/,'');
+}
+
+async function loadData(){
+  const raw=document.getElementById('sheet-url').value.trim();
+  const sid=parseSheetId(raw);
+  if(!sid){notify('スプレッドシートのURLまたはIDを確認してください',true);return;}
+  state.sheetId=sid;
+  showLd('データを読み込んでいます…'); setStat('loading','読み込み中…');
+  try{
+    const sheets=['config','courses','spots','course_spots','facilities'];
+    const csvs=await Promise.all(sheets.map(s=>fetchGviz(sid,s)));
+    sheets.forEach((s,i)=>{state[s]=parseCSV(csvs[i]);});
+    state.config=cleanConfigRows(state.config);
+    state.originals={};
+    sheets.forEach(s=>{state.originals[s]=dc(state[s]);});
+    Object.keys(changes).forEach(k=>{changes[k]={};});
+    state.loaded=true;
+    updateBadges(); showTab(currentTab);
+    setStat('ok',`読み込み完了 ✓ — コース:${state.courses.length} / スポット:${state.spots.length} / コース構成:${state.course_spots.length} / 施設:${state.facilities.length}`);
+    notify('読み込み完了しました ✓');
+  }catch(e){console.error(e);setStat('error',e.message);notify(e.message,true);}
+  finally{hideLd();}
+}
+
+// ═══════════════════════════════════════════════════════
+// GAS CLIENT
+// ═══════════════════════════════════════════════════════
+
+function onGasUrlChange(){
+  state.gasUrl=document.getElementById('gas-url').value.trim()||null;
+  state.gasConnected=false;
+  updateGasUI();
+}
+
+async function testGas(){
+  const url=document.getElementById('gas-url').value.trim();
+  if(!url){notify('GAS URLを入力してください',true);return;}
+  state.gasUrl=url; setStat('loading','GAS接続テスト中…');
+  const ok=await gasPing(url);
+  state.gasConnected=ok; updateGasUI();
+  if(ok){notify('GAS接続成功 ✓ 直接保存が使えます');setStat('ok','GAS接続済み — スプレッドシートへの直接保存が有効です');}
+  else{notify('GAS接続に失敗しました。URLとデプロイ設定を確認してください',true);setStat('error','GAS接続失敗');}
+}
+
+function gasPing(url){
+  return new Promise(resolve=>{
+    const cb='_gping_'+Date.now();
+    window[cb]=data=>{delete window[cb];if(sc.parentNode)sc.parentNode.removeChild(sc);resolve(!!(data&&data.ok));};
+    const sc=document.createElement('script');
+    sc.src=url+'?action=ping&callback='+cb;
+    sc.onerror=()=>resolve(false);
+    document.head.appendChild(sc);
+    setTimeout(()=>{if(window[cb]){delete window[cb];resolve(false);}},8000);
+  });
+}
+
+async function gasWrite(sheetName,rows){
+  if(!state.gasUrl) throw new Error('GAS URLが設定されていません');
+  await fetch(state.gasUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'write',sheet:sheetName,rows})});
+}
+
+function updateGasUI(){
+  const inp=document.getElementById('gas-url');
+  const lbl=document.getElementById('gas-status-lbl');
+  const saveBtn=document.getElementById('save-btn');
+  const ml=document.getElementById('mode-label');
+  const sg=document.getElementById('s-gas');
+  if(!state.gasUrl){
+    inp.className='hdr-in';lbl.textContent='';saveBtn.style.display='none';
+    ml.textContent='CSV出力のみ';ml.style.color='var(--dim)';sg.textContent='';
+  }else if(state.gasConnected){
+    inp.className='hdr-in gas-ok';lbl.innerHTML='<span style="color:var(--green);font-size:9px;font-weight:600;">✓ 接続済み</span>';
+    saveBtn.style.display='inline-flex';ml.textContent='読み書きモード';ml.style.color='var(--green)';sg.textContent='🟢 GAS接続済み — 直接保存有効';
+  }else{
+    inp.className='hdr-in';lbl.innerHTML='<span style="color:var(--gold);font-size:9px;">⚡ 未検証</span>';
+    saveBtn.style.display='none';ml.textContent='未接続';ml.style.color='var(--gold)';sg.textContent='「接続テスト」でGAS接続を確認してください';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVE
+// ═══════════════════════════════════════════════════════
+
+async function saveCurrentSheet(){
+  if(!state.loaded){notify('データを読み込んでください',true);return;}
+  if(!state.gasConnected){exportCurrentSheet();notify('GAS未接続のためCSVでダウンロードします');return;}
+
+  showLd('スプレッドシートに保存中…'); setStat('loading','保存中…');
+  try{
+    const sheetsToSave=currentTab==='courses'?['courses','course_spots']:[currentTab];
+    for(const s of sheetsToSave){
+      const rows=s==='config'?cleanConfigRows(state.config):state[s];
+      await gasWrite(s,rows);
+    }
+    // Re-read after short delay
+    await new Promise(r=>setTimeout(r,2200));
+    const allSheets=currentTab==='courses'?['courses','course_spots']:[currentTab];
+    for(const s of allSheets){
+      const csv=await fetchGviz(state.sheetId,s);
+      state[s]=parseCSV(csv);
+      state.originals[s]=dc(state[s]);
+      changes[s]={};
+      document.getElementById('dot-'+s)?.classList.remove('show');
+    }
+    updateBadges(); showTab(currentTab);
+    setStat('ok','保存完了 ✓');notify('スプレッドシートへの保存が完了しました ✓');
+  }catch(e){console.error(e);setStat('error','保存失敗: '+e.message);notify('保存に失敗しました: '+e.message,true);}
+  finally{hideLd();}
+}
+
+// ═══════════════════════════════════════════════════════
+// CHANGE TRACKING
+// ═══════════════════════════════════════════════════════
+
+function recChg(sheet,k,oldV,newV){
+  if(String(oldV)===String(newV)) delete changes[sheet][k];
+  else changes[sheet][k]={old:oldV,new:newV};
+  document.getElementById('dot-'+sheet)?.classList.toggle('show',Object.keys(changes[sheet]).length>0);
+  if(sheet===currentTab) updateChgBadge(sheet);
+}
+
+function updateChgBadge(sheet){
+  const n=Object.keys(changes[sheet]||{}).length;
+  const b=document.getElementById('chg-badge');
+  if(b){b.classList.toggle('show',n>0);if(n>0)b.textContent=`${n}件の変更あり`;}
+}
+
+function resetChanges(){
+  if(!state.loaded) return;
+  if(!confirm('このシートの変更をすべて元に戻しますか？')) return;
+  const s=currentTab;
+  const toReset=s==='courses'?['courses','course_spots']:[s];
+  toReset.forEach(k=>{state[k]=dc(state.originals[k]);changes[k]={};document.getElementById('dot-'+k)?.classList.remove('show');});
+  showTab(s);notify('変更を元に戻しました');
+}
+
+// ═══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+
+const TAB_LABELS={config:'CONFIG（設定）',courses:'コース + コース構成',spots:'SPOTS（スポット）',facilities:'FACILITIES（施設）'};
+function showTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.nav-it').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+tab)?.classList.add('active');
+  document.getElementById('config-rail')?.classList.toggle('show', tab==='config');
+  document.getElementById('ed-title').innerHTML=`SHEET: <em>${TAB_LABELS[tab]||tab}</em>`;
+  if(!state.loaded){document.getElementById('ed-body').innerHTML='<div class="empty-st"><div class="empty-ic">📂</div>先にデータを読み込んでください</div>';return;}
+  if(tab==='config'){renderConfig();showRpConfig();}
+  else if(tab==='courses'){renderCourses();showRpMap();}
+  else if(tab==='spots'){renderTable('spots');showRpMap();}
+  else if(tab==='facilities'){renderTable('facilities');showRpMap();}
+  updateChgBadge(tab);
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIG RENDER (SPLIT VIEW)
+// ═══════════════════════════════════════════════════════
+
+const CONFIG_SHORTCUTS = [
+  {key:'area_name', label:'エリア'},
+  {key:'color_bg', label:'背景'},
+  {key:'header_type', label:'ヘッダー'},
+  {key:'home_badge_text', label:'バッジ'},
+  {key:'caution_shigaichi', label:'コース'},
+  {key:'caution_shigaichi_url', label:'案内'},
+  {key:'special_enabled', label:'特別'},
+  {key:'cert_award_title', label:'修了証'},
+  {key:'next_lock_sec', label:'その他'},
+];
+
+const TITLE_STYLE_DEFS = [
+  {key:'app_title_color',       lbl:'アプリタイトル文字色',       desc:'ホーム上部の app_title の文字色。例: #FAF7F1', type:'color'},
+  {key:'app_title_font_size',   lbl:'アプリタイトル文字サイズ',   desc:'ホーム上部の app_title の文字サイズ。例: 30px'},
+  {key:'app_title_font',        lbl:'アプリタイトルフォント',     desc:'ホーム上部の app_title 専用フォント。未設定ならタイトルフォントを使用'},
+  {key:'app_subtitle_color',    lbl:'サブタイトル文字色',         desc:'ホーム上部の app_subtitle の文字色。例: rgba(250,247,241,.35)', type:'color'},
+  {key:'app_subtitle_font_size',lbl:'サブタイトル文字サイズ',     desc:'ホーム上部の app_subtitle の文字サイズ。例: 11px'},
+  {key:'app_subtitle_font',     lbl:'サブタイトルフォント',       desc:'ホーム上部の app_subtitle 専用フォント。未設定なら本文フォントを使用'},
+];
+
+function getConfigDisplayDefs(){
+  const areaStart = CONFIG_DEFS.findIndex((d,i)=>d.sec && CONFIG_DEFS[i+1]?.key === 'area_pref');
+  if(areaStart < 0) return CONFIG_DEFS;
+  let areaEnd = CONFIG_DEFS.findIndex((d,i)=>i > areaStart && d.sec);
+  if(areaEnd < 0) areaEnd = CONFIG_DEFS.length;
+  const areaBlock = CONFIG_DEFS.slice(areaStart, areaEnd);
+  const out = [];
+  CONFIG_DEFS.forEach((def, idx)=>{
+    if(idx >= areaStart && idx < areaEnd) return;
+    if(def.key === 'header_image_id') return;
+    out.push(def);
+    if(def.key === 'app_subtitle') out.push(...TITLE_STYLE_DEFS);
+    if(def.key === 'area_name') out.push(...areaBlock);
+  });
+  return out;
+}
+
+function renderConfigRail(){
+  const rail = document.getElementById('config-rail');
+  if(!rail) return;
+  rail.innerHTML = '';
+  CONFIG_SHORTCUTS.forEach(item=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cfg-jump-btn';
+    btn.textContent = item.label;
+    btn.title = item.label + '設定へ移動';
+    btn.onclick = ()=>focusConfigKey(item.key);
+    rail.appendChild(btn);
+  });
+}
+
+function renderConfig(){
+  const map={}, origMap={};
+  state.config.forEach(r=>{if(r.key) map[r.key]=r.value??'';});
+  (state.originals.config||[]).forEach(r=>{if(r.key) origMap[r.key]=r.value??'';});
+  renderConfigRail();
+
+  const body=document.getElementById('ed-body'); body.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.innerHTML='<div class="banner"><span>ℹ</span><div><strong>左列が現在スプレッドシートに保存されている値、右列が編集中の値です。</strong> 変更箇所は黄色でハイライトされます。<br>右のプレビューは編集内容をリアルタイムで反映します。保存はCSVダウンロードまたは「💾 スプレッドシートに保存」で行ってください。</div></div>';
+  body.appendChild(wrap);
+
+  const grid=document.createElement('div'); grid.className='cfg-split';
+
+  let sec=null;
+  getConfigDisplayDefs().forEach(def=>{
+    if(def.sec){
+      // Section headers (both columns)
+      const lh=document.createElement('div');lh.className='cfg-sec-h';lh.textContent=def.sec;
+      const rh=document.createElement('div');rh.className='cfg-sec-h right';rh.textContent=def.sec;
+      grid.appendChild(lh); grid.appendChild(rh);
+      sec=true; return;
+    }
+    if(!sec) return;
+    const cur=map[def.key]||'', orig=origMap[def.key]||'', isChg=cur!==orig;
+
+    // LEFT: saved value
+    const lc=document.createElement('div'); lc.className='cfg-row';
+    let savedDisp=orig||'';
+    let colorPreview='';
+    if(def.type==='color'&&orig) colorPreview=`<span class="cfg-color-preview" style="background:${orig}"></span>`;
+    lc.innerHTML=`<div class="cfg-kl">${def.lbl}</div><div class="cfg-kn">${def.key}</div>${def.desc?`<div class="cfg-kd">${def.desc}</div>`:''}<div class="cfg-saved-val ${orig?'has':''}">${colorPreview}${orig||'（未設定）'}</div>`;
+
+    // RIGHT: edit form
+    const rc=document.createElement('div'); rc.className='cfg-row edit-col'+(isChg?' chg':'');
+
+    const inp=document.createElement('input'); inp.type='text'; inp.className='cfg-in'; inp.value=cur;
+    inp.addEventListener('input',()=>{
+      setCV(def.key,inp.value);
+      const chg=inp.value!==orig;
+      rc.classList.toggle('chg',chg);
+      recChg('config',def.key,orig,inp.value);
+      updateConfigPreview();
+    });
+
+    const kLbl=document.createElement('div');kLbl.className='cfg-kl';kLbl.textContent=def.lbl;
+    rc.appendChild(kLbl);
+
+    if(def.type==='color'){
+      const row=document.createElement('div'); row.className='cfg-in-row';
+      const chip=document.createElement('div'); chip.className='color-chip'; chip.style.background=cur||'#888';
+      const ci=document.createElement('input'); ci.type='color'; ci.value=(cur&&cur.startsWith('#')&&cur.length>=7)?cur.slice(0,7):'#888888';
+      ci.style.cssText='position:absolute;opacity:0;width:0;height:0;';
+      ci.addEventListener('input',()=>{inp.value=ci.value;chip.style.background=ci.value;inp.dispatchEvent(new Event('input'));});
+      inp.addEventListener('input',()=>{chip.style.background=inp.value;if(inp.value.length>=7)ci.value=inp.value.slice(0,7);});
+      chip.addEventListener('click',()=>ci.click());
+      row.appendChild(inp); row.appendChild(chip); row.appendChild(ci);
+      rc.appendChild(row);
+      // 色変更時にプレビューフラッシュ
+      inp.addEventListener('input',()=>flashPreviewElement(def.key));
+    } else if(FONT_KEYS.includes(def.key)){
+      // フォントピッカー
+      mkFontPicker(def.key, cur, orig, rc, val=>{
+        const normalized = normalizePxValue(def.key, val);
+        setCV(def.key, normalized);
+        const chg=normalized!==orig;
+        rc.classList.toggle('chg',chg);
+        recChg('config',def.key,orig,normalized);
+        updateConfigPreview();
+      });
+    } else if(def.type==='audio'){
+      const row=document.createElement('div'); row.className='cfg-in-row';
+      row.appendChild(inp); row.appendChild(mkPlayBtn(()=>inp.value,def.lbl));
+      rc.appendChild(row);
+    } else if(def.type==='bool'){
+      const sel=document.createElement('select'); sel.className='cfg-in'; sel.style.marginTop='4px';
+      ['','TRUE','FALSE'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(cur===v)o.selected=true;sel.appendChild(o);});
+      sel.addEventListener('change',()=>{setCV(def.key,sel.value);const chg=sel.value!==orig;rc.classList.toggle('chg',chg);recChg('config',def.key,orig,sel.value);updateConfigPreview();});
+      rc.appendChild(sel);
+    } else if(def.type==='sel'&&def.opts){
+      const sel=document.createElement('select'); sel.className='cfg-in'; sel.style.marginTop='4px';
+      ['',...def.opts].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(cur===v)o.selected=true;sel.appendChild(o);});
+      sel.addEventListener('change',()=>{setCV(def.key,sel.value);const chg=sel.value!==orig;rc.classList.toggle('chg',chg);recChg('config',def.key,orig,sel.value);updateConfigPreview();});
+      rc.appendChild(sel);
+    } else {
+      // px自動補完対象はblur時に正規化
+      if(PX_AUTO_KEYS.includes(def.key)){
+        inp.placeholder='数字のみでも可（例: 14）';
+        inp.addEventListener('blur',()=>{
+          const normalized=normalizePxValue(def.key,inp.value);
+          if(normalized!==inp.value){inp.value=normalized;inp.dispatchEvent(new Event('input'));}
+        });
+      }
+      rc.appendChild(inp);
+    }
+
+    grid.appendChild(lc); grid.appendChild(rc);
+  });
+
+  body.appendChild(grid);
+  updateConfigPreview();
+  updateChgBadge('config');
+}
+
+function setCV(key,val){const ex=state.config.find(r=>r.key===key);if(ex)ex.value=val;else state.config.push({key,value:val});}
+
+function getCfg(key){
+  const r=state.config.find(r=>r.key===key);
+  return r?r.value:'';
+}
+
+function previewFontSize(val, fallback){
+  const m=String(val||'').trim().match(/^(\d+(?:\.\d+)?)px$/i);
+  if(!m) return val||fallback;
+  return Math.max(6, Math.round(parseFloat(m[1]) * 0.47)) + 'px';
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIG LIVE PREVIEW
+// ═══════════════════════════════════════════════════════
+
+function showRpConfig(){
+  document.getElementById('rp-config').style.display='';
+  document.getElementById('rp-map').style.display='none';
+  document.getElementById('rp-title').textContent='📱 ライブプレビュー';
+  document.getElementById('zoom-controls').style.display='flex';
+  document.getElementById('preview-mode-controls').style.display='flex';
+  document.getElementById('btn-lbl-toggle').style.display='';
+  // 保存済みズームを復元
+  const savedZoom = parseFloat(localStorage.getItem('lwg_sim_zoom'));
+  if(savedZoom) { simZoom=savedZoom; document.getElementById('zoom-val').textContent=Math.round(simZoom*100)+'%'; }
+  updateConfigPreview();
+}
+
+let previewMode = 'dark';
+
+function setPreviewMode(mode){
+  previewMode = mode;
+  ['dark','light','cert'].forEach(m=>document.getElementById('pm-'+m)?.classList.toggle('active', m===mode));
+  updateConfigPreview();
+}
+
+function renderCertPreview(rp,c){
+  const phone=document.createElement('div'); phone.className='sim-phone';
+  phone.style.background=c.bg;
+  const notch=document.createElement('div'); notch.className='sim-notch'; notch.style.background=c.ink;
+  const body=document.createElement('div');
+  body.style.cssText=`height:100%;padding:34px 16px 18px;background:${c.bg};display:flex;align-items:center;justify-content:center;`;
+
+  const cert=document.createElement('div');
+  cert.style.cssText=`width:100%;min-height:360px;background:${c.paper};border:2px solid ${c.gold};box-shadow:inset 0 0 0 5px ${c.paper},inset 0 0 0 6px ${c.border};padding:28px 18px 20px;color:${c.ink};display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;`;
+
+  const award=document.createElement('div');
+  award.textContent=getCfg('cert_award_title')||'修了証';
+  award.style.cssText=`font-family:'${getCfg('cert_title_font_family')||'serif'}';font-size:${getCfg('cert_title_font_size')||'32px'};letter-spacing:${getCfg('cert_title_letter_spacing')||'.18em'};font-weight:700;color:${c.ink};margin-top:8px;margin-bottom:20px;`;
+
+  const name=document.createElement('div');
+  name.textContent='まち歩き参加者 様';
+  name.style.cssText=`font-size:14px;border-bottom:1px solid ${c.border};padding:0 12px 6px;margin-bottom:20px;width:86%;`;
+
+  const text=document.createElement('div');
+  text.textContent=getCfg('cert_body_text')||'全てのまち歩きコースを修了したことをここに証します。';
+  text.style.cssText=`font-size:11px;line-height:1.8;color:${c.muted};margin-bottom:22px;`;
+
+  const issuer=document.createElement('div');
+  issuer.textContent=getCfg('cert_issuer')||getCfg('area_name')||c.title;
+  issuer.style.cssText='font-size:11px;align-self:flex-end;margin-right:10px;';
+
+  const seal=document.createElement('div');
+  seal.textContent=getCfg('cert_seal_text')||'修了';
+  seal.style.cssText=`position:absolute;right:18px;bottom:18px;width:${getCfg('cert_seal_size')||'64px'};height:${getCfg('cert_seal_size')||'64px'};border-radius:50%;border:${getCfg('cert_seal_border_width')||'2px'} solid ${getCfg('cert_seal_border_color')||c.primary};background:${getCfg('cert_seal_bg')||'transparent'};color:${getCfg('cert_seal_text_color')||c.primary};font-family:'${getCfg('cert_seal_font_family')||'serif'}';font-size:${getCfg('cert_seal_text_size')||'12px'};line-height:${getCfg('cert_seal_line_height')||'1.5'};display:flex;align-items:center;justify-content:center;white-space:pre-line;`;
+
+  cert.appendChild(award); cert.appendChild(name); cert.appendChild(text); cert.appendChild(issuer); cert.appendChild(seal);
+  body.appendChild(cert); phone.appendChild(notch); phone.appendChild(body);
+
+  const phoneWrap=document.createElement('div');
+  phoneWrap.className='sim-phone-wrap';
+  applySimZoom(phoneWrap);
+  phoneWrap.appendChild(phone);
+  rp.appendChild(phoneWrap);
+}
+
+function renderCertPreview(rp,c){
+  const phone=document.createElement('div'); phone.className='sim-phone';
+  phone.style.background='#2A2218';
+  const notch=document.createElement('div'); notch.className='sim-notch'; notch.style.background=c.ink;
+  const body=document.createElement('div');
+  body.style.cssText='height:100%;padding:24px 16px 40px;background:#2A2218;overflow:auto;display:flex;align-items:flex-start;justify-content:center;';
+
+  const cert=document.createElement('div');
+  cert.style.cssText='width:100%;background:#FBF5E8;position:relative;border:3px solid #9A7A3A;box-shadow:0 0 0 6px #FBF5E8,0 0 0 8px #9A7A3A,0 8px 32px rgba(0,0,0,.5);';
+  ['tl','tr','bl','br'].forEach(pos=>{
+    const corner=document.createElement('div');
+    const top=pos.includes('t')?'top:10px;':'bottom:10px;';
+    const side=pos.includes('l')?'left:10px;border-left:2px solid #C9A85C;':'right:10px;border-right:2px solid #C9A85C;';
+    const edge=pos.includes('t')?'border-top:2px solid #C9A85C;':'border-bottom:2px solid #C9A85C;';
+    corner.style.cssText=`position:absolute;width:24px;height:24px;${top}${side}${edge}`;
+    cert.appendChild(corner);
+  });
+
+  const inner=document.createElement('div');
+  inner.style.cssText='padding:28px 24px 32px;';
+  const titleRow=document.createElement('div');
+  titleRow.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:18px;';
+  const ruleL=document.createElement('div');
+  ruleL.style.cssText='flex:1;height:1px;background:linear-gradient(to right,transparent,#9A7A3A);';
+  const ruleR=document.createElement('div');
+  ruleR.style.cssText='flex:1;height:1px;background:linear-gradient(to left,transparent,#9A7A3A);';
+  const award=document.createElement('div');
+  award.textContent=getCfg('cert_award_title')||'修了証';
+  award.style.cssText=`font-family:'${getCfg('cert_title_font_family')||'serif'}';font-size:${getCfg('cert_title_font_size')||'26px'};letter-spacing:${getCfg('cert_title_letter_spacing')||'.35em'};font-weight:700;color:#2A1A0A;white-space:nowrap;`;
+  titleRow.appendChild(ruleL); titleRow.appendChild(award); titleRow.appendChild(ruleR);
+
+  const course=state.courses[0]||{};
+  const courseLabel=document.createElement('div');
+  courseLabel.textContent='コース';
+  courseLabel.style.cssText='font-size:9px;color:#9A7A3A;letter-spacing:.25em;text-align:center;margin-bottom:4px;';
+  const courseName=document.createElement('div');
+  courseName.textContent=course.course_name||'まち歩きコース';
+  courseName.style.cssText='font-size:15px;font-weight:700;color:#2A1A0A;text-align:center;border-bottom:1px solid #D4C9B0;padding-bottom:14px;margin-bottom:14px;letter-spacing:.08em;line-height:1.5;';
+  const text=document.createElement('div');
+  text.innerHTML='あなたは上記のまち歩きコースを<br>見事完走されましたことを<br>ここに証し、表彰いたします。';
+  text.style.cssText='font-size:13px;line-height:2.2;color:#3A2A1A;text-align:center;letter-spacing:.08em;margin-bottom:16px;';
+  const extra=document.createElement('div');
+  extra.textContent=getCfg('cert_body_text')||'';
+  extra.style.cssText='font-size:11px;color:#7A6A5A;text-align:center;line-height:1.9;margin-bottom:16px;letter-spacing:.04em;';
+
+  const spotRows=state.course_spots.filter(cs=>cs.course_id===course.course_id).sort((a,b)=>(parseInt(a.order)||0)-(parseInt(b.order)||0));
+  const spots=spotRows.map(cs=>state.spots.find(s=>s.spot_id===cs.spot_id)).filter(Boolean).slice(0,6);
+  const spotsLabel=document.createElement('div');
+  spotsLabel.textContent='訪問スポット';
+  spotsLabel.style.cssText='font-size:9px;color:#9A7A3A;letter-spacing:.25em;text-align:center;margin-bottom:8px;border-top:1px solid #D4C9B0;padding-top:12px;';
+  const spotsGrid=document.createElement('div');
+  spotsGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;margin-bottom:14px;';
+  (spots.length?spots:[{spot_name:'スポット1'},{spot_name:'スポット2'},{spot_name:'スポット3'}]).forEach((s,i)=>{
+    const item=document.createElement('div'); item.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;';
+    const num=document.createElement('div'); num.textContent=String(i+1); num.style.cssText='width:22px;height:22px;border-radius:50%;background:#9A7A3A;color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;';
+    const nm=document.createElement('div'); nm.textContent=s.spot_name||s.spot_id||'スポット'; nm.style.cssText='font-size:9px;color:#3A2A1A;text-align:center;line-height:1.3;max-width:72px;';
+    item.appendChild(num); item.appendChild(nm); spotsGrid.appendChild(item);
+  });
+
+  const stats=document.createElement('div');
+  stats.style.cssText='display:flex;justify-content:center;align-items:center;border:1px solid #D4C9B0;border-radius:4px;overflow:hidden;margin-bottom:14px;';
+  [
+    {v:course.distance_m||'0',u:'m',l:'歩行距離'},
+    {v:'0',u:'いいね',l:'今回の獲得'},
+    {v:String(spots.length||3),u:'箇所',l:'訪問スポット'},
+  ].forEach((st,i)=>{
+    const cell=document.createElement('div'); cell.style.cssText=`flex:1;text-align:center;padding:8px 4px;${i?'border-left:1px solid #D4C9B0;':''}`;
+    cell.innerHTML=`<div><span style="font-size:18px;font-weight:700;color:#9A7A3A;">${st.v}</span><span style="font-size:10px;color:#7A6A5A;margin-left:1px;">${st.u}</span></div><div style="font-size:9px;color:#9A7A5A;letter-spacing:.08em;margin-top:1px;">${st.l}</div>`;
+    stats.appendChild(cell);
+  });
+
+  const date=document.createElement('div');
+  date.textContent=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+  date.style.cssText='font-size:11px;color:#7A6A5A;text-align:center;letter-spacing:.15em;margin-bottom:18px;';
+  const issuer=document.createElement('div');
+  issuer.textContent=getCfg('cert_issuer')||getCfg('area_name')||c.title;
+  issuer.style.cssText='font-size:13px;color:#2A1A0A;letter-spacing:.08em;line-height:1.7;text-align:right;';
+  const seal=document.createElement('div');
+  seal.textContent=getCfg('cert_seal_text')||'修了';
+  seal.style.cssText=`width:${getCfg('cert_seal_size')||'60px'};height:${getCfg('cert_seal_size')||'60px'};border-radius:50%;border:${getCfg('cert_seal_border_width')||'3px'} double ${getCfg('cert_seal_border_color')||c.primary};background:${getCfg('cert_seal_bg')||'rgba(184,50,50,.04)'};color:${getCfg('cert_seal_text_color')||c.primary};font-family:'${getCfg('cert_seal_font_family')||'serif'}';font-size:${getCfg('cert_seal_text_size')||'10px'};line-height:${getCfg('cert_seal_line_height')||'1.4'};display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-line;`;
+  const footer=document.createElement('div');
+  footer.style.cssText='display:flex;justify-content:flex-end;align-items:center;gap:14px;padding-top:10px;border-top:1px solid #D4C9B0;margin-bottom:20px;';
+  footer.appendChild(issuer); footer.appendChild(seal);
+  const note=document.createElement('div');
+  note.textContent='スクリーンショットで記念に保存できます';
+  note.style.cssText='font-size:10px;color:#B8A890;text-align:center;margin-bottom:10px;letter-spacing:.06em;';
+  const btn=document.createElement('div');
+  btn.textContent='プライズを確認する';
+  btn.style.cssText='background:#9A7A3A;color:white;padding:12px;border-radius:4px;text-align:center;font-size:12px;letter-spacing:.12em;';
+
+  inner.appendChild(titleRow); inner.appendChild(courseLabel); inner.appendChild(courseName); inner.appendChild(text); inner.appendChild(extra); inner.appendChild(spotsLabel); inner.appendChild(spotsGrid); inner.appendChild(stats); inner.appendChild(date); inner.appendChild(footer); inner.appendChild(note); inner.appendChild(btn);
+  cert.appendChild(inner); body.appendChild(cert); phone.appendChild(notch); phone.appendChild(body);
+  const phoneWrap=document.createElement('div');
+  phoneWrap.className='sim-phone-wrap';
+  applySimZoom(phoneWrap);
+  phoneWrap.appendChild(phone);
+  rp.appendChild(phoneWrap);
+}
+
+function updateConfigPreview(){
+  if(currentTab!=='config') return;
+  const ink=getCfg('color_ink')||'#1C1A16';
+  const primary=getCfg('color_primary')||'#B83232';
+  const gold=getCfg('color_gold')||'#9A7A3A';
+  const bg=getCfg('color_bg')||'#F4EFE4';
+  const paper=getCfg('color_paper')||'#FAF7F1';
+  const muted=getCfg('color_muted')||'#7A7060';
+  const border=getCfg('color_border')||'#D4C9B0';
+  const title=getCfg('app_title')||'まち歩きガイド';
+  const sub=getCfg('app_subtitle')||'';
+  const headerType=getCfg('header_type');
+  const headerImg=getCfg('header_image_url');
+
+  // Sample courses for preview
+  const sampleCourses=state.courses.slice(0,3);
+
+  const rp=document.getElementById('rp-config');
+  rp.innerHTML='';
+  rp.style.cssText='height:100%;display:flex;align-items:flex-start;justify-content:flex-start;background:var(--bg);padding:10px;overflow:auto;';
+
+  if(previewMode==='cert'){
+    renderCertPreview(rp,{ink,primary,gold,bg,paper,muted,border,title});
+    return;
+  }
+
+  const isLight = previewMode==='light';
+  const textMain = isLight ? ink : '#FAF7F1';
+  const textSoft = isLight ? muted : 'rgba(250,247,241,.4)';
+  const titleColor=getCfg('app_title_color')||textMain;
+  const titleSize=previewFontSize(getCfg('app_title_font_size'),'14px');
+  const titleFont=getCfg('app_title_font')||getCfg('font_title')||'Noto Serif JP';
+  const subColor=getCfg('app_subtitle_color')||textSoft;
+  const subSize=previewFontSize(getCfg('app_subtitle_font_size'),'7px');
+  const subFont=getCfg('app_subtitle_font')||getCfg('font_body')||'Noto Sans JP';
+  const phoneBg = isLight ? bg : ink;
+  const cardBg = isLight ? paper : 'rgba(255,255,255,.05)';
+  const cardBorder = isLight ? border : 'rgba(255,255,255,.08)';
+
+  const phone=document.createElement('div'); phone.className='sim-phone';
+  phone.style.background=phoneBg;
+
+  const notch=document.createElement('div'); notch.className='sim-notch'; notch.style.background=ink;
+
+  const hdr=document.createElement('div'); hdr.className='sim-hdr';
+  hdr.style.background=isLight?paper:ink;
+  const ov=document.createElement('div'); ov.className='sim-hdr-ov';
+  if(!isLight) hdr.appendChild(ov);
+
+  if(headerType==='image'&&headerImg){
+    const img=document.createElement('img'); img.className='sim-hdr-img';
+    const m=headerImg.match(/\/file\/d\/([^/]+)/);
+    img.src=m?`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`:headerImg;
+    if(isLight) img.style.opacity='1';
+    img.onerror=()=>img.style.display='none';
+    hdr.appendChild(img);
+  }
+
+  const badge=document.createElement('div'); badge.className='sim-badge';
+  badge.style.cssText=`border-color:${primary};color:${primary};`;
+  badge.textContent='WALKING GUIDE';
+
+  const ttl=document.createElement('div'); ttl.className='sim-title';
+  ttl.style.color=titleColor; ttl.style.fontSize=titleSize; ttl.style.fontFamily=`'${titleFont}', serif`; ttl.textContent=title;
+  const stl=document.createElement('div'); stl.className='sim-sub';
+  stl.style.color=subColor; stl.style.fontSize=subSize; stl.style.fontFamily=`'${subFont}', sans-serif`; stl.textContent=sub;
+
+  hdr.appendChild(badge); hdr.appendChild(ttl); hdr.appendChild(stl);
+
+  const simBody=document.createElement('div'); simBody.className='sim-body';
+  if(isLight) simBody.style.background=bg;
+
+  // Section label
+  if(sampleCourses.some(c=>c.recommended==='TRUE'||c.recommended===true)){
+    const sl=document.createElement('div');
+    sl.style.cssText='font-size:8px;letter-spacing:.15em;margin-bottom:5px;';
+    sl.style.color=textSoft;
+    sl.style.color='rgba(250,247,241,.35)'; sl.textContent='おすすめ ★';
+    sl.style.color=textSoft;
+    simBody.appendChild(sl);
+  }
+
+  sampleCourses.forEach((c,i)=>{
+    const card=document.createElement('div'); card.className='sim-course';
+    const isRec=c.recommended==='TRUE'||c.recommended===true;
+    card.style.background=cardBg;
+    card.style.borderColor=isRec?primary+'66':cardBorder;
+    card.style.cssText=`background:rgba(255,255,255,.05);border-color:${isRec?primary+'66':'rgba(255,255,255,.08)'};`;
+    card.style.background=cardBg;
+    card.style.borderColor=isRec?primary+'66':cardBorder;
+    const type=document.createElement('div'); type.className='sim-course-type'; type.style.color='rgba(250,247,241,.35)'; type.textContent=c.course_type||'コース';
+    const name=document.createElement('div'); name.className='sim-course-name'; name.style.color='#FAF7F1'; name.textContent=c.course_name||`コース${i+1}`;
+    const meta=document.createElement('div'); meta.className='sim-course-meta'; meta.style.color='rgba(250,247,241,.4)';
+    meta.textContent=`🕐 約${c.duration_min||'?'}分 📍 約${c.distance_m||'?'}m`;
+    type.style.color=textSoft; name.style.color=textMain; meta.style.color=textSoft;
+    card.appendChild(type); card.appendChild(name); card.appendChild(meta);
+    simBody.appendChild(card);
+  });
+
+  const prizes=document.createElement('div'); prizes.className='sim-prizes';
+  if(isLight) prizes.style.borderColor=border;
+  prizes.style.color='rgba(250,247,241,.35)'; prizes.textContent='🏅 プライズ・御朱印帳を見る';
+  if(isLight){prizes.style.color=gold; prizes.style.borderColor=border;}
+  simBody.appendChild(prizes);
+
+  phone.appendChild(notch); phone.appendChild(hdr); phone.appendChild(simBody);
+
+  const phoneWrap = document.createElement('div');
+  phoneWrap.className = 'sim-phone-wrap';
+  applySimZoom(phoneWrap);
+  phoneWrap.appendChild(phone);
+  rp.appendChild(phoneWrap);
+
+  // クリックフォーカス・ラベルを再バインド
+  setTimeout(()=>{
+    bindPreviewClickFocus();
+    if(labelOverlayActive){ labelOverlayActive=false; toggleLabelOverlay(); }
+  }, 50);
+}
+
+// ═══════════════════════════════════════════════════════
+// COURSES MERGED VIEW
+// ═══════════════════════════════════════════════════════
+
+function renderCourses(){
+  const body=document.getElementById('ed-body'); body.innerHTML='';
+
+  // Change summary
+  const totalChg=Object.keys(changes.courses).length+Object.keys(changes.course_spots).length;
+  if(totalChg>0) body.appendChild(makeChgPanel([...Object.entries(changes.courses),...Object.entries(changes.course_spots)]));
+
+  const wrap=document.createElement('div'); wrap.className='course-cards';
+
+  state.courses.forEach((course,ci)=>{
+    const card=document.createElement('div'); card.className='cc-card';
+    const isRec=course.recommended==='TRUE'||course.recommended===true;
+
+    // HEAD
+    const head=document.createElement('div'); head.className='cc-head';
+    const toggle=document.createElement('span'); toggle.className='cc-toggle'; toggle.textContent='▶';
+    const name=document.createElement('span'); name.className='cc-name'; name.textContent=course.course_name||'（名称未設定）';
+    const tag=document.createElement('span'); tag.className='cc-tag'; tag.textContent=course.course_type||'—';
+    const rec=document.createElement('span'); rec.className='cc-rec'; rec.textContent=isRec?'★ おすすめ':'';
+    const meta=document.createElement('span'); meta.className='cc-meta'; meta.textContent=`${course.duration_min||'?'}分 / ${course.distance_m||'?'}m`;
+    const mapBtn=document.createElement('button'); mapBtn.className='btn-map btn-xs'; mapBtn.textContent='🗺 地図';
+    mapBtn.onclick=e=>{e.stopPropagation();selectCourse(course.course_id,card,mapBtn);};
+    head.appendChild(toggle); head.appendChild(name); head.appendChild(tag); head.appendChild(rec); head.appendChild(meta); head.appendChild(mapBtn);
+
+    // BODY
+    const cBody=document.createElement('div'); cBody.className='cc-body';
+
+    // Course fields grid
+    const fields=document.createElement('div'); fields.className='cc-fields';
+    const origCourse=(state.originals.courses||[])[ci]||{};
+
+    COURSE_FIELDS.forEach(col=>{
+      const f=document.createElement('div');
+      f.className='cc-field'+((['theme_text','finish_text'].includes(col.key))?' full':'');
+      const lbl=document.createElement('div'); lbl.className='cc-field-lbl';
+      lbl.innerHTML=`${col.lbl} <code>${col.key}</code>`;
+      f.appendChild(lbl);
+
+      const val=course[col.key]||'', origVal=origCourse[col.key]||'';
+      const chgKey=`${ci+1}行目:${col.lbl}`;
+
+      if(col.type==='audio'){
+        const row=document.createElement('div'); row.className='cc-field-in-row';
+        const inp=document.createElement('input'); inp.type='text'; inp.className='cc-field-in'+(val!==origVal?' chg':''); inp.value=val;
+        inp.addEventListener('input',()=>{course[col.key]=inp.value;inp.classList.toggle('chg',inp.value!==origVal);recChg('courses',chgKey,origVal,inp.value);});
+        row.appendChild(inp); row.appendChild(mkPlayBtn(()=>inp.value,col.lbl));
+        f.appendChild(row);
+      }else if(col.type==='bool'){
+        const sel=document.createElement('select'); sel.className='cc-field-in'+(val!==origVal?' chg':'');
+        ['','TRUE','FALSE'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(val===v)o.selected=true;sel.appendChild(o);});
+        sel.addEventListener('change',()=>{course[col.key]=sel.value;sel.classList.toggle('chg',sel.value!==origVal);recChg('courses',chgKey,origVal,sel.value);});
+        f.appendChild(sel);
+      }else if(col.type==='sel'&&col.opts){
+        const sel=document.createElement('select'); sel.className='cc-field-in'+(val!==origVal?' chg':'');
+        ['',...col.opts].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(val===v)o.selected=true;sel.appendChild(o);});
+        sel.addEventListener('change',()=>{course[col.key]=sel.value;sel.classList.toggle('chg',sel.value!==origVal);recChg('courses',chgKey,origVal,sel.value);});
+        f.appendChild(sel);
+      }else{
+        const inp=document.createElement('input'); inp.type='text'; inp.className='cc-field-in'+(val!==origVal?' chg':''); inp.value=val;
+        inp.addEventListener('input',()=>{course[col.key]=inp.value;inp.classList.toggle('chg',inp.value!==origVal);recChg('courses',chgKey,origVal,inp.value);if(col.key==='course_name')name.textContent=inp.value||'（名称未設定）';});
+        f.appendChild(inp);
+      }
+      fields.appendChild(f);
+    });
+    cBody.appendChild(fields);
+
+    // Spots area
+    const spotsArea=document.createElement('div'); spotsArea.className='cc-spots-area';
+    const spotsTitle=document.createElement('div'); spotsTitle.className='cc-spots-title';
+    spotsTitle.innerHTML='スポット構成（巡回順）';
+    spotsArea.appendChild(spotsTitle);
+    const spotsList=document.createElement('div'); spotsList.id='spots-list-'+course.course_id;
+    renderSpotsList(course.course_id, spotsList);
+    spotsArea.appendChild(spotsList);
+
+    // Add spot
+    const addRow=document.createElement('div'); addRow.className='spot-add-row';
+    const sel=document.createElement('select'); sel.className='spot-sel';
+    const defOpt=document.createElement('option'); defOpt.value=''; defOpt.textContent='── スポットを選択して追加 ──'; sel.appendChild(defOpt);
+    state.spots.forEach(s=>{const o=document.createElement('option');o.value=s.spot_id;o.textContent=`${s.spot_name} [${s.spot_id}]`;sel.appendChild(o);});
+    const addBtn=document.createElement('button'); addBtn.className='btn btn-p btn-xs'; addBtn.textContent='＋ 追加';
+    addBtn.onclick=()=>{
+      if(!sel.value) return;
+      const maxOrder=state.course_spots.filter(cs=>cs.course_id===course.course_id).reduce((m,cs)=>Math.max(m,parseInt(cs.order)||0),0);
+      state.course_spots.push({course_id:course.course_id,spot_id:sel.value,order:String(maxOrder+1)});
+      recChg('course_spots',`${course.course_id}:${sel.value}:追加`,'','order:'+(maxOrder+1));
+      renderSpotsList(course.course_id,spotsList);
+      sel.value='';
+    };
+    addRow.appendChild(sel); addRow.appendChild(addBtn);
+    spotsArea.appendChild(addRow);
+    cBody.appendChild(spotsArea);
+    card.appendChild(head); card.appendChild(cBody); wrap.appendChild(card);
+
+    // Toggle
+    head.onclick=e=>{
+      if(e.target===mapBtn||e.target.closest('.btn-map')) return;
+      const open=!cBody.classList.contains('open');
+      cBody.classList.toggle('open',open);
+      toggle.classList.toggle('open',open);
+    };
+  });
+
+  // Add course button
+  const addBtn=document.createElement('button'); addBtn.className='add-row-btn';
+  addBtn.innerHTML='＋ コースを追加'; addBtn.onclick=addCourse;
+  wrap.appendChild(addBtn);
+  body.appendChild(wrap);
+}
+
+function renderSpotsList(courseId, container){
+  container.innerHTML='';
+  const courseSpots=state.course_spots
+    .filter(cs=>cs.course_id===courseId)
+    .sort((a,b)=>(parseInt(a.order)||0)-(parseInt(b.order)||0));
+  const total=courseSpots.length;
+
+  courseSpots.forEach((cs,i)=>{
+    const spot=state.spots.find(s=>s.spot_id===cs.spot_id);
+    const row=document.createElement('div'); row.className='spot-row';
+    const num=document.createElement('div'); num.className='spot-num'+(i===total-1?' goal':'');
+    num.textContent=cs.order||i+1;
+    const info=document.createElement('div'); info.className='spot-info';
+    info.innerHTML=`<div class="spot-name">${spot?spot.spot_name:cs.spot_id}</div><div class="spot-sub">${cs.spot_id}</div>`;
+    const dist=document.createElement('div'); dist.className='spot-dist';
+    dist.textContent=spot?`接近:${spot.approach_dist||'?'}m 到着:${spot.arrive_dist||'?'}m`:'スポット未登録';
+
+    const upBtn=document.createElement('button'); upBtn.className='btn btn-o btn-xs'; upBtn.textContent='↑'; upBtn.title='上へ';
+    upBtn.onclick=()=>{if(i>0){const tmp=courseSpots[i-1];[courseSpots[i-1],courseSpots[i]]=[courseSpots[i],courseSpots[i-1]];courseSpots.forEach((cs2,j)=>{cs2.order=String(j+1);});recChg('course_spots',`${courseId}:並び替え`,'',(Date.now()+''));renderSpotsList(courseId,container);}};
+    const dnBtn=document.createElement('button'); dnBtn.className='btn btn-o btn-xs'; dnBtn.textContent='↓'; dnBtn.title='下へ';
+    dnBtn.onclick=()=>{if(i<total-1){[courseSpots[i],courseSpots[i+1]]=[courseSpots[i+1],courseSpots[i]];courseSpots.forEach((cs2,j)=>{cs2.order=String(j+1);});recChg('course_spots',`${courseId}:並び替え`,'',(Date.now()+''));renderSpotsList(courseId,container);}};
+    const rmBtn=document.createElement('button'); rmBtn.className='btn btn-o btn-xs'; rmBtn.style.color='var(--accent)'; rmBtn.textContent='✕'; rmBtn.title='削除';
+    rmBtn.onclick=()=>{
+      const idx=state.course_spots.findIndex(c2=>c2===cs);
+      if(idx>=0){state.course_spots.splice(idx,1);recChg('course_spots',`${courseId}:${cs.spot_id}:削除`,cs.spot_id,'（削除）');renderSpotsList(courseId,container);}
+    };
+    row.appendChild(num); row.appendChild(info); row.appendChild(dist); row.appendChild(upBtn); row.appendChild(dnBtn); row.appendChild(rmBtn);
+    container.appendChild(row);
+  });
+  if(courseSpots.length===0){
+    const empty=document.createElement('div'); empty.style.cssText='font-size:11px;color:var(--dim);padding:8px;text-align:center;';
+    empty.textContent='スポットが設定されていません。下のセレクトから追加してください。';
+    container.appendChild(empty);
+  }
+}
+
+function addCourse(){
+  const newCourse={course_id:'course_'+(Date.now()),course_name:'新しいコース',course_type:'市街地',display_order:'99',recommended:'FALSE',duration_min:'30',distance_m:'1000',start_date:'',end_date:'',audio_theme_url:'',theme_text:'',audio_finish_url:'',finish_text:''};
+  state.courses.push(newCourse);
+  renderCourses();
+  // Scroll to bottom
+  const body=document.getElementById('ed-body');
+  setTimeout(()=>body.scrollTo({top:body.scrollHeight,behavior:'smooth'}),80);
+}
+
+// ═══════════════════════════════════════════════════════
+// GENERIC TABLE RENDER (SPOTS / FACILITIES)
+// ═══════════════════════════════════════════════════════
+
+function renderTable(sn){
+  const schema=SCHEMAS[sn], rows=state[sn]||[], origRows=state.originals[sn]||[];
+  const body=document.getElementById('ed-body'); body.innerHTML='';
+  if(!schema){body.innerHTML='<div class="empty-st"><div class="empty-ic">⚠</div>スキーマ未定義</div>';return;}
+
+  const chgCount=Object.keys(changes[sn]).length;
+  if(chgCount>0) body.appendChild(makeChgPanel(Object.entries(changes[sn])));
+
+  const wrap=document.createElement('div'); wrap.className='tbl-wrap';
+  const tbl=document.createElement('table'); tbl.className='dt';
+  const thead=document.createElement('thead'),tr=document.createElement('tr');
+  mkTh(tr,'#','th-n');
+  schema.forEach(col=>{const th=mkTh(tr,'');th.innerHTML=`<div>${col.lbl}</div>${col.desc?`<div class="thd">${col.desc}</div>`:''}`;if(col.w)th.style.minWidth=col.w+'px';});
+  mkTh(tr,'操作','th-act');
+  thead.appendChild(tr); tbl.appendChild(thead);
+
+  const tbody=document.createElement('tbody'); tbody.id='tbody-'+sn;
+  rows.forEach((row,i)=>tbody.appendChild(mkRow(sn,schema,row,origRows[i]||{},i)));
+  tbl.appendChild(tbody); wrap.appendChild(tbl);
+
+  const addBtn=document.createElement('button'); addBtn.className='add-row-btn';
+  addBtn.innerHTML='＋ 行を追加'; addBtn.onclick=()=>addRow(sn);
+  wrap.appendChild(addBtn); body.appendChild(wrap);
+  updateChgBadge(sn);
+}
+
+function mkTh(tr,html,cls){const th=document.createElement('th');th.innerHTML=html;if(cls)th.className=cls;tr.appendChild(th);return th;}
+
+function mkRow(sn,schema,row,origRow,idx){
+  const tr=document.createElement('tr');
+  const tn=document.createElement('td');tn.className='td-n';tn.textContent=idx+1;tr.appendChild(tn);
+
+  schema.forEach(col=>{
+    const td=document.createElement('td');
+    const val=row[col.key]||'', origVal=origRow[col.key]||'', isChg=val!==origVal;
+    if(isChg) td.classList.add('chg');
+    const chgKey=`${idx+1}行目:${col.lbl}`;
+
+    if(col.type==='audio'){
+      const wr=document.createElement('div');wr.className='td-au';
+      const el=document.createElement('input');el.type='text';el.className='c-in';el.value=val;
+      if(col.w)el.style.minWidth=(col.w-85)+'px';
+      el.title=isChg?`変更前: ${origVal||'（空）'}`:col.desc||'';
+      el.addEventListener('input',()=>{row[col.key]=el.value;const c=el.value!==origVal;td.classList.toggle('chg',c);recChg(sn,chgKey,origVal,el.value);});
+      wr.appendChild(el);wr.appendChild(mkPlayBtn(()=>el.value,col.lbl));td.appendChild(wr);
+    }else if(col.type==='bool'){
+      const el=document.createElement('select');el.className='c-in';
+      ['','TRUE','FALSE'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(val===v)o.selected=true;el.appendChild(o);});
+      el.addEventListener('change',()=>{row[col.key]=el.value;td.classList.toggle('chg',el.value!==origVal);recChg(sn,chgKey,origVal,el.value);});
+      td.appendChild(el);
+    }else if(col.type==='sel'&&col.opts){
+      const el=document.createElement('select');el.className='c-in';
+      ['',...col.opts].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(val===v)o.selected=true;el.appendChild(o);});
+      el.addEventListener('change',()=>{row[col.key]=el.value;td.classList.toggle('chg',el.value!==origVal);recChg(sn,chgKey,origVal,el.value);});
+      td.appendChild(el);
+    }else{
+      const el=document.createElement('input');el.type='text';el.className='c-in';el.value=val;
+      if(col.w)el.style.minWidth=col.w+'px';
+      el.title=isChg?`変更前: ${origVal||'（空）'}`:col.desc||'';
+      el.addEventListener('input',()=>{row[col.key]=el.value;const c=el.value!==origVal;td.classList.toggle('chg',c);el.title=c?`変更前: ${origVal||'（空）'}`:col.desc||'';recChg(sn,chgKey,origVal,el.value);});
+      td.appendChild(el);
+    }
+    tr.appendChild(td);
+  });
+
+  // Actions cell
+  const ta=document.createElement('td');ta.className='td-act';
+  const mapBtn=document.createElement('button');mapBtn.className='btn-map btn-xs';mapBtn.textContent='🗺';
+  mapBtn.title=sn==='spots'?`${row.spot_name||'このスポット'}を地図表示`:`${row.facility_name||'この施設'}を地図表示`;
+  mapBtn.onclick=()=>{
+    document.querySelectorAll('.sel-row').forEach(r=>r.classList.remove('sel-row'));
+    tr.classList.add('sel-row');
+    selectedRow[sn]=idx;
+    document.querySelectorAll('.btn-map.active').forEach(b=>b.classList.remove('active'));
+    mapBtn.classList.add('active');
+    if(sn==='spots') showSpotMap(row);
+    else showFacilityMap(row);
+  };
+  const delBtn=document.createElement('button');delBtn.className='btn-ico btn-xs';delBtn.innerHTML='✕';delBtn.title='削除';delBtn.style.cssText='margin-left:2px;border:1px solid var(--border);border-radius:3px;';
+  delBtn.onclick=()=>{if(!confirm(`${idx+1}行目を削除しますか？`))return;state[sn].splice(idx,1);renderTable(sn);};
+  ta.appendChild(mapBtn);ta.appendChild(delBtn);tr.appendChild(ta);
+  return tr;
+}
+
+function addRow(sn){
+  const schema=SCHEMAS[sn];if(!schema)return;
+  const nr={};schema.forEach(c=>{nr[c.key]='';});state[sn].push(nr);
+  updateBadge(sn);
+  const tb=document.getElementById('tbody-'+sn);
+  if(tb){const tr=mkRow(sn,schema,nr,{},state[sn].length-1);tb.appendChild(tr);tr.scrollIntoView({behavior:'smooth',block:'nearest'});const fi=tr.querySelector('input,select');if(fi)setTimeout(()=>fi.focus(),80);}
+}
+
+// ═══════════════════════════════════════════════════════
+// CHANGE PANEL HELPER
+// ═══════════════════════════════════════════════════════
+
+function makeChgPanel(entries){
+  const p=document.createElement('div');p.className='chg-panel';
+  p.innerHTML=`<div class="chg-panel-title">✏ ${entries.length}件の変更があります（保存するまでスプレッドシートには反映されません）</div>`;
+  entries.slice(0,12).forEach(([k,v])=>{
+    const d=document.createElement('div');d.className='chg-item';
+    d.innerHTML=`<span class="chg-k">${k}</span><span class="chg-old">${v.old||'（空）'}</span><span class="chg-arr"> → </span><span class="chg-new">${v.new||'（空）'}</span>`;
+    p.appendChild(d);
+  });
+  if(entries.length>12){const m=document.createElement('div');m.className='chg-item';m.style.color='var(--dim)';m.textContent=`… 他 ${entries.length-12}件`;p.appendChild(m);}
+  return p;
+}
+
+// ═══════════════════════════════════════════════════════
+// MAP (LEAFLET)
+// ═══════════════════════════════════════════════════════
+
+function showRpMap(){
+  document.getElementById('rp-config').style.display='none';
+  const mapEl=document.getElementById('rp-map'); mapEl.style.display='flex';
+  document.getElementById('rp-title').textContent='🗺 地図表示';
+  document.getElementById('zoom-controls').style.display='none';
+  document.getElementById('preview-mode-controls').style.display='none';
+  document.getElementById('btn-lbl-toggle').style.display='none';
+  document.getElementById('map-legend').innerHTML='<div class="map-empty" style="height:36px;"><span style="font-size:10px;color:var(--dim);">行の🗺ボタンをクリックすると地図が表示されます</span></div>';
+  initLeaflet();
+  clearMap();
+}
+
+function initLeaflet(){
+  if(leafletMap) return;
+  const el=document.getElementById('leaflet-map');
+  leafletMap=L.map(el,{zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(leafletMap);
+  mapLayerGroup=L.layerGroup().addTo(leafletMap);
+}
+
+function clearMap(){
+  if(mapLayerGroup) mapLayerGroup.clearLayers();
+}
+
+function refreshRightPanel(){
+  if(currentTab==='config'){updateConfigPreview();}
+  else{clearMap();notify('地図をリセットしました。行の🗺ボタンで再表示してください。');}
+}
+
+function selectCourse(courseId, card, btn){
+  document.querySelectorAll('.cc-card.is-sel').forEach(c=>c.classList.remove('is-sel'));
+  document.querySelectorAll('.btn-map.active').forEach(b=>b.classList.remove('active'));
+  card.classList.add('is-sel'); btn.classList.add('active');
+  showCourseMap(courseId);
+}
+
+function showCourseMap(courseId){
+  initLeaflet(); clearMap();
+  document.getElementById('rp-title').textContent='🗺 コースルート';
+
+  const csRows=state.course_spots.filter(cs=>cs.course_id===courseId).sort((a,b)=>(parseInt(a.order)||0)-(parseInt(b.order)||0));
+  const spots=csRows.map(cs=>state.spots.find(s=>s.spot_id===cs.spot_id)).filter(Boolean);
+
+  if(spots.length===0){
+    document.getElementById('map-legend').innerHTML='<div style="font-size:10px;color:var(--dim);padding:8px;">このコースにはスポットが登録されていません</div>';
+    return;
+  }
+
+  const coords=[];
+  spots.forEach((spot,i)=>{
+    const lat=parseFloat(spot.lat), lng=parseFloat(spot.lng);
+    if(isNaN(lat)||isNaN(lng)) return;
+    coords.push([lat,lng]);
+
+    const approachDist=parseInt(spot.approach_dist)||50;
+    const arriveDist=parseInt(spot.arrive_dist)||15;
+    const isLast=i===spots.length-1;
+
+    // Approach circle
+    L.circle([lat,lng],{radius:approachDist,color:'#2A5A8A',fillColor:'#2A5A8A',fillOpacity:0.07,weight:1.5,dashArray:'5 3'}).addTo(mapLayerGroup);
+    // Arrive circle
+    L.circle([lat,lng],{radius:arriveDist,color:'#B83232',fillColor:'#B83232',fillOpacity:0.18,weight:2}).addTo(mapLayerGroup);
+
+    // Numbered marker
+    const ic=L.divIcon({html:`<div style="background:${isLast?'#9A7A3A':'#B83232'};color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.35);font-family:sans-serif;">${i+1}</div>`,iconSize:[24,24],iconAnchor:[12,12],className:''});
+    L.marker([lat,lng],{icon:ic}).addTo(mapLayerGroup).bindPopup(`<strong>${spot.spot_name}</strong><br>接近: ${approachDist}m 以内<br>到着: ${arriveDist}m 以内`);
+  });
+
+  if(coords.length>1){
+    L.polyline(coords,{color:'#B83232',weight:2.5,dashArray:'8 5',opacity:0.65}).addTo(mapLayerGroup);
+  }
+  if(coords.length>0){
+    leafletMap.fitBounds(L.latLngBounds(coords),{padding:[24,24]});
+    setTimeout(()=>leafletMap.invalidateSize(),120);
+  }
+
+  document.getElementById('map-legend').innerHTML=`
+    <div class="legend-item"><div class="legend-dot" style="background:#B83232;border:2px solid white;box-shadow:0 0 0 1.5px #B83232;"></div>スポット</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9A7A3A;border:2px solid white;box-shadow:0 0 0 1.5px #9A7A3A;"></div>ゴール</div>
+    <div class="legend-item"><div class="legend-line" style="background:#2A5A8A;opacity:.6;border-top:1.5px dashed #2A5A8A;"></div>接近エリア</div>
+    <div class="legend-item"><div class="legend-line" style="background:#B83232;opacity:.7;"></div>到着判定エリア</div>
+  `;
+}
+
+function showSpotMap(spot){
+  initLeaflet(); clearMap();
+  document.getElementById('rp-title').textContent=`📍 ${spot.spot_name||'スポット'}`;
+  const lat=parseFloat(spot.lat), lng=parseFloat(spot.lng);
+  if(isNaN(lat)||isNaN(lng)){
+    document.getElementById('map-legend').innerHTML='<div style="font-size:10px;color:var(--dim);padding:8px;">緯度・経度が設定されていません</div>';
+    return;
+  }
+  const approachDist=parseInt(spot.approach_dist)||50;
+  const arriveDist=parseInt(spot.arrive_dist)||15;
+
+  L.circle([lat,lng],{radius:approachDist,color:'#2A5A8A',fillColor:'#2A5A8A',fillOpacity:0.09,weight:1.5,dashArray:'5 3'}).addTo(mapLayerGroup);
+  L.circle([lat,lng],{radius:arriveDist,color:'#B83232',fillColor:'#B83232',fillOpacity:0.2,weight:2}).addTo(mapLayerGroup);
+  const ic=L.divIcon({html:`<div style="background:#B83232;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;box-shadow:0 1px 6px rgba(0,0,0,.4);">📍</div>`,iconSize:[26,26],iconAnchor:[13,13],className:''});
+  L.marker([lat,lng],{icon:ic}).addTo(mapLayerGroup).bindPopup(`<strong>${spot.spot_name}</strong><br>接近: ${approachDist}m 以内<br>到着: ${arriveDist}m 以内`).openPopup();
+  leafletMap.setView([lat,lng],17);
+  setTimeout(()=>leafletMap.invalidateSize(),120);
+
+  document.getElementById('map-legend').innerHTML=`
+    <div class="legend-item"><div class="legend-dot" style="background:#2A5A8A;opacity:.7;"></div>接近エリア（${approachDist}m）</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#B83232;opacity:.9;"></div>到着判定エリア（${arriveDist}m）</div>
+  `;
+}
+
+function showFacilityMap(facility){
+  initLeaflet(); clearMap();
+  document.getElementById('rp-title').textContent=`🏛 ${facility.facility_name||'施設'}`;
+  const lat=parseFloat(facility.lat), lng=parseFloat(facility.lng);
+  if(isNaN(lat)||isNaN(lng)){
+    document.getElementById('map-legend').innerHTML='<div style="font-size:10px;color:var(--dim);padding:8px;">緯度・経度が設定されていません</div>';
+    return;
+  }
+  const trigDist=parseInt(facility.trigger_dist)||30;
+  L.circle([lat,lng],{radius:trigDist,color:'#C06010',fillColor:'#C06010',fillOpacity:0.14,weight:2,dashArray:'4 3'}).addTo(mapLayerGroup);
+  const ic=L.divIcon({html:`<div style="background:#C06010;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;box-shadow:0 1px 6px rgba(0,0,0,.4);">🏛</div>`,iconSize:[26,26],iconAnchor:[13,13],className:''});
+  L.marker([lat,lng],{icon:ic}).addTo(mapLayerGroup).bindPopup(`<strong>${facility.facility_name}</strong><br>通知トリガー: ${trigDist}m 以内`).openPopup();
+  leafletMap.setView([lat,lng],17);
+  setTimeout(()=>leafletMap.invalidateSize(),120);
+
+  document.getElementById('map-legend').innerHTML=`
+    <div class="legend-item"><div class="legend-dot" style="background:#C06010;opacity:.9;"></div>通知トリガーエリア（${trigDist}m）</div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════
+// AUDIO PLAYBACK
+// ═══════════════════════════════════════════════════════
+
+function driveUrl(url){if(!url)return null;const m=url.match(/\/file\/d\/([^/]+)/);if(m)return`https://drive.google.com/uc?export=download&id=${m[1]}`;return url;}
+
+function mkPlayBtn(getUrl,label){
+  const btn=document.createElement('button');btn.className='btn-play';btn.innerHTML='▶ 再生';btn.title=label||'音声';
+  btn.onclick=e=>{e.stopPropagation();const u=getUrl();if(!u){notify('音声URLが入力されていません',true);return;}playAudio(u,label||'音声',btn);};
+  return btn;
+}
+
+function playAudio(url,label,btn){
+  stopAudio();
+  const audio=new Audio(driveUrl(url));currentAudio=audio;currentPlayBtn=btn;
+  if(btn){btn.innerHTML='■ 停止';btn.classList.add('playing');}
+  document.getElementById('ab-name').textContent=label;
+  document.getElementById('audio-bar').classList.add('show');
+  audio.addEventListener('timeupdate',()=>{
+    if(!audio.duration)return;
+    document.getElementById('ab-fill').style.width=(audio.currentTime/audio.duration*100)+'%';
+    const m=Math.floor(audio.currentTime/60),s=Math.floor(audio.currentTime%60).toString().padStart(2,'0');
+    document.getElementById('ab-time').textContent=`${m}:${s}`;
+  });
+  audio.addEventListener('ended',()=>stopAudio());
+  audio.addEventListener('error',()=>{stopAudio();notify('音声の再生に失敗しました（URLを確認してください）',true);});
+  audio.play().catch(()=>{stopAudio();notify('音声の再生に失敗しました',true);});
+}
+
+function stopAudio(){
+  if(currentAudio){currentAudio.pause();currentAudio=null;}
+  if(currentPlayBtn){currentPlayBtn.innerHTML='▶ 再生';currentPlayBtn.classList.remove('playing');currentPlayBtn=null;}
+  document.getElementById('audio-bar').classList.remove('show');
+  document.getElementById('ab-fill').style.width='0';
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════
+
+function exportCurrentSheet(){
+  if(!state.loaded){notify('先にデータを読み込んでください',true);return;}
+  if(currentTab==='courses'){exportSheet('courses');setTimeout(()=>exportSheet('course_spots'),300);}
+  else exportSheet(currentTab);
+}
+
+function exportSheet(sn){
+  let csv;
+  if(sn==='config') csv='key,value\n'+cleanConfigRows(state.config).map(r=>`${esc(r.key||'')},${esc(r.value||'')}`).join('\n');
+  else{const sc=SCHEMAS[sn]||(sn==='courses'?COURSE_FIELDS:null)||(sn==='course_spots'?[{key:'course_id'},{key:'spot_id'},{key:'order'}]:null);if(!sc)return;csv=buildCSV(sc.map(c=>c.key),state[sn]);}
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=sn+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  notify(sn+'.csv をダウンロードしました');
+}
+
+function exportAll(){
+  if(!state.loaded){notify('先にデータを読み込んでください',true);return;}
+  ['config','courses','spots','course_spots','facilities'].forEach((s,i)=>setTimeout(()=>exportSheet(s),i*320));
+  notify('全シートのCSV（5ファイル）をダウンロードします');
+}
+
+// ═══════════════════════════════════════════════════════
+// GAS MODAL
+// ═══════════════════════════════════════════════════════
+
+function showGasModal(){
+  document.getElementById('gas-code-display').textContent=GAS_CODE;
+  document.getElementById('gas-modal').classList.add('show');
+}
+function closeGasModal(){document.getElementById('gas-modal').classList.remove('show');}
+async function copyGasCode(){
+  try{await navigator.clipboard.writeText(GAS_CODE);notify('GASコードをクリップボードにコピーしました ✓');}
+  catch(e){notify('コピーに失敗しました。手動でコードを選択してコピーしてください',true);}
+}
+
+const APP_BASE_URL = 'https://kosa-e-mon.github.io/local-walk-guide/';
+
+function buildQrTargetUrl(){
+  const raw=(document.getElementById('qr-sheet-url')?.value||'').trim();
+  if(!raw) return APP_BASE_URL;
+  if(raw.startsWith(APP_BASE_URL)) return raw;
+  const sid=parseSheetId(raw);
+  if(sid) return APP_BASE_URL + '?sid=' + encodeURIComponent(sid);
+  if(/^https?:\/\//i.test(raw)) return raw;
+  return APP_BASE_URL + '?sid=' + encodeURIComponent(raw);
+}
+
+function showQrModal(){
+  const url=buildQrTargetUrl();
+  const box=document.getElementById('qr-box');
+  box.innerHTML='';
+  document.getElementById('qr-url').textContent=url;
+  if(typeof QRCode==='undefined'){
+    notify('QR生成ライブラリを読み込めませんでした。ネットワークを確認してください',true);
+    return;
+  }
+  new QRCode(box,{
+    text:url,
+    width:212,
+    height:212,
+    colorDark:'#000000',
+    colorLight:'#ffffff',
+    correctLevel:QRCode.CorrectLevel.M
+  });
+  document.getElementById('qr-modal').classList.add('show');
+}
+
+function closeQrModal(){document.getElementById('qr-modal').classList.remove('show');}
+
+function getQrCanvas(){
+  const box=document.getElementById('qr-box');
+  const canvas=box?.querySelector('canvas');
+  if(canvas) return canvas;
+  const img=box?.querySelector('img');
+  if(!img) return null;
+  const c=document.createElement('canvas');
+  c.width=img.naturalWidth||212; c.height=img.naturalHeight||212;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(img,0,0,c.width,c.height);
+  return c;
+}
+
+function qrFileName(){
+  const title=(getCfg('area_name')||getCfg('app_title')||'local-walk-guide').replace(/[\\/:*?"<>|]/g,'_').trim();
+  return (title||'local-walk-guide') + '_QR.png';
+}
+
+function downloadQrPng(){
+  const canvas=getQrCanvas();
+  if(!canvas){notify('先にQRコードを表示してください',true);return;}
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download=qrFileName();
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  notify('QRコードPNGをダウンロードしました');
+}
+
+async function copyQrPng(){
+  const canvas=getQrCanvas();
+  if(!canvas){notify('先にQRコードを表示してください',true);return;}
+  if(!navigator.clipboard || typeof ClipboardItem==='undefined'){
+    await copyQrUrl();
+    notify('画像コピーに未対応のためURLをコピーしました');
+    return;
+  }
+  canvas.toBlob(async blob=>{
+    try{
+      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+      notify('QRコード画像をコピーしました');
+    }catch(e){
+      await copyQrUrl();
+      notify('画像コピーに失敗したためURLをコピーしました');
+    }
+  },'image/png');
+}
+
+async function copyQrUrl(){
+  const url=document.getElementById('qr-url')?.textContent || buildQrTargetUrl();
+  try{await navigator.clipboard.writeText(url);notify('QRのURLをコピーしました');}
+  catch(e){notify('コピーに失敗しました',true);}
+}
+
+// ═══════════════════════════════════════════════════════
+// UI UTILITIES
+// ═══════════════════════════════════════════════════════
+
+function updateBadges(){['config','courses','spots','course_spots','facilities'].forEach(updateBadge);}
+function updateBadge(n){const el=document.getElementById('badge-'+n);if(el)el.textContent=(n==='config'?state.config.length:(state[n]||[]).length);}
+function setStat(t,m){document.getElementById('s-dot').className='s-dot '+t;document.getElementById('s-msg').textContent=m;}
+function showLd(m){document.getElementById('ld-txt').textContent=m||'処理中…';document.getElementById('ld-mask').classList.add('show');}
+function hideLd(){document.getElementById('ld-mask').classList.remove('show');}
+let nt=null;
+function notify(m,err){const el=document.getElementById('notif');el.textContent=(err?'⚠ ':'✓ ')+m;el.className='notif'+(err?' err':'')+' show';if(nt)clearTimeout(nt);nt=setTimeout(()=>el.classList.remove('show'),3500);}
+window.addEventListener('DOMContentLoaded',()=>{
+  showTab('config');
+  document.getElementById('gas-code-display').textContent=GAS_CODE;
+  initResizeHandle();
+  initEditorSize();
+  initPreviewPan();
+});
+document.getElementById('gas-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeGasModal();});
+document.getElementById('diff-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDiffModal();});
+document.getElementById('qr-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQrModal();});
+
+// ═══════════════════════════════════════════════════════
+// A: RESIZE HANDLE — 右パネル幅をドラッグ調整
+// ═══════════════════════════════════════════════════════
+const RP_DEFAULT_W = 356;
+const RP_MIN_W = 260;
+const RP_MAX_W = 700;
+
+function initResizeHandle(){
+  const handle = document.getElementById('resize-handle');
+  const panel  = document.getElementById('right-panel');
+
+  // 保存済み幅を復元
+  const saved = parseInt(localStorage.getItem('lwg_rp_width'));
+  if(saved && saved >= RP_MIN_W && saved <= RP_MAX_W) panel.style.width = saved + 'px';
+
+  let startX, startW;
+  handle.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startW = panel.getBoundingClientRect().width;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMove = ev => {
+      const delta = startX - ev.clientX; // 左に引くと広がる
+      const newW = Math.min(RP_MAX_W, Math.max(RP_MIN_W, startW + delta));
+      panel.style.width = newW + 'px';
+    };
+    const onUp = () => {
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      const w = parseInt(panel.style.width);
+      localStorage.setItem('lwg_rp_width', w);
+      if(leafletMap) setTimeout(()=>leafletMap.invalidateSize(),50);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  });
+
+  // ダブルクリックでリセット
+  handle.addEventListener('dblclick', () => {
+    panel.style.width = RP_DEFAULT_W + 'px';
+    localStorage.removeItem('lwg_rp_width');
+    if(leafletMap) setTimeout(()=>leafletMap.invalidateSize(),50);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ①: PREVIEW ZOOM
+// ═══════════════════════════════════════════════════════
+let simZoom = 1.0;
+const SIM_PHONE_W = 220;
+const SIM_PHONE_H = 460;
+
+function changeZoom(delta){
+  simZoom = Math.min(2.0, Math.max(0.5, simZoom + delta));
+  simZoom = Math.round(simZoom * 10) / 10;
+  applySimZoom();
+  localStorage.setItem('lwg_sim_zoom', simZoom);
+}
+
+function applySimZoom(wrap){
+  wrap = wrap || document.querySelector('.sim-phone-wrap');
+  document.getElementById('zoom-val').textContent = Math.round(simZoom * 100) + '%';
+  if(!wrap) return;
+  wrap.style.setProperty('--sim-zoom', simZoom);
+  wrap.style.transform = 'none';
+  wrap.style.width = `max(100%, ${SIM_PHONE_W * simZoom + 120}px)`;
+  wrap.style.height = `max(100%, ${SIM_PHONE_H * simZoom + 180}px)`;
+  wrap.style.minWidth = `${SIM_PHONE_W * simZoom + 120}px`;
+  wrap.style.minHeight = `${SIM_PHONE_H * simZoom + 180}px`;
+  const phone = wrap.querySelector('.sim-phone');
+  if(phone) phone.style.setProperty('--sim-zoom', simZoom);
+}
+
+function initPreviewPan(){
+  const panel = document.getElementById('rp-config');
+  if(!panel) return;
+  const savedZoom = parseFloat(localStorage.getItem('lwg_sim_zoom'));
+  if(savedZoom) simZoom = Math.min(2.0, Math.max(0.5, Math.round(savedZoom * 10) / 10));
+  applySimZoom();
+
+  let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  panel.addEventListener('mousedown', e=>{
+    if(e.button !== 0) return;
+    dragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = panel.scrollLeft;
+    startTop = panel.scrollTop;
+    panel.classList.add('dragging');
+  });
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    panel.scrollLeft = startLeft - (e.clientX - startX);
+    panel.scrollTop = startTop - (e.clientY - startY);
+  });
+  document.addEventListener('mouseup', ()=>{
+    if(!dragging) return;
+    dragging = false;
+    panel.classList.remove('dragging');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ②: COLOR FLASH — 変更箇所をプレビュー内でフラッシュ
+// ═══════════════════════════════════════════════════════
+const COLOR_FLASH_MAP = {
+  color_ink:     ['.sim-phone', '.sim-hdr'],
+  color_primary: ['.sim-badge', '.sim-course.rec'],
+  color_gold:    ['.sim-prizes'],
+  color_bg:      ['.sim-body'],
+  color_paper:   ['.sim-course'],
+  app_title_color: ['.sim-title'],
+  app_subtitle_color: ['.sim-sub'],
+};
+
+function flashPreviewElement(key){
+  const selectors = COLOR_FLASH_MAP[key];
+  if(!selectors) return;
+  selectors.forEach(sel => {
+    const el = document.querySelector(sel);
+    if(!el) return;
+    el.classList.remove('sim-flash');
+    void el.offsetWidth; // reflow
+    el.classList.add('sim-flash');
+    setTimeout(()=>el.classList.remove('sim-flash'), 800);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ③: LABEL OVERLAY — プレビュー内にキー名を表示
+// ═══════════════════════════════════════════════════════
+let labelOverlayActive = false;
+const LABEL_TARGETS = [
+  {sel:'.sim-hdr',    key:'color_ink / header_type', pos:{top:'4px',left:'4px'}},
+  {sel:'.sim-badge',  key:'home_badge_text / color_primary', pos:{top:'4px',left:'4px'}},
+  {sel:'.sim-title',  key:'app_title / app_title_color', pos:{bottom:'2px',left:'4px'}},
+  {sel:'.sim-sub',    key:'app_subtitle / app_subtitle_color', pos:{bottom:'2px',left:'4px'}},
+  {sel:'.sim-body',   key:'color_bg (背景)', pos:{top:'4px',right:'4px'}},
+  {sel:'.sim-prizes', key:'color_gold', pos:{top:'2px',left:'4px'}},
+];
+
+function toggleLabelOverlay(){
+  labelOverlayActive = !labelOverlayActive;
+  const btn = document.getElementById('btn-lbl-toggle');
+  btn.classList.toggle('active', labelOverlayActive);
+  document.querySelectorAll('.sim-label-tag').forEach(el=>el.remove());
+  if(!labelOverlayActive) return;
+  LABEL_TARGETS.forEach(t=>{
+    const target = document.querySelector(t.sel);
+    if(!target) return;
+    const tag = document.createElement('div');
+    tag.className = 'sim-label-tag';
+    tag.textContent = t.key;
+    Object.assign(tag.style, t.pos, {position:'absolute'});
+    target.style.position = 'relative';
+    target.appendChild(tag);
+  });
+}
+
+// ④: CLICK-TO-FOCUS — プレビュー要素クリックで対応フォームへスクロール
+const CLICK_FOCUS_MAP = {
+  '.sim-title':  'app_title',
+  '.sim-sub':    'app_subtitle',
+  '.sim-badge':  'home_badge_text',
+  '.sim-hdr':    'header_type',
+  '.sim-body':   'color_bg',
+  '.sim-prizes': 'color_gold',
+};
+
+function bindPreviewClickFocus(){
+  Object.entries(CLICK_FOCUS_MAP).forEach(([sel, key])=>{
+    const el = document.querySelector(sel);
+    if(!el) return;
+    el.style.cursor = 'pointer';
+    el.title = `クリックで「${key}」にジャンプ`;
+    el.onclick = ()=> focusConfigKey(key);
+  });
+}
+
+function focusConfigKey(key){
+  const body = document.getElementById('ed-body');
+  const rows = document.querySelectorAll('.cfg-row');
+  for(const row of rows){
+    const kn = row.querySelector('.cfg-kn');
+    if(kn && kn.textContent === key){
+      if(body){
+        const rowTop = row.offsetTop;
+        const targetTop = Math.max(0, rowTop - (body.clientHeight / 2) + (row.clientHeight / 2));
+        body.scrollTo({top:targetTop, behavior:'smooth'});
+      }
+      const inp = row.querySelector('.cfg-in, select.cfg-in');
+      if(inp){ inp.focus(); inp.style.transition='box-shadow .2s'; inp.style.boxShadow='0 0 0 3px rgba(184,50,50,.4)'; setTimeout(()=>inp.style.boxShadow='',1200); }
+      break;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// ⑤: PRE-SAVE DIFF MODAL
+// ═══════════════════════════════════════════════════════
+let pendingSaveCallback = null;
+
+function showDiffModal(changesObj, onConfirm){
+  const tbody = document.getElementById('diff-tbody');
+  tbody.innerHTML = '';
+  const entries = Object.entries(changesObj);
+  if(entries.length === 0){ onConfirm(); return; } // 変更なしはそのまま保存
+  entries.forEach(([k, v])=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="diff-key">${k}</td><td><div class="diff-old">${v.old||'（空）'}</div></td><td><div class="diff-new">${v.new||'（空）'}</div></td>`;
+    tbody.appendChild(tr);
+  });
+  pendingSaveCallback = onConfirm;
+  document.getElementById('diff-confirm-btn').onclick = ()=>{ closeDiffModal(); onConfirm(); };
+  document.getElementById('diff-modal').classList.add('show');
+}
+
+function closeDiffModal(){ document.getElementById('diff-modal').classList.remove('show'); pendingSaveCallback=null; }
+
+// saveCurrentSheet を差分確認付きに上書き
+const _origSaveCurrentSheet = saveCurrentSheet;
+window.saveCurrentSheet = async function(){
+  if(!state.loaded){notify('データを読み込んでください',true);return;}
+  // 変更内容を収集
+  const allChg = {};
+  const keys = currentTab==='courses'?['courses','course_spots']:[currentTab];
+  keys.forEach(k=>Object.assign(allChg, changes[k]||{}));
+  if(Object.keys(allChg).length === 0){ notify('変更がありません'); return; }
+  showDiffModal(allChg, ()=> _origSaveCurrentSheet());
+};
+
+// ═══════════════════════════════════════════════════════
+// ⑦: FONT SIZE AUTO-PX
+// ═══════════════════════════════════════════════════════
+const PX_AUTO_KEYS = ['font_size_base','font_size_heading','font_size_explain','app_title_font_size','app_subtitle_font_size','cert_title_font_size','cert_seal_size','cert_seal_text_size'];
+
+function normalizePxValue(key, val){
+  if(!PX_AUTO_KEYS.includes(key)) return val;
+  const trimmed = val.trim();
+  if(!trimmed) return trimmed;
+  if(/^\d+(\.\d+)?$/.test(trimmed)) return trimmed + 'px';
+  return trimmed;
+}
+
+// ═══════════════════════════════════════════════════════
+// ⑧: EDITOR SIZE TOGGLE
+// ═══════════════════════════════════════════════════════
+const SIZE_MAP = {s:'13px', m:'15px', l:'17px'};
+
+function setEditorSize(sz){
+  const size = SIZE_MAP[sz] || '13px';
+  document.documentElement.style.setProperty('--editor-font-size', size);
+  document.body.style.fontSize = size;
+  ['sz-s','sz-m','sz-l'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  document.getElementById('sz-'+sz)?.classList.add('active');
+  localStorage.setItem('lwg_editor_size', sz);
+}
+
+function initEditorSize(){
+  const saved = localStorage.getItem('lwg_editor_size') || 's';
+  setEditorSize(saved);
+}
+
+// ═══════════════════════════════════════════════════════
+// ⑨: FONT PICKER
+// ═══════════════════════════════════════════════════════
+const JP_FONTS = [
+  {name:'Noto Sans JP', label:'Noto Sans JP（游ゴシック系・読みやすい）'},
+  {name:'Noto Serif JP', label:'Noto Serif JP（明朝・上品）'},
+  {name:'Shippori Mincho', label:'Shippori Mincho（細明朝・和風）'},
+  {name:'Yuji Syuku', label:'Yuji Syuku（毛筆・格調高い）'},
+  {name:'Kaisei Decol', label:'Kaisei Decol（アンティーク明朝）'},
+  {name:'Zen Maru Gothic', label:'Zen Maru Gothic（丸ゴシック・柔らか）'},
+  {name:'Hina Mincho', label:'Hina Mincho（細い明朝・繊細）'},
+  {name:'M PLUS Rounded 1c', label:'M PLUS Rounded 1c（丸みゴシック）'},
+  {name:'Sawarabi Mincho', label:'Sawarabi Mincho（さわらび明朝）'},
+  {name:'Sawarabi Gothic', label:'Sawarabi Gothic（さわらびゴシック）'},
+];
+const FONT_KEYS = ['font_title','font_body','app_title_font','app_subtitle_font','cert_title_font_family','cert_seal_font_family'];
+
+function mkFontPicker(key, cur, orig, rc, onChg){
+  const wrap = document.createElement('div'); wrap.className='font-picker-wrap';
+  const preview = document.createElement('div'); preview.className='font-preview'; preview.textContent='増田まち歩きガイド / MACHI ARUKI';
+  if(cur) preview.style.fontFamily=`'${cur}', serif`;
+  if(cur) loadGoogleFont(cur);
+
+  const sel = document.createElement('select'); sel.className='font-picker-sel';
+  const defOpt = document.createElement('option'); defOpt.value=''; defOpt.textContent='── フォントを選択 ──'; sel.appendChild(defOpt);
+  JP_FONTS.forEach(f=>{
+    const o=document.createElement('option'); o.value=f.name; o.textContent=f.label;
+    o.style.fontFamily=`'${f.name}', sans-serif`;
+    loadGoogleFont(f.name);
+    if(cur===f.name) o.selected=true;
+    sel.appendChild(o);
+  });
+  // 直接入力欄（選択肢にないフォントも可）
+  const inp = document.createElement('input'); inp.type='text'; inp.className='cfg-in'; inp.value=cur; inp.placeholder='または直接入力';
+  inp.style.marginTop='0';
+
+  sel.addEventListener('change',()=>{
+    inp.value=sel.value;
+    preview.style.fontFamily=sel.value?`'${sel.value}', serif`:'';
+    preview.textContent='増田まち歩きガイド / MACHI ARUKI';
+    onChg(sel.value);
+    // Googleフォントを動的に読み込む
+    if(sel.value) loadGoogleFont(sel.value);
+  });
+  inp.addEventListener('input',()=>{
+    preview.style.fontFamily=inp.value?`'${inp.value}', serif`:'';
+    if(inp.value) loadGoogleFont(inp.value);
+    onChg(inp.value);
+  });
+
+  wrap.appendChild(preview); wrap.appendChild(sel); wrap.appendChild(inp);
+  rc.appendChild(wrap);
+}
+
+function loadGoogleFont(name){
+  const id='gf-'+name.replace(/\s/g,'-');
+  if(document.getElementById(id)) return;
+  const link=document.createElement('link'); link.id=id; link.rel='stylesheet';
+  link.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
+  document.head.appendChild(link);
+}
+
+</script>
+</body>
+</html>
