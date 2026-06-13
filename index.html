@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1C1A16">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="まち歩き">
 <title>まち歩きガイド</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Kaisei+Decol:wght@400;700&family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Kaisei+Decol:wght@400;700&family=Shippori+Mincho:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <!-- ══ Google Analytics 4 ══
@@ -107,7 +107,7 @@ body {
 
 .home-body { flex: 1; overflow-y: auto; padding: 16px; }
 
-.home-section-label { font-size: 10px; color: rgba(250,247,241,.3); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 8px; margin-top: 16px; }
+.home-section-label { font-size: 11px; color: rgba(250,247,241,.3); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 8px; margin-top: 16px; }
 .home-section-label:first-child { margin-top: 0; }
 
 /* ══ ホーム画面 ライト／ダーク切替 ══ */
@@ -176,15 +176,15 @@ body {
 .course-card.completed { border-color: rgba(154,122,58,.4); }
 .course-card.masuda-recommend { border-color: rgba(154,122,58,.3); background: rgba(154,122,58,.05); }
 
-.course-card-tag { position: absolute; top: 0; right: 0; font-size: 9px; letter-spacing: .1em; padding: 3px 10px; border-radius: 0 var(--radius) 0 6px; }
+.course-card-tag { position: absolute; top: 0; right: 0; font-size: 11px; letter-spacing: .1em; padding: 3px 10px; border-radius: 0 var(--radius) 0 6px; }
 .tag-rec { background: var(--primary); color: white; }
 .tag-done { background: var(--gold); color: white; }
 .tag-masuda { background: rgba(154,122,58,.6); color: white; }
 
-.course-card-type { font-size: 10px; color: rgba(250,247,241,.35); letter-spacing: .1em; margin-bottom: 4px; }
+.course-card-type { font-size: 11px; color: rgba(250,247,241,.35); letter-spacing: .1em; margin-bottom: 4px; }
 .course-card-name { font-family: var(--font-title); font-size: 17px; font-weight: 700; color: #FAF7F1; margin-bottom: 6px; }
-.course-card-meta { display: flex; gap: 12px; font-size: 11px; color: rgba(250,247,241,.4); }
-.course-card-period { font-size: 10px; color: var(--orange); margin-top: 5px; }
+.course-card-meta { display: flex; gap: 12px; font-size: 13px; font-weight: 500; color: rgba(250,247,241,.4); }
+.course-card-period { font-size: 12px; color: var(--orange); margin-top: 5px; }
 
 /* エリア切り替えカード */
 .area-card {
@@ -197,14 +197,14 @@ body {
 .area-card-icon { font-size: 24px; }
 .area-card-info { flex: 1; }
 .area-card-name { font-size: 14px; color: rgba(250,247,241,.8); font-weight: 500; margin-bottom: 2px; }
-.area-card-desc { font-size: 10px; color: rgba(250,247,241,.3); letter-spacing: .04em; }
+.area-card-desc { font-size: 11px; color: rgba(250,247,241,.3); letter-spacing: .04em; }
 .area-card-arrow { font-size: 14px; color: rgba(250,247,241,.2); }
 .area-card.home-area { border-color: rgba(154,122,58,.3); }
 .area-card.fav-area { border-color: rgba(58,122,74,.25); }
 
 .btn-prizes-home {
   width: 100%; background: transparent; border: 1px solid rgba(250,247,241,.15);
-  color: rgba(250,247,241,.45); padding: 12px; font-size: 12px;
+  color: rgba(250,247,241,.45); padding: 12px; font-size: 13px;
   letter-spacing: .1em; border-radius: 4px; cursor: pointer; margin-top: 4px;
   transition: all .2s;
 }
@@ -272,8 +272,8 @@ body {
 .nav-progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
 .nav-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width .5s ease; }
 .nav-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-.nav-step-label { font-size: 10px; color: var(--muted); letter-spacing: .15em; }
-.gps-status { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.nav-step-label { font-size: 11px; color: var(--muted); letter-spacing: .15em; }
+.gps-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
 .gps-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; transition: background .3s; }
 .gps-dot.searching { background: #f0a040; animation: blink 1s infinite; }
 .gps-dot.active { background: var(--green); }
@@ -289,27 +289,27 @@ body {
 .dist-info { flex: 1; }
 .dist-number { font-family: var(--font-title); font-size: 28px; font-weight: 900; color: #0b0a08; line-height: .95; letter-spacing: .03em; text-shadow: 0 1px 0 #fff, 0 0 1px rgba(28,26,22,.7); }
 .dist-number span { font-size: 12px; font-weight: 800; margin-left: 3px; color: #3b352b; }
-.dist-status { font-size: 10px; color: #5d5346; margin-top: 4px; letter-spacing: .04em; font-weight: 600; }
+.dist-status { font-size: 12px; color: #5d5346; margin-top: 4px; letter-spacing: .04em; font-weight: 600; }
 .ring-wrap { position: relative; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: radial-gradient(circle, #fffef8 45%, #efe4cf 46%, #fffaf0 68%); box-shadow: inset 0 0 0 1px rgba(28,26,22,.08), 0 2px 8px rgba(28,26,22,.12); }
 .ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
 .ring-bg { fill: none; stroke: #c8b992; stroke-width: 4; }
 .ring-fill { fill: none; stroke: var(--primary); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 113; stroke-dashoffset: 113; transition: stroke-dashoffset .6s ease, stroke .4s; filter: drop-shadow(0 0 2px rgba(184,50,50,.35)); }
-.ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #1c1a16; font-weight: 800; letter-spacing: .02em; }
+.ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #1c1a16; font-weight: 800; letter-spacing: .02em; }
 .distance-panel.near .ring-wrap { animation: distancePulse var(--distance-pulse-speed, 1.6s) ease-in-out infinite; }
 .distance-panel.arrived .ring-wrap { animation: distancePulse .95s ease-in-out infinite; }
 @keyframes distancePulse { 0%,100%{transform:scale(1); box-shadow: inset 0 0 0 1px rgba(28,26,22,.08), 0 2px 8px rgba(28,26,22,.12)} 50%{transform:scale(1.045); box-shadow: inset 0 0 0 1px rgba(28,26,22,.1), 0 0 0 5px rgba(184,50,50,.08), 0 4px 14px rgba(184,50,50,.18)} }
 @media (prefers-reduced-motion: reduce) { .distance-panel.near .ring-wrap, .distance-panel.arrived .ring-wrap { animation: none; } }
 
 /* 歩行距離 */
-.walk-bar { margin: 8px 20px 0; background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
-.walk-val { font-family: var(--font-title); font-size: 14px; color: var(--ink); font-weight: 600; margin-left: auto; }
+.walk-bar { margin: 8px 20px 0; background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.walk-val { font-family: var(--font-title); font-size: 15px; color: var(--ink); font-weight: 600; margin-left: auto; }
 
 /* 施設トースト */
-.facility-toast { margin: 7px 20px 0; background: rgba(200,112,32,.1); border: 1px solid rgba(200,112,32,.3); border-radius: 8px; padding: 8px 13px; font-size: 11px; color: var(--orange); display: none; align-items: center; gap: 8px; line-height: 1.5; }
+.facility-toast { margin: 7px 20px 0; background: rgba(200,112,32,.1); border: 1px solid rgba(200,112,32,.3); border-radius: 8px; padding: 8px 13px; font-size: 12px; color: var(--orange); display: none; align-items: center; gap: 8px; line-height: 1.5; }
 .facility-toast.show { display: flex; animation: fadeIn .3s ease; }
 
 /* 音声ログ */
-.voice-log { margin: 7px 20px 0; background: rgba(58,122,74,.07); border: 1px solid rgba(58,122,74,.18); border-radius: 8px; padding: 8px 13px; font-size: 11px; color: var(--green); min-height: 32px; display: flex; align-items: center; gap: 8px; letter-spacing: .04em; line-height: 1.5; }
+.voice-log { margin: 7px 20px 0; background: rgba(58,122,74,.07); border: 1px solid rgba(58,122,74,.18); border-radius: 8px; padding: 8px 13px; font-size: 12px; color: var(--green); min-height: 32px; display: flex; align-items: center; gap: 8px; letter-spacing: .04em; line-height: 1.5; }
 
 /* マップ */
 .map-container { margin: 8px 20px 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); height: 320px; position: relative; }
@@ -334,16 +334,16 @@ body {
 .spot-dot { width: 26px; height: 26px; border-radius: 50%; background: #C8C0B0; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-size: 11px; font-weight: 600; color: white; flex-shrink: 0; transition: background .3s, transform .3s; position: relative; z-index: 1; }
 .spot-dot.done { background: var(--gold); }
 .spot-dot.current { background: var(--primary); transform: scale(1.15); }
-.spot-dot-label { font-size: 9px; color: var(--muted); margin-top: 3px; text-align: center; max-width: 52px; line-height: 1.3; }
+.spot-dot-label { font-size: 10px; color: var(--muted); margin-top: 3px; text-align: center; max-width: 56px; line-height: 1.3; }
 
 .arrive-section { padding: 10px 20px 20px; display: flex; flex-direction: column; gap: 7px; margin-top: auto; }
 .btn-arrived { background: var(--paper); border: 2px solid var(--ink); color: var(--ink); padding: 13px; font-family: var(--font-title); font-size: 14px; letter-spacing: .12em; border-radius: var(--radius); cursor: pointer; width: 100%; transition: background .2s, color .2s; }
 .btn-arrived:active { background: var(--ink); color: var(--paper); }
-.manual-hint { font-size: 10px; color: var(--muted); text-align: center; }
+.manual-hint { font-size: 11px; color: var(--muted); text-align: center; }
 .btn-arrived:disabled { opacity: .45; cursor: default; background: var(--border); color: var(--muted); border-color: var(--border); }
 
 /* 次スポット表示 */
-.nav-next-spot { font-size: 10px; color: var(--muted); letter-spacing: .06em; margin-top: 3px; padding-left: 2px; min-height: 14px; }
+.nav-next-spot { font-size: 12px; color: var(--muted); letter-spacing: .06em; margin-top: 3px; padding-left: 2px; min-height: 16px; }
 .nav-next-spot span { color: var(--primary); font-weight: 500; }
 
 /* ARキャリブレーションオーバーレイ */
@@ -396,8 +396,8 @@ body {
 .explain-body { padding: 16px 20px 0; flex: 1; overflow-y: auto; }
 .explain-text { font-size: var(--font-size-explain); line-height: 2.0; color: var(--ink); letter-spacing: .04em; margin-bottom: 16px; white-space: pre-wrap; }
 .explain-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-.explain-sub { font-size: 10px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 7px; }
-.explain-keyword { display: inline-block; background: var(--paper); border: 1px solid var(--border); font-size: 11px; color: var(--gold); padding: 2px 9px; border-radius: 20px; margin: 2px 2px 2px 0; }
+.explain-sub { font-size: 11px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 7px; }
+.explain-keyword { display: inline-block; background: var(--paper); border: 1px solid var(--border); font-size: 12px; color: var(--gold); padding: 2px 9px; border-radius: 20px; margin: 2px 2px 2px 0; }
 .btn-next { margin: 14px 20px 24px; background: var(--primary); color: white; border: none; padding: 14px; font-family: var(--font-title); font-size: var(--font-size-heading); letter-spacing: .15em; border-radius: var(--radius); cursor: pointer; width: calc(100% - 40px); transition: opacity .2s; }
 .btn-next:active { opacity: .8; }
 .btn-next:disabled { opacity: .5; cursor: default; background: var(--muted); letter-spacing: .06em; }
@@ -408,8 +408,47 @@ body {
 /* ══ いいねバー ══ */
 .like-bar { padding: 5px 16px 5px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .like-bar-icon { font-size: 12px; opacity: .45; }
-.like-bar-text { font-size: 10px; color: rgba(250,247,241,.28); letter-spacing: .06em; flex: 1; }
+.like-bar-text { font-size: 11px; color: rgba(250,247,241,.28); letter-spacing: .06em; flex: 1; }
 .like-bar-val { font-family: var(--font-title); font-size: 13px; color: rgba(250,247,241,.35); font-weight: 600; letter-spacing: .04em; }
+
+.weather-bar {
+  padding: 7px 16px 7px; display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,.06));
+  background: rgba(255,255,255,.025);
+  min-height: 34px;
+}
+.weather-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(250,247,241,.28); flex-shrink: 0;
+}
+.weather-dot.hot { background: var(--orange); box-shadow: 0 0 0 3px rgba(200,112,32,.12); }
+.weather-dot.rain { background: #5a7da0; box-shadow: 0 0 0 3px rgba(90,125,160,.12); }
+.weather-text {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13px; font-weight: 500; color: var(--home-subtext, rgba(250,247,241,.42)); letter-spacing: .04em;
+}
+.weather-refresh {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--home-card-border, rgba(255,255,255,.12));
+  background: transparent; color: var(--home-subtext, rgba(250,247,241,.42));
+  font-size: 14px; line-height: 1; cursor: pointer; flex-shrink: 0;
+}
+.weather-refresh:active { opacity: .65; }
+
+.nav-sensors { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 72%; }
+.nav-sensors .gps-status { min-width: 0; flex-shrink: 1; }
+.nav-sensors .gps-status span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-weather-chip {
+  display: none; align-items: center; gap: 6px; max-width: 190px; min-height: 26px;
+  border: 1px solid rgba(122,112,96,.22); border-radius: 999px; padding: 4px 9px;
+  background: rgba(250,247,241,.58);
+  font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nav-weather-chip.show { display: flex; }
+.nav-weather-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.nav-weather-dot.hot { background: var(--orange); }
+.nav-weather-dot.rain { background: #5a7da0; }
+.nav-weather-text { overflow: hidden; text-overflow: ellipsis; }
 
 /* ══ 修了書（賞状スタイル） ══ */
 #screen-goal { background: #2A2218; overflow-y: auto; }
@@ -450,13 +489,13 @@ body {
   letter-spacing: var(--cert-title-letter-spacing, .35em);
 }
 /* コース名 */
-.cert-sho-course-label { font-size: 9px; color: #9A7A3A; letter-spacing: .25em; text-align: center; margin-bottom: 4px; }
+.cert-sho-course-label { font-size: 11px; color: #9A7A3A; letter-spacing: .25em; text-align: center; margin-bottom: 4px; }
 .cert-sho-course { font-family: var(--font-title); font-size: 15px; font-weight: 700; color: #2A1A0A; text-align: center; border-bottom: 1px solid #D4C9B0; padding-bottom: 14px; margin-bottom: 14px; letter-spacing: .08em; line-height: 1.5; }
 /* 本文 */
 .cert-sho-body { font-family: var(--font-title); font-size: 13px; line-height: 2.2; color: #3A2A1A; text-align: center; letter-spacing: .08em; margin-bottom: 16px; }
 .cert-sho-extra { font-size: 11px; color: #7A6A5A; text-align: center; line-height: 1.9; margin-bottom: 16px; letter-spacing: .04em; }
 /* スポット一覧 */
-.cert-sho-spots-label { font-size: 9px; color: #9A7A3A; letter-spacing: .25em; text-align: center; margin-bottom: 8px; border-top: 1px solid #D4C9B0; padding-top: 12px; }
+.cert-sho-spots-label { font-size: 11px; color: #9A7A3A; letter-spacing: .25em; text-align: center; margin-bottom: 8px; border-top: 1px solid #D4C9B0; padding-top: 12px; }
 .cert-sho-spots { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; margin-bottom: 14px; }
 .cert-sho-spot-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .cert-sho-spot-num { width: 22px; height: 22px; border-radius: 50%; background: #9A7A3A; color: white; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-size: 10px; font-weight: 700; }
@@ -466,8 +505,8 @@ body {
 .cert-sho-stat { flex: 1; text-align: center; padding: 8px 4px; }
 .cert-sho-stat + .cert-sho-stat { border-left: 1px solid #D4C9B0; }
 .cert-sho-stat-val { font-family: var(--font-title); font-size: 18px; font-weight: 700; color: #9A7A3A; }
-.cert-sho-stat-unit { font-size: 10px; color: #7A6A5A; margin-left: 1px; }
-.cert-sho-stat-label { font-size: 9px; color: #9A7A5A; letter-spacing: .08em; margin-top: 1px; }
+.cert-sho-stat-unit { font-size: 11px; color: #7A6A5A; margin-left: 1px; }
+.cert-sho-stat-label { font-size: 11px; color: #9A7A5A; letter-spacing: .08em; margin-top: 1px; }
 /* 日付 */
 .cert-sho-date { font-size: 11px; color: #7A6A5A; text-align: center; letter-spacing: .15em; margin-bottom: 18px; font-family: var(--font-title); }
 /* 発行者・印鑑フッター */
@@ -492,7 +531,7 @@ body {
 .cert-sho-btn-primary { background: #9A7A3A; color: white; border: none; padding: 13px; font-family: var(--font-title); font-size: 13px; letter-spacing: .12em; border-radius: 4px; cursor: pointer; transition: opacity .2s; width: 100%; }
 .cert-sho-btn-primary:active { opacity: .8; }
 .cert-sho-btn-secondary { background: transparent; border: 1px solid #D4C9B0; color: #9A7A5A; padding: 11px; font-size: 12px; letter-spacing: .1em; border-radius: 4px; cursor: pointer; width: 100%; }
-.cert-sho-screenshot { font-size: 10px; color: #B8A890; text-align: center; margin-bottom: 10px; letter-spacing: .06em; }
+.cert-sho-screenshot { font-size: 11px; color: #B8A890; text-align: center; margin-bottom: 10px; letter-spacing: .06em; }
 .cert-sho-seal { position: relative; display: flex; align-items: center; justify-content: center; transform-origin: center; }
 .cert-sho.goal-animate .cert-sho-seal { animation: certStamp .72s cubic-bezier(.2,1.25,.25,1) .28s both; }
 .cert-sho-seal::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; opacity: 0; background: radial-gradient(circle, rgba(184,50,50,.18), rgba(184,50,50,.06) 42%, transparent 70%); transform: scale(.65); pointer-events: none; }
@@ -574,7 +613,7 @@ body {
 .stamp-date-in { font-size: 10px; color: var(--primary); letter-spacing: .06em; font-family: var(--font-title); position: relative; z-index: 1; line-height: 1.3; text-align: center; }
 .stamp-name { font-family: var(--font-title); font-size: 12px; font-weight: 600; color: var(--ink); text-align: center; line-height: 1.45; max-width: 122px; }
 .stamp-name.locked-name { color: var(--muted); opacity: .4; }
-.stamp-where { font-size: 10px; color: var(--muted); text-align: center; line-height: 1.45; }
+.stamp-where { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.45; }
 .stamps-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; line-height: 2.0; }
 .stamps-total { text-align: center; margin-top: 16px; font-size: 11px; color: var(--muted); letter-spacing: .1em; }
 .stamps-total span { font-family: var(--font-title); font-size: 18px; font-weight: 700; color: var(--primary); margin: 0 2px; }
@@ -582,11 +621,11 @@ body {
 .prize-card-where { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
 /* プライズヘッダータブ */
 .prizes-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.1); margin-top: 10px; }
-.prizes-tab { flex: 1; padding: 8px; text-align: center; font-size: 11px; letter-spacing: .1em; color: rgba(250,247,241,.35); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; }
+.prizes-tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; letter-spacing: .1em; color: rgba(250,247,241,.35); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; }
 .prizes-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
 /* 地域フィルターチップ */
 .prizes-filter { padding: 10px 16px 4px; display: flex; gap: 6px; flex-wrap: wrap; }
-.prizes-filter-chip { background: transparent; border: 1px solid rgba(250,247,241,.2); color: rgba(250,247,241,.4); padding: 4px 11px; border-radius: 20px; font-size: 10px; letter-spacing: .06em; cursor: pointer; transition: all .2s; white-space: nowrap; }
+.prizes-filter-chip { background: transparent; border: 1px solid rgba(250,247,241,.2); color: rgba(250,247,241,.4); padding: 4px 11px; border-radius: 20px; font-size: 11px; letter-spacing: .06em; cursor: pointer; transition: all .2s; white-space: nowrap; }
 .prizes-filter-chip.active { background: rgba(154,122,58,.2); border-color: var(--gold); color: var(--gold); }
 /* 地域グループラベル */
 .prizes-location-group { margin-top: 14px; margin-bottom: 6px; }
@@ -633,17 +672,17 @@ body {
   white-space: nowrap;
 }
 .btn-cloud-login:active { opacity: .8; }
-.cloud-login-hint { font-size: 10px; color: rgba(250,247,241,.3); letter-spacing: .04em; line-height: 1.4; }
+.cloud-login-hint { font-size: 11px; color: rgba(250,247,241,.3); letter-spacing: .04em; line-height: 1.4; }
 .cloud-user-area { display: none; align-items: center; gap: 8px; flex: 1; }
 .cloud-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; flex-shrink: 0; transition: background .3s; }
 .cloud-dot.ok { background: var(--green); }
 .cloud-dot.syncing { background: #f0a040; animation: blink 1s infinite; }
 .cloud-dot.error { background: var(--primary); }
 .cloud-dot.idle { background: rgba(250,247,241,.25); }
-.cloud-status-text { font-size: 10px; color: rgba(250,247,241,.4); flex: 1; letter-spacing: .04em; }
+.cloud-status-text { font-size: 11px; color: rgba(250,247,241,.4); flex: 1; letter-spacing: .04em; }
 .btn-cloud-sync {
   background: transparent; border: 1px solid rgba(255,255,255,.15); color: rgba(250,247,241,.5);
-  padding: 4px 10px; border-radius: 20px; font-size: 10px; cursor: pointer; letter-spacing: .06em;
+  padding: 4px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; letter-spacing: .06em;
   white-space: nowrap; transition: all .2s;
 }
 .btn-cloud-sync:active { border-color: var(--green); color: var(--green); }
@@ -652,6 +691,64 @@ body {
   font-size: 16px; cursor: pointer; padding: 2px; line-height: 1; flex-shrink: 0;
 }
 .btn-cloud-signout:active { color: var(--primary); }
+
+/* ══ コースカード拡張（サムネイル・スタート地点・説明文） ══ */
+.course-card-row { display: flex; gap: 12px; align-items: flex-start; }
+.course-card-thumb { width: 68px; height: 68px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,.06); }
+.course-card-main { flex: 1; min-width: 0; }
+.course-card-start { font-size: 13px; color: var(--home-subtext, rgba(250,247,241,.45)); margin-bottom: 5px; letter-spacing: .02em; }
+.course-card-start .course-card-dist { color: var(--orange); font-weight: 600; }
+.course-card-desc { font-size: 12px; color: var(--home-subtext, rgba(250,247,241,.4)); margin-top: 6px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#screen-home .course-card-start, #screen-home .course-card-desc { color: var(--home-subtext, rgba(250,247,241,.4)); }
+
+/* ══ すべてのコースを見る（折りたたみ） ══ */
+.btn-all-courses {
+  width: 100%; background: transparent; border: 1px solid var(--home-card-border, rgba(250,247,241,.15));
+  color: var(--home-subtext, rgba(250,247,241,.45)); padding: 12px; font-size: 13px;
+  letter-spacing: .1em; border-radius: 4px; cursor: pointer; margin-top: 12px;
+  transition: all .2s;
+}
+.btn-all-courses:active { border-color: var(--gold); color: var(--gold); }
+#all-courses-wrap { margin-top: 8px; }
+
+/* ══ コース説明画面 ══ */
+#screen-intro { background: var(--bg); }
+.intro-photo { width: 100%; aspect-ratio: 16/9; background: #2A2720; position: relative; overflow: hidden; }
+.intro-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.intro-header { background: var(--ink); color: var(--paper); padding: 16px 22px 14px; }
+.intro-type { font-size: 11px; letter-spacing: .18em; color: var(--primary); border: 1px solid var(--primary); padding: 2px 9px; display: inline-block; margin-bottom: 7px; }
+.intro-name { font-family: var(--font-title); font-size: 22px; font-weight: 700; line-height: 1.3; }
+.intro-body { padding: 16px 20px 0; flex: 1; overflow-y: auto; }
+.intro-desc { font-size: var(--font-size-explain); line-height: 2.0; color: var(--ink); letter-spacing: .04em; margin-bottom: 14px; white-space: pre-wrap; }
+.intro-grid { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 14px; margin-bottom: 12px; }
+.intro-grid-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.intro-grid-item:last-child { border-bottom: none; }
+.intro-grid-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.intro-grid-label { font-size: 11px; color: var(--muted); letter-spacing: .12em; }
+.intro-grid-val { font-family: var(--font-title); font-size: 16px; font-weight: 600; color: var(--ink); line-height: 1.4; }
+.intro-notes { background: rgba(200,112,32,.1); border: 1px solid rgba(200,112,32,.3); border-radius: 8px; padding: 9px 13px; font-size: 13px; color: var(--orange); display: flex; align-items: flex-start; gap: 8px; line-height: 1.7; margin-bottom: 12px; }
+.intro-wbgt { border-radius: 8px; padding: 9px 13px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; line-height: 1.7; margin-bottom: 12px; border: 1px solid var(--border); background: var(--paper); color: var(--ink); }
+.intro-wbgt-title { font-weight: 700; }
+.intro-wbgt-msg { font-size: 12px; color: var(--muted); }
+.intro-wbgt.wbgt-bg-warn { border-color: rgba(200,112,32,.4); background: rgba(200,112,32,.08); }
+.intro-wbgt.wbgt-bg-warn .intro-wbgt-title { color: var(--orange); }
+.intro-wbgt.wbgt-bg-severe, .intro-wbgt.wbgt-bg-danger { border-color: rgba(184,50,50,.4); background: rgba(184,50,50,.07); }
+.intro-wbgt.wbgt-bg-severe .intro-wbgt-title, .intro-wbgt.wbgt-bg-danger .intro-wbgt-title { color: var(--primary); }
+.btn-intro-audio { background: var(--paper); border: 1px solid var(--border); color: var(--ink); padding: 11px; font-size: 13px; letter-spacing: .08em; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 4px; }
+.btn-intro-audio:active { background: var(--border); }
+.intro-buttons { padding: 14px 20px 24px; display: flex; flex-direction: column; gap: 8px; }
+.btn-intro-start { background: var(--primary); color: white; border: none; padding: 14px; font-family: var(--font-title); font-size: 16px; letter-spacing: .12em; border-radius: var(--radius); cursor: pointer; width: 100%; transition: opacity .2s; }
+.btn-intro-start:active { opacity: .8; }
+.btn-intro-start:disabled { opacity: .5; background: var(--muted); cursor: default; }
+.btn-intro-back { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 11px; font-size: 12px; letter-spacing: .08em; border-radius: 8px; cursor: pointer; width: 100%; }
+.btn-intro-back:active { background: var(--border); }
+
+/* ══ WBGT表示 ══ */
+#wbgt-bar .weather-text { font-weight: 600; } /* 安全情報はひと回し強く */
+.weather-dot.wbgt-safe { background: var(--green); box-shadow: 0 0 0 3px rgba(58,122,74,.12); }
+.weather-dot.wbgt-caution { background: #d4b53a; box-shadow: 0 0 0 3px rgba(212,181,58,.12); }
+.weather-dot.wbgt-warn { background: var(--orange); box-shadow: 0 0 0 3px rgba(200,112,32,.12); }
+.weather-dot.wbgt-severe, .weather-dot.wbgt-danger { background: var(--primary); box-shadow: 0 0 0 3px rgba(184,50,50,.14); }
 </style>
 </head>
 <body>
@@ -698,7 +795,45 @@ body {
     <span class="like-bar-text">累計いいね</span>
     <span class="like-bar-val" id="like-bar-val">0 いいね</span>
   </div>
+  <div class="weather-bar" id="weather-bar">
+    <span class="weather-dot" id="weather-dot"></span>
+    <span class="weather-text" id="weather-text">&#22825;&#27671;&#12434;&#30906;&#35469;&#20013;</span>
+    <button class="weather-refresh" onclick="refreshWeather(true)" title="&#22825;&#27671;&#12434;&#26356;&#26032;" aria-label="&#22825;&#27671;&#12434;&#26356;&#26032;">&#8635;</button>
+  </div>
+  <!-- 暑さ指数（WBGT・wbgt_enabled=TRUE のとき表示） -->
+  <div class="weather-bar" id="wbgt-bar" style="display:none">
+    <span class="weather-dot" id="wbgt-dot"></span>
+    <span class="weather-text" id="wbgt-text"></span>
+  </div>
   <div class="home-body" id="home-body"></div>
+</div>
+
+<!-- ②b コース説明 -->
+<div id="screen-intro" class="screen">
+  <div class="intro-photo" id="intro-photo">
+    <div class="photo-placeholder" id="intro-photo-placeholder"><div class="photo-placeholder-icon">📷</div><div>写真準備中</div></div>
+  </div>
+  <div class="intro-header">
+    <div class="intro-type" id="intro-type"></div>
+    <div class="intro-name" id="intro-name"></div>
+  </div>
+  <div class="intro-body">
+    <div class="intro-desc" id="intro-desc"></div>
+    <div class="intro-grid">
+      <div class="intro-grid-item"><span class="intro-grid-icon">🚩</span><div><div class="intro-grid-label">スタート</div><div class="intro-grid-val" id="intro-start"></div></div></div>
+      <div class="intro-grid-item"><span class="intro-grid-icon">🏁</span><div><div class="intro-grid-label">ゴール</div><div class="intro-grid-val" id="intro-goal"></div></div></div>
+      <div class="intro-grid-item"><span class="intro-grid-icon">🕐</span><div><div class="intro-grid-label">所要時間</div><div class="intro-grid-val" id="intro-time"></div></div></div>
+      <div class="intro-grid-item"><span class="intro-grid-icon">📍</span><div><div class="intro-grid-label">歩行距離</div><div class="intro-grid-val" id="intro-dist"></div></div></div>
+      <div class="intro-grid-item"><span class="intro-grid-icon">🏛</span><div><div class="intro-grid-label">立ち寄り</div><div class="intro-grid-val" id="intro-spots"></div></div></div>
+    </div>
+    <div class="intro-notes" id="intro-notes" style="display:none"><span>⚠️</span><span id="intro-notes-text"></span></div>
+    <div class="intro-wbgt" id="intro-wbgt" style="display:none"></div>
+    <button class="btn-intro-audio" id="btn-intro-audio" style="display:none" onclick="playCourseIntroAudio()">🔊 コース説明を聞く</button>
+  </div>
+  <div class="intro-buttons">
+    <button class="btn-intro-start" id="btn-intro-start" onclick="startCourseFromIntro()">このコースを開始する</button>
+    <button class="btn-intro-back" onclick="backToHomeFromIntro()">← ホームに戻る</button>
+  </div>
 </div>
 
 <!-- ③ ナビ -->
@@ -707,7 +842,10 @@ body {
     <div class="nav-progress-bar"><div class="nav-progress-fill" id="progress-fill"></div></div>
     <div class="nav-top-row">
       <div class="nav-step-label" id="nav-step-label"></div>
-      <div class="gps-status"><div class="gps-dot searching" id="gps-dot"></div><span id="gps-label">GPS取得中</span></div>
+      <div class="nav-sensors">
+        <div class="gps-status"><div class="gps-dot searching" id="gps-dot"></div><span id="gps-label">GPS取得中</span></div>
+        <div class="nav-weather-chip" id="nav-weather-chip"><span class="nav-weather-dot" id="nav-weather-dot"></span><span class="nav-weather-text" id="nav-weather-text"></span></div>
+      </div>
     </div>
     <div class="nav-name-row">
       <div class="nav-spot-name" id="nav-spot-name"></div>
@@ -768,7 +906,7 @@ body {
           <!-- 中心 -->
           <circle cx="50" cy="50" r="5" fill="rgba(255,255,255,0.85)"/>
           <!-- 方位ラベル -->
-          <text x="50" y="7" text-anchor="middle" fill="#FF6B6B" font-size="6" font-weight="bold" font-family="sans-serif">目的地</text>
+          <text x="50" y="9" text-anchor="middle" fill="#FF6B6B" font-size="10" font-weight="bold" font-family="sans-serif">目的地</text>
         </svg>
       </div>
     </div>
@@ -947,6 +1085,42 @@ let nextButtonLocked = false;  // 「次へ」ボタンロック中フラグ
 let nextLockTimer = null;      // 「次へ」タイマー解除用
 
 // ══════════════════════════════════════
+// 多言語化(i18n)基盤
+// 日本語の文言そのものを辞書キーにする。辞書に無い文言は日本語のまま表示(フォールバック)。
+// UI言語はシートの config: lang で宣言する(未設定=ja)。シートの内容(コース名・解説)は翻訳しない。
+// 音声ナレーション文・表彰状キャンバスの文面は対象外(音声多言語化は別途)。
+// ══════════════════════════════════════
+let uiLang = 'ja';
+const I18N = {
+  // 英語辞書はここに足す。例:
+  // en: { 'すべてのコースを見る ▼': 'View all courses ▼', '約{n}分': 'approx. {n} min' }
+  en: {}
+};
+function t(s) {
+  if (uiLang === 'ja') return s;
+  const d = I18N[uiLang];
+  return (d && d[s]) || s;
+}
+// プレースホルダ付き文言用。例: tf('約{n}分', {n: 50})
+function tf(s, params) {
+  let out = t(s);
+  for (const [k, v] of Object.entries(params || {})) out = out.split(`{${k}}`).join(v);
+  return out;
+}
+// 静的HTML中のテキストを辞書で置き換える(ja時は何もしない)
+function localizeStaticDom() {
+  if (uiLang === 'ja') return;
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    const s = node.nodeValue.trim();
+    if (!s) continue;
+    const tr = t(s);
+    if (tr !== s) node.nodeValue = node.nodeValue.replace(s, tr);
+  }
+}
+
+// ══════════════════════════════════════
 // ローカルストレージ
 // ══════════════════════════════════════
 const STORAGE_PREFIX = 'lwg_';
@@ -1005,10 +1179,256 @@ function creditWalk(currentSessionDist) {
 
 function updateLikeBar() {
   const el = document.getElementById('like-bar-val');
-  if (el) el.textContent = `${loadLifetimeWalk().toLocaleString()} いいね`;
+  if (el) el.textContent = `${loadLifetimeWalk().toLocaleString()} ${t('いいね')}`;
 }
 
 // ── ホーム画面テーマ切替 ──
+const WEATHER_CACHE_MS = 12 * 60 * 1000;
+let weatherState = { data: null, lat: null, lng: null, fetchedAt: 0, loading: false };
+
+function getHomeWeatherPoint() {
+  const cfgLat = parseFloat(cfg.weather_lat || cfg.lat || cfg.area_lat);
+  const cfgLng = parseFloat(cfg.weather_lng || cfg.lng || cfg.area_lng);
+  if (Number.isFinite(cfgLat) && Number.isFinite(cfgLng)) return { lat: cfgLat, lng: cfgLng };
+  const firstSpot = allSpots.find(s => Number.isFinite(s.lat) && Number.isFinite(s.lng));
+  return firstSpot ? { lat: firstSpot.lat, lng: firstSpot.lng } : null;
+}
+
+function weatherCodeLabel(code) {
+  if (code === 0) return t('\u5feb\u6674');
+  if ([1,2].includes(code)) return t('\u6674\u308c\u9593\u3042\u308a');
+  if (code === 3) return t('\u304f\u3082\u308a');
+  if ([45,48].includes(code)) return t('\u9727');
+  if ([51,53,55,56,57].includes(code)) return t('\u5c0f\u96e8');
+  if ([61,63,65,66,67,80,81,82].includes(code)) return t('\u96e8');
+  if ([71,73,75,77,85,86].includes(code)) return t('\u96ea');
+  if ([95,96,99].includes(code)) return t('\u96f7\u96e8');
+  return t('\u5929\u6c17');
+}
+
+function getWeatherTone(current = {}) {
+  const code = Number(current.weather_code);
+  const apparent = Number(current.apparent_temperature ?? current.temperature_2m);
+  if (Number.isFinite(apparent) && apparent >= 30) return 'hot';
+  if ([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code)) return 'rain';
+  return '';
+}
+
+function buildWeatherText(data, compact = false) {
+  const current = data?.current || {};
+  const temp = Math.round(Number(current.temperature_2m));
+  const apparent = Math.round(Number(current.apparent_temperature));
+  const label = weatherCodeLabel(Number(current.weather_code));
+  if (!Number.isFinite(temp)) return compact ? '' : t('\u5929\u6c17\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093');
+
+  const tempText = `${temp}\u2103`;
+  const apparentText = Number.isFinite(apparent) && Math.abs(apparent - temp) >= 2
+    ? `\u30fb${t('\u4f53\u611f')}${apparent}\u2103`
+    : '';
+  const heatText = Number.isFinite(apparent) && apparent >= 30
+    ? compact ? `\u30fb${t('\u6c34\u5206')}` : `\u30fb${t('\u6c34\u5206\u3068\u4f11\u61a9\u3092\u5c11\u3057')}`
+    : '';
+  return compact ? `${tempText}${apparentText} ${label}${heatText}` : `${t('\u73fe\u5728')} ${tempText}${apparentText}\u30fb${label}${heatText}`;
+}
+
+function setWeatherLoading(text) {
+  const homeText = document.getElementById('weather-text');
+  if (homeText) homeText.textContent = text;
+}
+
+function renderWeather(data) {
+  const tone = getWeatherTone(data?.current || {});
+  const homeText = document.getElementById('weather-text');
+  const homeDot = document.getElementById('weather-dot');
+  if (homeText) homeText.textContent = buildWeatherText(data, false);
+  if (homeDot) homeDot.className = 'weather-dot' + (tone ? ' ' + tone : '');
+
+  const w = updateWbgt(data);
+
+  const chip = document.getElementById('nav-weather-chip');
+  const navText = document.getElementById('nav-weather-text');
+  const navDot = document.getElementById('nav-weather-dot');
+  if (chip && navText) {
+    let text = buildWeatherText(data, true);
+    if (text && w != null) text += ` ／WBGT${w} ${wbgtLevel(w).label}`;
+    navText.textContent = text;
+    chip.classList.toggle('show', !!text);
+  }
+  if (navDot) navDot.className = 'nav-weather-dot' + (tone ? ' ' + tone : '');
+}
+
+function setWeatherError() {
+  const homeText = document.getElementById('weather-text');
+  if (homeText) homeText.textContent = t('\u5929\u6c17\u306f\u5f8c\u3067\u518d\u78ba\u8a8d\u3067\u304d\u307e\u3059');
+  const chip = document.getElementById('nav-weather-chip');
+  if (chip) chip.classList.remove('show');
+}
+
+async function refreshWeather(force = false, point = null) {
+  const target = point || getHomeWeatherPoint();
+  if (!target || weatherState.loading) return;
+
+  const now = Date.now();
+  const samePlace = weatherState.lat !== null &&
+    Math.abs(weatherState.lat - target.lat) < 0.025 &&
+    Math.abs(weatherState.lng - target.lng) < 0.025;
+  if (!force && weatherState.data && samePlace && now - weatherState.fetchedAt < WEATHER_CACHE_MS) {
+    renderWeather(weatherState.data);
+    return;
+  }
+
+  weatherState.loading = true;
+  if (!weatherState.data) setWeatherLoading(t('\u5929\u6c17\u3092\u78ba\u8a8d\u4e2d'));
+  try {
+    const params = new URLSearchParams({
+      latitude: String(target.lat),
+      longitude: String(target.lng),
+      current: 'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code',
+      timezone: 'auto'
+    });
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+    if (!res.ok) throw new Error('weather_fetch_failed');
+    const data = await res.json();
+    weatherState = { data, lat: target.lat, lng: target.lng, fetchedAt: Date.now(), loading: false };
+    renderWeather(data);
+  } catch (e) {
+    weatherState.loading = false;
+    console.error('Weather error:', e);
+    setWeatherError();
+  }
+}
+
+// ══════════════════════════════════════
+// 暑さ指数（WBGT）
+// configの wbgt_point_code（環境省「暑さ指数情報提供地点一覧」の地点コード）と
+// wbgt_proxy_url（GAS中継URL）が設定されていれば環境省の公式予測値を表示する。
+// 未設定・取得失敗時は気温+湿度からの推定値にフォールバック（「推定」表記）。
+// ══════════════════════════════════════
+let currentWbgt = null;          // 表示中のWBGT値
+let currentWbgtOfficial = false; // 公式値かどうか（falseなら推定）
+const WBGT_OFFICIAL_CACHE_MS = 30 * 60 * 1000;
+let wbgtOfficial = { value: null, fetchedAt: 0, loading: false, key: '' };
+
+function wbgtEnabled() { return cfg.wbgt_enabled === 'TRUE'; }
+
+// 気温Ta(℃)・相対湿度RH(%)からの簡易推定。日射・風を含まない近似のため「推定」表記で扱う
+function estimateWBGT(ta, rh) {
+  if (!Number.isFinite(ta) || !Number.isFinite(rh)) return null;
+  const e = rh / 100 * 6.105 * Math.exp(17.27 * ta / (237.7 + ta)); // 水蒸気圧 hPa
+  return Math.round(0.567 * ta + 0.393 * e + 3.94);
+}
+
+function wbgtLevel(w) {
+  if (w == null) return null;
+  if (w < 21) return { label: t('ほぼ安全'), msg: t('通常どおり散策できます'), cls: 'safe' };
+  if (w < 25) return { label: t('注意'), msg: t('水分補給を意識しましょう'), cls: 'caution' };
+  if (w < 28) return { label: t('警戒'), msg: t('休憩を取りながら歩きましょう'), cls: 'warn' };
+  if (w < 31) return { label: t('厳重警戒'), msg: t('長時間の散策は避け、日陰で休みましょう'), cls: 'severe' };
+  return { label: t('危険'), msg: t('屋外散策は控えめにしましょう'), cls: 'danger' };
+}
+
+// 環境省 予測値CSVから現在時刻に最も近い予測値を取り出す
+// 形式: 1行目 ",,2026061121,2026061124,..."（YYYYMMDDHH。HHは24まで）
+//       2行目 "地点コード,更新時刻, 190, 190,..."（WBGT×10）
+function parseWbgtForecastCSV(text) {
+  const lines = String(text).trim().split(/\r?\n/);
+  if (lines.length < 2) return null;
+  const header = lines[0].split(',');
+  const row = lines[1].split(',');
+  const now = Date.now();
+  let best = null;
+  for (let i = 2; i < header.length && i < row.length; i++) {
+    const t = String(header[i]).trim();
+    const v = parseInt(row[i], 10);
+    if (!/^\d{10}$/.test(t) || !Number.isFinite(v)) continue;
+    const time = new Date(+t.slice(0,4), +t.slice(4,6) - 1, +t.slice(6,8), +t.slice(8,10)).getTime();
+    const diff = Math.abs(time - now);
+    if (!best || diff < best.diff) best = { diff, value: Math.round(v / 10) };
+  }
+  return best ? best.value : null;
+}
+
+// GAS中継経由で公式値を取得（30分キャッシュ。失敗もキャッシュして連続リトライを防ぐ）
+async function refreshWbgtOfficial() {
+  const code = String(cfg.wbgt_point_code || '').trim();
+  const proxy = String(cfg.wbgt_proxy_url || '').trim();
+  if (!wbgtEnabled() || !code || !proxy) return;
+  const key = code + '|' + proxy;
+  if (wbgtOfficial.loading) return;
+  if (wbgtOfficial.key === key && Date.now() - wbgtOfficial.fetchedAt < WBGT_OFFICIAL_CACHE_MS) return;
+  wbgtOfficial.loading = true;
+  try {
+    const sep = proxy.includes('?') ? '&' : '?';
+    const res = await fetch(`${proxy}${sep}point=${encodeURIComponent(code)}`);
+    if (!res.ok) throw new Error('wbgt_proxy_failed');
+    const json = await res.json();
+    const value = json && json.csv ? parseWbgtForecastCSV(json.csv) : null;
+    wbgtOfficial = { value, fetchedAt: Date.now(), loading: false, key };
+    if (value != null) {
+      // 公式値が届いたら表示を差し替える
+      if (weatherState.data) renderWeather(weatherState.data);
+      else updateWbgt(null);
+    }
+  } catch (e) {
+    console.error('WBGT official error:', e);
+    wbgtOfficial = { value: null, fetchedAt: Date.now(), loading: false, key };
+  }
+}
+
+// WBGTを決定し、ホームバー・コース説明画面の表示を更新する。WBGT値（無効時はnull）を返す
+function updateWbgt(data) {
+  currentWbgt = null;
+  currentWbgtOfficial = false;
+  const bar = document.getElementById('wbgt-bar');
+  if (!wbgtEnabled()) {
+    if (bar) bar.style.display = 'none';
+    renderIntroWbgt();
+    return null;
+  }
+
+  // 有効な公式値があれば優先、なければ推定
+  if (wbgtOfficial.value != null && Date.now() - wbgtOfficial.fetchedAt < WBGT_OFFICIAL_CACHE_MS * 2) {
+    currentWbgt = wbgtOfficial.value;
+    currentWbgtOfficial = true;
+  } else {
+    const cur = data?.current || {};
+    currentWbgt = estimateWBGT(Number(cur.temperature_2m), Number(cur.relative_humidity_2m));
+  }
+  refreshWbgtOfficial(); // 裏で公式値を更新（取得でき次第表示が差し替わる）
+
+  const lv = wbgtLevel(currentWbgt);
+  if (bar) {
+    if (lv) {
+      document.getElementById('wbgt-dot').className = 'weather-dot wbgt-' + lv.cls;
+      const src = currentWbgtOfficial ? '' : t('(推定)');
+      document.getElementById('wbgt-text').textContent = `${t('暑さ指数')}${src} ${currentWbgt}｜${lv.label} — ${lv.msg}`;
+      bar.style.display = 'flex';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+  renderIntroWbgt();
+  return currentWbgt;
+}
+
+// コース説明画面のWBGT行
+function renderIntroWbgt() {
+  const el = document.getElementById('intro-wbgt');
+  if (!el) return;
+  const lv = wbgtLevel(currentWbgt);
+  if (!wbgtEnabled() || !lv) { el.style.display = 'none'; return; }
+  el.className = 'intro-wbgt wbgt-bg-' + lv.cls;
+  el.innerHTML = '';
+  const title = document.createElement('span');
+  title.className = 'intro-wbgt-title';
+  title.textContent = `${t('本日の暑さ指数')}${currentWbgtOfficial ? '' : t('（推定）')}：WBGT ${currentWbgt}｜${lv.label}`;
+  const msg = document.createElement('span');
+  msg.className = 'intro-wbgt-msg';
+  msg.textContent = lv.msg;
+  el.appendChild(title); el.appendChild(msg);
+  el.style.display = 'flex';
+}
+
 const HOME_THEME_KEY = 'lwg_home_theme';
 let homeThemeAutoStarted = false;
 
@@ -1104,7 +1524,7 @@ function applyHomeTheme(mode) {
   const btn = document.getElementById('home-theme-toggle');
   if (btn) {
     btn.textContent = mode === 'light' ? '☀️' : '🌙';
-    btn.title = mode === 'light' ? 'ライトモード' : 'ダークモード';
+    btn.title = mode === 'light' ? t('ライトモード') : t('ダークモード');
   }
 }
 
@@ -1173,7 +1593,9 @@ function splitLine(line) {
 // シート取得
 // ══════════════════════════════════════
 function sheetURL(sid, sheet) {
-  return `https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
+  // headers=1: 1行目のみをヘッダーとして扱う。
+  // これが無いとgvizの型推定（数値セルの混入など）で複数行がヘッダーに巻き込まれ、パースが壊れる
+  return `https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${sheet}&headers=1`;
 }
 
 async function fetchSheet(sid, sheet) {
@@ -1189,7 +1611,7 @@ async function fetchSheet(sid, sheet) {
 async function initApp() {
   checkAndResetIfSheetChanged();
   document.getElementById('loading-error').style.display = 'none';
-  document.getElementById('loading-msg').textContent = 'データを読み込んでいます…';
+  document.getElementById('loading-msg').textContent = t('データを読み込んでいます…');
 
   // URLパラメータからsid取得
   const params = new URLSearchParams(location.search);
@@ -1209,6 +1631,10 @@ async function initApp() {
     parseCSV(cfgCSV).forEach(r => { if (r.key) cfg[r.key] = r.value; });
     applyConfig();
 
+    // UI言語はシートが宣言する(?lang=は使わない方針。解説とUIの言語混在を防ぐ)
+    uiLang = String(cfg.lang || 'ja').trim().toLowerCase();
+    localizeStaticDom();
+
     // データ
     allCourses = parseCSV(coursesCSV).map(c => ({
       ...c,
@@ -1216,6 +1642,10 @@ async function initApp() {
       recommended: c.recommended === 'TRUE',
       duration_min: parseInt(c.duration_min) || 0,
       distance_m: parseInt(c.distance_m) || 0,
+      course_description: c.course_description || '',
+      course_thumbnail_url: c.course_thumbnail_url || '',
+      course_audio_url: c.course_audio_url || '',
+      course_notes: c.course_notes || '',
     }));
 
     allSpots = parseCSV(spotsCSV).map(s => ({
@@ -1244,6 +1674,7 @@ async function initApp() {
 
     showScreen('screen-home');
     renderHome();
+    refreshWeather();
 
   } catch(e) {
     console.error(e);
@@ -1344,7 +1775,7 @@ function applyConfig() {
   document.title = title;
   document.getElementById('loading-logo').textContent = title;
   document.getElementById('home-title').textContent = title;
-  document.getElementById('home-subtitle').textContent = cfg.app_subtitle || 'コースを選んでください';
+  document.getElementById('home-subtitle').textContent = cfg.app_subtitle || t('コースを選んでください');
 
   // ホームバッジ
   const badge = document.getElementById('home-badge');
@@ -1431,6 +1862,42 @@ function applyHeaderStyle() {
 }
 
 // ══════════════════════════════════════
+// コース→スポット解決ヘルパー
+// （order最小=スタート、order最大=ゴール）
+// ══════════════════════════════════════
+function buildCourseSpots(course) {
+  return allCourseSpots
+    .filter(cs => cs.course_id === course.course_id)
+    .sort((a,b) => a.order - b.order)
+    .map(cs => {
+      const spot = allSpots.find(s => s.spot_id === cs.spot_id);
+      return spot ? { ...spot, order: cs.order } : null;
+    })
+    .filter(Boolean);
+}
+function courseStartSpot(course) { return buildCourseSpots(course)[0] || null; }
+function courseGoalSpot(course) { const s = buildCourseSpots(course); return s[s.length-1] || null; }
+
+// ══════════════════════════════════════
+// ホーム用 現在地（1回取得・5分キャッシュ）
+// ナビ用watchPositionとは独立
+// ══════════════════════════════════════
+let homePos = null; // { lat, lng, at }
+function fetchHomePosition(onDone) {
+  if (!navigator.geolocation) { onDone(null); return; }
+  if (homePos && Date.now() - homePos.at < 5 * 60 * 1000) { onDone(homePos); return; }
+  navigator.geolocation.getCurrentPosition(
+    p => { homePos = { lat: p.coords.latitude, lng: p.coords.longitude, at: Date.now() }; onDone(homePos); },
+    () => onDone(null),
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 120000 }
+  );
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ══════════════════════════════════════
 // ホーム描画
 // ══════════════════════════════════════
 function renderHome() {
@@ -1438,32 +1905,61 @@ function renderHome() {
   body.innerHTML = '';
   const prizes = loadPrizes();
   const areas = loadAreas();
-  const today = new Date(); today.setHours(0,0,0,0);
   // いいねバー更新
   updateLikeBar();
 
-  // アクティブコース
+  // アクティブコース（おすすめ優先 → display_order）
   const activeCourses = allCourses.filter(c => isActive(c))
     .sort((a,b) => { if (a.recommended && !b.recommended) return -1; if (!a.recommended && b.recommended) return 1; return a.display_order - b.display_order; });
+
+  // ── 近くから始められるコース（GPS取得後に距離付きへ差し替え）──
+  const nearbyWrap = document.createElement('div');
+  nearbyWrap.id = 'nearby-section';
+  body.appendChild(nearbyWrap);
+  renderNearbySection(nearbyWrap, activeCourses, prizes, homePos);
+  fetchHomePosition(pos => {
+    if (!pos) return;
+    const wrap = document.getElementById('nearby-section');
+    if (wrap) renderNearbySection(wrap, activeCourses, prizes, pos);
+  });
+
+  // ── すべてのコース（折りたたみ）──
+  const allWrap = document.createElement('div');
+  allWrap.id = 'all-courses-wrap';
+  allWrap.style.display = 'none';
 
   const recCourses = activeCourses.filter(c => c.recommended);
   const normalCourses = activeCourses.filter(c => !c.recommended);
 
   if (recCourses.length > 0) {
-    body.appendChild(sectionLabel('おすすめ ★'));
-    recCourses.forEach(c => body.appendChild(makeCourseCard(c, prizes)));
+    allWrap.appendChild(sectionLabel(t('おすすめ ★')));
+    recCourses.forEach(c => allWrap.appendChild(makeCourseCard(c, prizes)));
   }
   if (normalCourses.length > 0) {
-    const lbl = sectionLabel('コース一覧');
+    const lbl = sectionLabel(t('コース一覧'));
     if (recCourses.length > 0) lbl.style.marginTop = '14px';
-    body.appendChild(lbl);
-    normalCourses.forEach(c => body.appendChild(makeCourseCard(c, prizes)));
+    allWrap.appendChild(lbl);
+    normalCourses.forEach(c => allWrap.appendChild(makeCourseCard(c, prizes)));
+  }
+
+  if (activeCourses.length > 0) {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'btn-all-courses';
+    toggleBtn.textContent = t('すべてのコースを見る ▼');
+    toggleBtn.onclick = () => {
+      const open = allWrap.style.display !== 'none';
+      allWrap.style.display = open ? 'none' : 'block';
+      toggleBtn.textContent = open ? t('すべてのコースを見る ▼') : t('すべてのコースを閉じる ▲');
+      if (!open) trackEvent('home_expand_all_courses');
+    };
+    body.appendChild(toggleBtn);
+    body.appendChild(allWrap);
   }
 
   // 他のまち歩き（訪れた町）
   const otherAreas = areas.visited.filter(v => v.sid !== currentSheetId);
   if (otherAreas.length > 0) {
-    const lbl = sectionLabel('訪れたまち歩き'); lbl.style.marginTop = '14px';
+    const lbl = sectionLabel(t('訪れたまち歩き')); lbl.style.marginTop = '14px';
     body.appendChild(lbl);
     otherAreas.forEach(a => body.appendChild(makeAreaCard(a, '📍', '')));
   }
@@ -1472,7 +1968,7 @@ function renderHome() {
   if (currentSheetId !== MASUDA_SHEET_ID) {
     const visitedMasuda = areas.visited.find(v => v.sid === MASUDA_SHEET_ID);
     if (!visitedMasuda) {
-      const lbl = sectionLabel('こんなまち歩きも'); lbl.style.marginTop = '14px';
+      const lbl = sectionLabel(t('こんなまち歩きも')); lbl.style.marginTop = '14px';
       body.appendChild(lbl);
       const masudaCard = makeAreaCard({ sid: MASUDA_SHEET_ID, name: '増田まち歩き', desc: '秋田県横手市増田町 ／ 重要伝統的建造物群保存地区' }, '🖌️', 'masuda');
       body.appendChild(masudaCard);
@@ -1483,7 +1979,7 @@ function renderHome() {
   const btnPrizes = document.createElement('button');
   btnPrizes.className = 'btn-prizes-home';
   btnPrizes.style.marginTop = '14px';
-  btnPrizes.textContent = '🖌️ 御朱印帳を見る';
+  btnPrizes.textContent = t('🖌️ 御朱印帳を見る');
   btnPrizes.onclick = () => { showScreen('screen-prizes'); switchPrizesTab('prizes'); };
   body.appendChild(btnPrizes);
 
@@ -1501,24 +1997,58 @@ function sectionLabel(text) {
   return el;
 }
 
-function makeCourseCard(course, prizes) {
+// 「近くから始められるコース」枠。GPS取得済みならスタート地点が近い順、未取得ならおすすめ順
+function renderNearbySection(container, activeCourses, prizes, pos) {
+  container.innerHTML = '';
+  const maxN = parseInt(cfg.max_nearby_courses) || 3;
+  let list, label;
+  if (pos) {
+    list = activeCourses
+      .map(c => {
+        const s = courseStartSpot(c);
+        return s && Number.isFinite(s.lat) && Number.isFinite(s.lng)
+          ? { c, d: haversine(pos.lat, pos.lng, s.lat, s.lng) } : null;
+      })
+      .filter(Boolean)
+      .sort((a,b) => a.d - b.d)
+      .slice(0, maxN);
+    label = t('近くから始められるコース');
+  } else {
+    list = activeCourses.slice(0, maxN).map(c => ({ c, d: null }));
+    label = t('おすすめコース');
+  }
+  if (list.length === 0) return;
+  container.appendChild(sectionLabel(label));
+  list.forEach(({ c, d }) => container.appendChild(makeCourseCard(c, prizes, d)));
+}
+
+function makeCourseCard(course, prizes, distM) {
   const done = !!prizeForCourse(prizes, course);
   const card = document.createElement('div');
   card.className = 'course-card' + (course.recommended ? ' recommended' : '') + (done ? ' completed' : '');
 
   let tag = '';
-  if (done) tag = '<div class="course-card-tag tag-done">✓ 完了</div>';
-  else if (course.recommended) tag = '<div class="course-card-tag tag-rec">★ おすすめ</div>';
+  if (done) tag = `<div class="course-card-tag tag-done">${t('✓ 完了')}</div>`;
+  else if (course.recommended) tag = `<div class="course-card-tag tag-rec">${t('★ おすすめ')}</div>`;
 
   let period = '';
   if (course.start_date || course.end_date) {
     const s = course.start_date ? course.start_date.replace(/-/g,'/') : '';
     const e = course.end_date ? course.end_date.replace(/-/g,'/') : '';
-    period = `<div class="course-card-period">🗓 ${s}${e ? ' 〜 '+e : ''} 限定</div>`;
+    period = `<div class="course-card-period">🗓 ${s}${e ? ' 〜 '+e : ''} ${t('限定')}</div>`;
   }
 
-  card.innerHTML = `${tag}<div class="course-card-type">${course.course_type}</div><div class="course-card-name">${course.course_name}</div><div class="course-card-meta"><span>🕐 約${course.duration_min}分</span><span>📍 約${course.distance_m}m</span></div>${period}`;
-  card.onclick = () => selectCourse(course);
+  const start = courseStartSpot(course);
+  const distHtml = Number.isFinite(distM) ? `　<span class="course-card-dist">${tf('現在地から 約{d}', {d: formatDist(distM)})}</span>` : '';
+  const startLine = start ? `<div class="course-card-start">🚩 ${t('スタート：')}${escHtml(start.spot_name)}${distHtml}</div>` : '';
+
+  const thumbSrc = course.course_thumbnail_url ? drivePhotoUrl(course.course_thumbnail_url) : '';
+  const thumb = thumbSrc ? `<img class="course-card-thumb" src="${escHtml(thumbSrc)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+
+  const desc = course.course_description ? `<div class="course-card-desc">${escHtml(course.course_description)}</div>` : '';
+
+  card.innerHTML = `${tag}<div class="course-card-row">${thumb}<div class="course-card-main"><div class="course-card-type">${escHtml(course.course_type)}</div><div class="course-card-name">${escHtml(course.course_name)}</div>${startLine}<div class="course-card-meta"><span>🕐 ${tf('約{n}分', {n: course.duration_min})}</span><span>📍 ${tf('約{n}m', {n: course.distance_m})}</span></div>${desc}${period}</div></div>`;
+  card.onclick = () => showCourseIntro(course);
   return card;
 }
 
@@ -1559,6 +2089,98 @@ function isSpecialActive() {
 }
 
 // ══════════════════════════════════════
+// コース説明画面
+// （カードタップ→説明→「開始する」→ selectCourse）
+// ══════════════════════════════════════
+let introCourse = null;
+
+function showCourseIntro(course) {
+  unlockAudio(); // タップ起点で音声をアンロック（説明音声の自動再生用）
+  introCourse = course;
+  trackEvent('course_intro_view', { course_id: course.course_id, course_name: course.course_name });
+
+  const spots = buildCourseSpots(course);
+  const start = spots[0] || null;
+  const goal = spots[spots.length - 1] || null;
+
+  // サムネイル
+  const pa = document.getElementById('intro-photo');
+  const ph = document.getElementById('intro-photo-placeholder');
+  const old = pa.querySelector('img'); if (old) old.remove();
+  if (course.course_thumbnail_url) {
+    const img = document.createElement('img');
+    img.src = drivePhotoUrl(course.course_thumbnail_url);
+    img.alt = course.course_name;
+    img.onerror = () => { img.remove(); ph.style.display = 'flex'; };
+    ph.style.display = 'none';
+    pa.insertBefore(img, pa.firstChild);
+  } else {
+    ph.style.display = 'flex';
+  }
+
+  document.getElementById('intro-type').textContent = course.course_type || '';
+  document.getElementById('intro-name').textContent = course.course_name || '';
+  document.getElementById('intro-desc').textContent = course.course_description || '';
+  document.getElementById('intro-start').textContent = start ? start.spot_name : '—';
+  document.getElementById('intro-goal').textContent = goal ? goal.spot_name : '—';
+  document.getElementById('intro-time').textContent = course.duration_min ? tf('約{n}分', {n: course.duration_min}) : '—';
+  document.getElementById('intro-dist').textContent = course.distance_m ? tf('約{d}', {d: formatDist(course.distance_m)}) : '—';
+  document.getElementById('intro-spots').textContent = tf('{n}スポット', {n: spots.length});
+
+  // 注意事項
+  const notes = document.getElementById('intro-notes');
+  if (course.course_notes) {
+    document.getElementById('intro-notes-text').textContent = course.course_notes;
+    notes.style.display = 'flex';
+  } else {
+    notes.style.display = 'none';
+  }
+
+  // WBGT（キャッシュ表示＋裏で更新）
+  renderIntroWbgt();
+  refreshWeather();
+
+  // スポット0件は開始不可
+  const startBtn = document.getElementById('btn-intro-start');
+  startBtn.disabled = spots.length === 0;
+  startBtn.textContent = spots.length === 0 ? t('スポットデータがありません') : t('このコースを開始する');
+
+  // 説明音声
+  const audioBtn = document.getElementById('btn-intro-audio');
+  if (course.course_audio_url) {
+    audioBtn.style.display = 'block';
+    audioBtn.textContent = t('🔊 コース説明を聞く');
+  } else {
+    audioBtn.style.display = 'none';
+  }
+
+  showScreen('screen-intro');
+  if (course.course_audio_url) playCourseIntroAudio();
+}
+
+// コース説明音声を再生（自動再生ブロック時もボタンから再生できる）
+function playCourseIntroAudio() {
+  if (!introCourse || !introCourse.course_audio_url) return;
+  trackEvent('course_intro_audio_play', { course_id: introCourse.course_id });
+  playVoice(introCourse.course_audio_url, '', null, true); // TTSフォールバックなし（fallback空）
+  const btn = document.getElementById('btn-intro-audio');
+  if (btn) btn.textContent = t('🔊 もう一度聴く');
+}
+
+function startCourseFromIntro() {
+  if (!introCourse) return;
+  stopVoice(); // 説明音声を必ず停止してからナビへ
+  trackEvent('course_intro_start', { course_id: introCourse.course_id, course_name: introCourse.course_name });
+  selectCourse(introCourse);
+}
+
+function backToHomeFromIntro() {
+  stopVoice();
+  introCourse = null;
+  goHome();
+}
+
+// ══════════════════════════════════════
 // コース開始
 // ══════════════════════════════════════
 function selectCourse(course) {
@@ -1567,16 +2189,9 @@ function selectCourse(course) {
   // GA4: コース選択イベント
   trackEvent('course_select', { course_id: course.course_id, course_name: course.course_name });
 
-  const csRows = allCourseSpots
-    .filter(cs => cs.course_id === course.course_id)
-    .sort((a,b) => a.order - b.order);
+  courseSpots = buildCourseSpots(course);
 
-  courseSpots = csRows.map(cs => {
-    const spot = allSpots.find(s => s.spot_id === cs.spot_id);
-    return spot ? { ...spot, order: cs.order } : null;
-  }).filter(Boolean);
-
-  if (courseSpots.length === 0) { alert('スポットデータがありません'); return; }
+  if (courseSpots.length === 0) { alert(t('スポットデータがありません')); return; }
 
   // 前回の進行状況を確認
   const saved = loadProgress();
@@ -1584,9 +2199,9 @@ function selectCourse(course) {
     const spotName = courseSpots[saved.currentIdx]?.spot_name || '';
     const savedDate = formatDate(saved.savedAt);
     showModal(
-      '途中から再開しますか？',
-      `スポット ${saved.currentIdx + 1} / ${courseSpots.length}\n${spotName} へ向かう途中\n（${savedDate} 保存）`,
-      '続きから再開', '最初から始める',
+      t('途中から再開しますか？'),
+      tf('スポット {a} / {b}\n{name} へ向かう途中\n（{date} 保存）', {a: saved.currentIdx + 1, b: courseSpots.length, name: spotName, date: savedDate}),
+      t('続きから再開'), t('最初から始める'),
       () => {
         currentIdx = saved.currentIdx;
         totalWalkDist = saved.totalWalkDist || 0;
@@ -1608,6 +2223,7 @@ function startWalk(playStartAnnounce) {
   updateNavScreen();
   pushNavHistory();
   showScreen('screen-nav');
+  if (courseSpots[0]) refreshWeather(false, { lat: courseSpots[0].lat, lng: courseSpots[0].lng });
   initMap();
   startGPS();
 
@@ -1708,9 +2324,9 @@ function showScreen(id) {
 }
 
 function formatDist(m) { return m < 1000 ? `${Math.round(m)} m` : `${(m/1000).toFixed(1)} km`; }
-function formatDate(iso) { const d=new Date(iso); return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`; }
+function formatDate(iso) { const d=new Date(iso); return tf('{y}年{m}月{d}日', {y: d.getFullYear(), m: d.getMonth()+1, d: d.getDate()}); }
 
-function goHome() { stopGPS(); closeAR(); showScreen('screen-home'); renderHome(); }
+function goHome() { stopVoice(); stopGPS(); closeAR(); showScreen('screen-home'); renderHome(); }
 
 // ══════════════════════════════════════
 // カスタムモーダル
@@ -1753,9 +2369,9 @@ function exportBackup() {
   link.click();
   URL.revokeObjectURL(url);
   showModal(
-    'データを保存しました',
-    'JSONファイルを端末に保存しました。\nサイトデータを削除しても、このファイルから復元できます。',
-    'OK', '閉じる',
+    t('データを保存しました'),
+    t('JSONファイルを端末に保存しました。\nサイトデータを削除しても、このファイルから復元できます。'),
+    t('OK'), t('閉じる'),
     () => {},
     null
   );
@@ -1772,24 +2388,24 @@ function importBackup(event) {
       const data = normalizeBackupPayload(JSON.parse(reader.result));
       const counts = backupCounts(data);
       showModal(
-        'データを復元しますか？',
-        `御朱印 ${counts.prizes}件\n訪れたまち歩き ${counts.areas}件\n途中再開データ ${counts.progress}件\n\n現在の端末データと統合して復元します。`,
-        '復元する', 'キャンセル',
+        t('データを復元しますか？'),
+        tf('御朱印 {p}件\n訪れたまち歩き {a}件\n途中再開データ {g}件\n\n現在の端末データと統合して復元します。', {p: counts.prizes, a: counts.areas, g: counts.progress}),
+        t('復元する'), t('キャンセル'),
         () => {
           applyBackupData(data);
-          showModal('復元しました', '御朱印帳・訪問履歴・途中再開データを復元しました。', 'OK', '閉じる', () => {}, null);
+          showModal(t('復元しました'), t('御朱印帳・訪問履歴・途中再開データを復元しました。'), t('OK'), t('閉じる'), () => {}, null);
         },
         null
       );
     } catch(e) {
-      showModal('復元できませんでした', 'バックアップJSONの形式を確認してください。', 'OK', '閉じる', () => {}, null);
+      showModal(t('復元できませんでした'), t('バックアップJSONの形式を確認してください。'), t('OK'), t('閉じる'), () => {}, null);
     } finally {
       input.value = '';
     }
   };
   reader.onerror = () => {
     input.value = '';
-    showModal('復元できませんでした', 'ファイルを読み込めませんでした。', 'OK', '閉じる', () => {}, null);
+    showModal(t('復元できませんでした'), t('ファイルを読み込めませんでした。'), t('OK'), t('閉じる'), () => {}, null);
   };
   reader.readAsText(file);
 }
@@ -1831,9 +2447,9 @@ function applyBackupData(imported) {
 
 function confirmGoHome() {
   showModal(
-    'まち歩きを中断しますか？',
-    '進行状況は保存されます。\n次回同じコースを選ぶと再開できます。',
-    'ホームへ戻る', '続ける',
+    t('まち歩きを中断しますか？'),
+    t('進行状況は保存されます。\n次回同じコースを選ぶと再開できます。'),
+    t('ホームへ戻る'), t('続ける'),
     () => { saveProgress(); goHome(); },
     null
   );
@@ -1904,6 +2520,14 @@ function unlockAudio() {
   a.play().then(() => { audioUnlocked = true; }).catch(() => {});
 }
 
+// 再生中の音声（MP3・TTS）を完全停止する
+function stopVoice() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  voicePlaying = false;
+  updateArrivedButton();
+}
+
 
 // ── 「次へ」ボタンのロック・解除 ──
 function lockNextButton() {
@@ -1912,7 +2536,7 @@ function lockNextButton() {
   if (!btn) return;
   btn.disabled = true;
   btn.dataset.origText = btn.textContent;
-  btn.textContent = '🔊 音声ガイド再生中…';
+  btn.textContent = t('🔊 音声ガイド再生中…');
 }
 
 function unlockNextButton() {
@@ -2015,8 +2639,8 @@ function setVoiceLog(icon, text) {
 // GPS
 // ══════════════════════════════════════
 function startGPS() {
-  if (!navigator.geolocation) { setGPSStatus('error','GPS非対応'); return; }
-  setGPSStatus('searching','GPS取得中');
+  if (!navigator.geolocation) { setGPSStatus('error', t('GPS非対応')); return; }
+  setGPSStatus('searching', t('GPS取得中'));
   watchId = navigator.geolocation.watchPosition(onGPSUpdate, onGPSError,
     { enableHighAccuracy:true, maximumAge:3000, timeout:15000 });
 }
@@ -2027,7 +2651,7 @@ function stopGPS() {
 
 function onGPSUpdate(pos) {
   const { latitude:lat, longitude:lng, accuracy } = pos.coords;
-  setGPSStatus('active', `精度 ±${Math.round(accuracy)}m`);
+  setGPSStatus('active', tf('精度 ±{n}m', {n: Math.round(accuracy)}));
 
   // 歩行距離
   if (lastWalkPos) {
@@ -2042,6 +2666,7 @@ function onGPSUpdate(pos) {
     }
   }
   lastWalkPos = { lat, lng };
+  refreshWeather(false, { lat, lng });
 
   // 地図現在地
   if (leafletMap) {
@@ -2090,9 +2715,9 @@ function onGPSUpdate(pos) {
 }
 
 function onGPSError(err) {
-  const m = {1:'位置情報が許可されていません',2:'位置を取得できません',3:'タイムアウト'};
+  const m = {1: t('位置情報が許可されていません'), 2: t('位置を取得できません'), 3: t('タイムアウト')};
   setGPSStatus('error', m[err.code]||'GPS Error');
-  setVoiceLog('⚠️','手動「着いた！」ボタンをご利用ください');
+  setVoiceLog('⚠️', t('手動「着いた！」ボタンをご利用ください'));
 }
 
 function setGPSStatus(s,l) {
@@ -2120,23 +2745,23 @@ function updateDistanceUI(dist, spot) {
   const ratio = Math.min(1,(500-dist)/500);
   const ringFill = document.getElementById('ring-fill');
   ringFill.style.strokeDashoffset = 113-(ratio*113);
-  document.getElementById('ring-label').textContent = dist<=999?dist+'m':'遠';
+  document.getElementById('ring-label').textContent = dist<=999?dist+'m':t('遠');
   panel.classList.remove('near','arrived');
   panel.style.removeProperty('--distance-pulse-speed');
   if (dist <= spot.arrive_dist) {
     panel.classList.add('arrived');
     document.getElementById('dist-icon').textContent='🎯';
-    document.getElementById('dist-status').textContent='到着しました！';
+    document.getElementById('dist-status').textContent=t('到着しました！');
     ringFill.style.stroke='var(--green)';
   } else if (dist <= spot.approach_dist) {
     panel.classList.add('near');
     document.getElementById('dist-icon').textContent='🏃';
-    document.getElementById('dist-status').textContent=`もうすぐです！（到着判定: ${spot.arrive_dist}m以内）`;
+    document.getElementById('dist-status').textContent=tf('もうすぐです！（到着判定: {n}m以内）', {n: spot.arrive_dist});
     panel.style.setProperty('--distance-pulse-speed', dist <= spot.arrive_dist * 2 ? '1.05s' : '1.45s');
     ringFill.style.stroke='#c87020';
   } else {
     document.getElementById('dist-icon').textContent='🚶';
-    document.getElementById('dist-status').textContent=`${spot.spot_name} まで（到着判定: ${spot.arrive_dist}m以内）`;
+    document.getElementById('dist-status').textContent=tf('{name} まで（到着判定: {n}m以内）', {name: spot.spot_name, n: spot.arrive_dist});
     ringFill.style.stroke='var(--primary)';
   }
 }
@@ -2201,7 +2826,7 @@ async function openAR() {
   const spot = courseSpots[currentIdx];
   document.getElementById('ar-spot-name').textContent = spot.spot_name;
   document.getElementById('ar-dist').innerHTML = `${arLastDist}<span>m</span>`;
-  document.getElementById('ar-compass').textContent = '方位取得中…';
+  document.getElementById('ar-compass').textContent = t('方位取得中…');
 
   // キャリブレーションオーバーレイを表示し、3秒後に自動非表示
   const calib = document.getElementById('ar-calib-overlay');
@@ -2216,7 +2841,7 @@ async function openAR() {
   try {
     arStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment' } });
     document.getElementById('ar-video').srcObject = arStream;
-  } catch(e) { document.getElementById('ar-compass').textContent = 'カメラ非対応'; }
+  } catch(e) { document.getElementById('ar-compass').textContent = t('カメラ非対応'); }
 
   // Android: deviceorientationabsolute（真北基準）を優先
   arAbsoluteSupported = false;
@@ -2225,7 +2850,7 @@ async function openAR() {
   setTimeout(() => {
     if (!arAbsoluteSupported) {
       window.addEventListener('deviceorientation', onDeviceOrientationRelative);
-      document.getElementById('ar-compass').textContent = '端末を8の字に振ってコンパスを校正してください';
+      document.getElementById('ar-compass').textContent = t('端末を8の字に振ってコンパスを校正してください');
     }
   }, 200);
 }
@@ -2258,7 +2883,7 @@ function updateARDirection(deviceHeading, accuracy) {
   // SVGコンパス針を回転
   const inner = document.getElementById('ar-dir-inner');
   if (inner) inner.style.transform = `rotate(${relative}deg)`;
-  document.getElementById('ar-compass').textContent = `目標方位: ${Math.round(targetBearing)}°`;
+  document.getElementById('ar-compass').textContent = tf('目標方位: {n}°', {n: Math.round(targetBearing)});
 
   // 精度警告（iOSのwebkitCompassAccuracyが使える場合）
   const warnEl = document.getElementById('ar-accuracy-warn');
@@ -2305,7 +2930,7 @@ function updateNavScreen() {
   const progress = courseSpots.length>1 ? (currentIdx/(courseSpots.length-1))*100 : 100;
   document.getElementById('progress-fill').style.width = progress+'%';
   document.getElementById('nav-step-label').textContent = `STEP ${currentIdx+1} / ${courseSpots.length}`;
-  document.getElementById('nav-spot-name').textContent = spot.spot_name+' へ';
+  document.getElementById('nav-spot-name').textContent = tf('{name} へ', {name: spot.spot_name});
 
   // 次スポット表示
   const nextEl = document.getElementById('nav-next-spot');
@@ -2314,16 +2939,16 @@ function updateNavScreen() {
     if (nextIdx < courseSpots.length) {
       const isGoal = nextIdx === courseSpots.length - 1;
       const nextSpotName = courseSpots[nextIdx].spot_name;
-      nextEl.innerHTML = `次→ <span>${nextSpotName}</span>${isGoal ? '（ゴール）' : ''}`;
+      nextEl.innerHTML = `${t('次→')} <span>${nextSpotName}</span>${isGoal ? t('（ゴール）') : ''}`;
     } else {
-      nextEl.innerHTML = '<span>このスポットがゴールです</span>';
+      nextEl.innerHTML = `<span>${t('このスポットがゴールです')}</span>`;
     }
   }
 
   buildSpotsRow();
   approachNotified=false; arrivedDetected=false;
   document.getElementById('dist-number').innerHTML='--<span>m</span>';
-  document.getElementById('dist-status').textContent=`GPS確認中（到着判定: ${spot.arrive_dist}m以内）`;
+  document.getElementById('dist-status').textContent=tf('GPS確認中（到着判定: {n}m以内）', {n: spot.arrive_dist});
   document.getElementById('ring-fill').style.strokeDashoffset=113;
   document.getElementById('ring-label').textContent='--';
   document.getElementById('distance-panel').className='distance-panel';
@@ -2338,7 +2963,7 @@ function updateArrivedButton() {
   if (!btn) return;
   const locked = voicePlaying || gpsLocked;
   btn.disabled = locked;
-  btn.textContent = locked ? '🔊 音声ガイド再生中…' : '📍 着いた！（手動）';
+  btn.textContent = locked ? t('🔊 音声ガイド再生中…') : t('📍 着いた！（手動）');
 }
 
 // ══════════════════════════════════════
@@ -2451,7 +3076,7 @@ function showExplain(spot) {
   const kw = document.getElementById('explain-keywords'); kw.innerHTML='';
   if (spot.keywords) spot.keywords.split(',').forEach(k => { k=k.trim(); if(!k)return; const s=document.createElement('span'); s.className='explain-keyword'; s.textContent=k; kw.appendChild(s); });
 
-  document.getElementById('btn-next').textContent = isLast ? '🖌️ 表彰状を受け取る' : '次のスポットへ →';
+  document.getElementById('btn-next').textContent = isLast ? t('🖌️ 表彰状を受け取る') : t('次のスポットへ →');
   explainCurrentSpot = spot; // 「もう一度聴く」用にスポットを保持
   showScreen('screen-explain');
   // ※ 音声再生は呼び出し元（playArriveSequence）が到着音声 → 解説音声の順で制御する
@@ -2715,9 +3340,9 @@ function renderPrizes() {
 
   // 獲得済みは保存データから積み上げ、未達成は現在の地域コースだけ出す
   const savedItems = Object.entries(prizes).map(([pid, val]) => {
-    const name = prizeCourse(val) || allCourses.find(c => pid === coursePrizeId(c) || pid === legacyPrizeId(c))?.course_name || 'まち歩きコース';
+    const name = prizeCourse(val) || allCourses.find(c => pid === coursePrizeId(c) || pid === legacyPrizeId(c))?.course_name || t('まち歩きコース');
     return {
-      id: pid, name, icon: '🖌️', desc: `${name}を完走`,
+      id: pid, name, icon: '🖌️', desc: tf('{name}を完走', {name}),
       done: !!prizeDate(val),
       date: prizeDate(val),
       area: prizeArea(val),
@@ -2730,7 +3355,7 @@ function renderPrizes() {
   const lockedItems = allCourses.filter(c => !prizeForCourse(prizes, c)).map(c => {
     const pid = coursePrizeId(c);
     return {
-      id: pid, name: c.course_name, icon: '🖌️', desc: `${c.course_name}を完走`,
+      id: pid, name: c.course_name, icon: '🖌️', desc: tf('{name}を完走', {name: c.course_name}),
       done: false,
       date: null,
       area: '',
@@ -2746,13 +3371,13 @@ function renderPrizes() {
   const locationKeys = [...new Set(completedItems.map(i => [i.pref, i.city, i.areaName].filter(Boolean).join(' ') || i.area || ''))].filter(Boolean);
 
   if (filterEl && locationKeys.length > 1) {
-    const allChip = makeFilterChip('すべて', 'all');
+    const allChip = makeFilterChip(t('すべて'), 'all');
     filterEl.appendChild(allChip);
     locationKeys.forEach(loc => filterEl.appendChild(makeFilterChip(loc, loc)));
   }
 
   if (items.length === 0) {
-    body.innerHTML=`<div class="empty-prizes"><div class="empty-icon">🖌️</div>まだ御朱印はありません。<br>まち歩きを完走すると獲得できます。</div>`;
+    body.innerHTML=`<div class="empty-prizes"><div class="empty-icon">🖌️</div>${t('まだ御朱印はありません。')}<br>${t('まち歩きを完走すると獲得できます。')}</div>`;
     return;
   }
 
@@ -2768,12 +3393,12 @@ function renderPrizes() {
 
   if (completed.length > 0) {
     const lbl = document.createElement('div'); lbl.className='prizes-section-label';
-    lbl.textContent = `COMPLETED — ${completed.length}件`; body.appendChild(lbl);
+    lbl.textContent = tf('COMPLETED — {n}件', {n: completed.length}); body.appendChild(lbl);
     completed.forEach(p => body.appendChild(makePrizeCard(p, true)));
   }
   if (locked.length > 0) {
     const lbl = document.createElement('div'); lbl.className='prizes-section-label';
-    lbl.style.marginTop='16px'; lbl.textContent=`LOCKED — ${locked.length}件`; body.appendChild(lbl);
+    lbl.style.marginTop='16px'; lbl.textContent=tf('LOCKED — {n}件', {n: locked.length}); body.appendChild(lbl);
     locked.forEach(p=>body.appendChild(makePrizeCard(p,false)));
   }
 }
@@ -2788,19 +3413,22 @@ function makeFilterChip(label, key) {
 
 function makePrizeCard(prize, done) {
   const card=document.createElement('div'); card.className='prize-card '+(done?'completed':'locked');
-  const whereText = done && prize.area ? `📍 ${prize.area}` : '';
+  const whereArea = prize.areaName || prize.area || '';
+  // area_nameに市名が既に含まれるシート(例:「秋田県横手市増田」)では市を重ねない
+  const whereParts = (prize.city && !whereArea.includes(prize.city)) ? [prize.city, whereArea] : [whereArea];
+  const whereText = done && whereArea ? `📍 ${whereParts.join(' ')}` : '';
   card.innerHTML=`
     ${done?'<div class="prize-card-bar"></div>':''}
     <div class="prize-card-icon">${done?prize.icon:'🔒'}</div>
     <div class="prize-card-info">
       <div class="prize-card-name">${prize.name}</div>
       <div class="prize-card-desc">${prize.desc}</div>
-      ${done?`<div class="prize-card-date">✓ ${formatDate(prize.date)} 達成</div>`:''}
+      ${done?`<div class="prize-card-date">✓ ${tf('{date} 達成', {date: formatDate(prize.date)})}</div>`:''}
       ${done && whereText?`<div class="prize-card-where">${whereText}</div>`:''}
     </div>
     <div class="prize-card-status">
       <div class="prize-status-icon">${done?'🥇':'🔒'}</div>
-      <div class="prize-status-label">${done?'授与済み':'未達成'}</div>
+      <div class="prize-status-label">${done?t('授与済み'):t('未達成')}</div>
     </div>`;
   return card;
 }
@@ -2817,13 +3445,13 @@ function renderVisitedWalks() {
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
   if (visits.length === 0) {
-    body.innerHTML = `<div class="empty-prizes"><div class="empty-icon">📍</div>訪問履歴はまだありません。</div>`;
+    body.innerHTML = `<div class="empty-prizes"><div class="empty-icon">📍</div>${t('訪問履歴はまだありません。')}</div>`;
     return;
   }
 
   const lbl = document.createElement('div');
   lbl.className = 'prizes-section-label';
-  lbl.textContent = `VISITED — ${visits.length}件`;
+  lbl.textContent = tf('VISITED — {n}件', {n: visits.length});
   body.appendChild(lbl);
 
   const list = document.createElement('div');
@@ -2836,7 +3464,7 @@ function makeVisitedCard(visit) {
   const pref = visit.prefecture || visit.pref || '';
   const city = visit.city || '';
   const area = visit.area || visit.area_name || visit.name || '';
-  const date = visit.date ? formatDate(visit.date) : '記録なし';
+  const date = visit.date ? formatDate(visit.date) : t('記録なし');
 
   const card = document.createElement('div');
   card.className = 'visited-card';
@@ -2844,18 +3472,18 @@ function makeVisitedCard(visit) {
   const info = document.createElement('div');
   const prefEl = document.createElement('div');
   prefEl.className = 'visited-pref';
-  prefEl.textContent = pref || '県未設定';
+  prefEl.textContent = pref || t('県未設定');
   const cityEl = document.createElement('div');
   cityEl.className = 'visited-city';
-  cityEl.textContent = city || visit.name || '市区町村未設定';
+  cityEl.textContent = city || visit.name || t('市区町村未設定');
   const areaEl = document.createElement('div');
   areaEl.className = 'visited-area';
-  areaEl.textContent = area || 'エリア未設定';
+  areaEl.textContent = area || t('エリア未設定');
   info.append(prefEl, cityEl, areaEl);
 
   const dateEl = document.createElement('div');
   dateEl.className = 'visited-date';
-  dateEl.innerHTML = '最終訪問';
+  dateEl.innerHTML = t('最終訪問');
   const dateValue = document.createElement('span');
   dateValue.textContent = date;
   dateEl.appendChild(dateValue);
@@ -2875,7 +3503,7 @@ function renderStamps() {
   const body = document.getElementById('prizes-body'); body.innerHTML='';
 
   const savedStamps = Object.entries(prizes).map(([pid, val]) => {
-    const name = prizeCourse(val) || allCourses.find(c => pid === coursePrizeId(c) || pid === legacyPrizeId(c))?.course_name || 'まち歩きコース';
+    const name = prizeCourse(val) || allCourses.find(c => pid === coursePrizeId(c) || pid === legacyPrizeId(c))?.course_name || t('まち歩きコース');
     return { name, val, done: !!prizeDate(val) };
   }).filter(i => i.done);
   const lockedStamps = allCourses.filter(c => !prizeForCourse(prizes, c)).map(c => ({ name: c.course_name, val: null, done: false }));
@@ -2884,7 +3512,7 @@ function renderStamps() {
   const totalCount = stampItems.length;
 
   if (totalCount === 0) {
-    body.innerHTML=`<div class="stamps-empty"><div class="empty-icon">🔖</div>コースデータがありません。</div>`;
+    body.innerHTML=`<div class="stamps-empty"><div class="empty-icon">🔖</div>${t('コースデータがありません。')}</div>`;
     return;
   }
 
@@ -2917,7 +3545,7 @@ function renderStamps() {
   body.appendChild(book);
 
   const total = document.createElement('div'); total.className='stamps-total';
-  total.innerHTML=`達成 <span>${completedCount}</span> / ${totalCount} コース`;
+  total.innerHTML=tf('達成 <span>{a}</span> / {b} コース', {a: completedCount, b: totalCount});
   body.appendChild(total);
 }
 
@@ -2969,7 +3597,7 @@ function initGoogleAuth() {
     client_id: GOOGLE_CLIENT_ID,
     scope: DRIVE_SCOPE,
     callback: async (resp) => {
-      if (resp.error) { showSyncStatus('error', 'ログインに失敗しました'); return; }
+      if (resp.error) { showSyncStatus('error', t('ログインに失敗しました')); return; }
       gAccessToken = resp.access_token;
       gTokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
       await fetchGUserInfo();
@@ -2983,7 +3611,7 @@ function initGoogleAuth() {
     gUserEmail = saved.email;
     updateCloudUI();
     // サイレントでトークンを再取得して自動同期（ユーザー操作不要）
-    showSyncStatus('syncing', '同期中…');
+    showSyncStatus('syncing', t('同期中…'));
     const silentClient = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: DRIVE_SCOPE,
@@ -2993,14 +3621,14 @@ function initGoogleAuth() {
           gTokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
           await syncCloud();
         } else {
-          showSyncStatus('idle', '再ログインで同期できます');
+          showSyncStatus('idle', t('再ログインで同期できます'));
         }
       }
     });
     try {
       silentClient.requestAccessToken({ prompt: '' }); // ポップアップなしで試みる
     } catch(e) {
-      showSyncStatus('idle', '再ログインで同期できます');
+      showSyncStatus('idle', t('再ログインで同期できます'));
     }
   }
 }
@@ -3020,7 +3648,7 @@ async function fetchGUserInfo() {
 // ── サインイン ──
 function signIn() {
   if (!gTokenClient) {
-    showModal('設定が必要です', 'GOOGLE_CLIENT_IDをHTMLファイルに設定してください。', '閉じる', '', hideModal, null);
+    showModal(t('設定が必要です'), t('GOOGLE_CLIENT_IDをHTMLファイルに設定してください。'), t('閉じる'), '', hideModal, null);
     return;
   }
   gTokenClient.requestAccessToken({ prompt: 'consent' });
@@ -3029,9 +3657,9 @@ function signIn() {
 // ── サインアウト確認 ──
 function confirmSignOut() {
   showModal(
-    'ログアウトしますか？',
-    'Googleアカウントとの連携を解除します。\nローカルのデータは保持されます。',
-    'ログアウト', 'キャンセル',
+    t('ログアウトしますか？'),
+    t('Googleアカウントとの連携を解除します。\nローカルのデータは保持されます。'),
+    t('ログアウト'), t('キャンセル'),
     signOut, null
   );
 }
@@ -3177,11 +3805,11 @@ function mergeBackup(cloud, local) {
 // ── 同期メイン処理 ──
 async function syncCloud() {
   if (!isSignedIn()) return; // 未ログインは何もしない
-  showSyncStatus('syncing', '同期中…');
+  showSyncStatus('syncing', t('同期中…'));
 
   try {
     if (!await ensureToken()) {
-      showSyncStatus('idle', '再ログインが必要です');
+      showSyncStatus('idle', t('再ログインが必要です'));
       return;
     }
 
@@ -3207,14 +3835,14 @@ async function syncCloud() {
 
     const now = new Date();
     const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-    showSyncStatus('ok', `同期完了 ${timeStr}`);
+    showSyncStatus('ok', tf('同期完了 {time}', {time: timeStr}));
     lsSet('lwg_last_sync', now.toISOString());
 
     // ホーム画面が表示中なら再描画
     if (document.getElementById('screen-home').classList.contains('active')) renderHome();
   } catch(e) {
     console.error('Sync error:', e);
-    const msg = e.message === 'token_unavailable' ? '再ログインが必要です' : '同期に失敗しました';
+    const msg = e.message === 'token_unavailable' ? t('再ログインが必要です') : t('同期に失敗しました');
     showSyncStatus('error', msg);
   }
 }
@@ -3231,9 +3859,9 @@ function updateCloudUI() {
     const lastSync = lsGet('lwg_last_sync', null);
     if (lastSync) {
       const d = new Date(lastSync);
-      showSyncStatus('ok', `前回同期 ${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`);
+      showSyncStatus('ok', tf('前回同期 {when}', {when: `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`}));
     } else {
-      showSyncStatus('idle', '未同期');
+      showSyncStatus('idle', t('未同期'));
     }
   } else {
     loginArea.style.display = 'flex';
