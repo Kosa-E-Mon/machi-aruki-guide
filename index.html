@@ -3599,9 +3599,14 @@ function initGoogleAuth() {
     scope: DRIVE_SCOPE,
     callback: async (resp) => {
       if (resp.error) { showSyncStatus('error', t('ログインに失敗しました')); return; }
+      if (!(resp.scope || '').includes('drive.appdata')) {
+        showModal(t('権限が許可されていません'), t('バックアップにはGoogleドライブへのアクセス許可が必要です。\nもう一度ログインして、許可にチェックを入れてください。'), t('閉じる'), '', hideModal, null);
+        return;
+      }
       gAccessToken = resp.access_token;
       gTokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
-      await fetchGUserInfo();
+      gUserEmail = 'connected';
+      lsSet('lwg_cloud_session', { email: gUserEmail, time: Date.now() });
       updateCloudUI();
       await syncCloud();
     }
@@ -3632,18 +3637,6 @@ function initGoogleAuth() {
       showSyncStatus('idle', t('再ログインで同期できます'));
     }
   }
-}
-
-// ── ユーザー情報取得 ──
-async function fetchGUserInfo() {
-  try {
-    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${gAccessToken}` }
-    });
-    const info = await r.json();
-    gUserEmail = info.email || '';
-    lsSet('lwg_cloud_session', { email: gUserEmail, time: Date.now() });
-  } catch {}
 }
 
 // ── サインイン ──
