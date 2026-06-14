@@ -661,13 +661,13 @@ function onName(p,val){
     const r=toRomaji(val);
     inp.value=r;
     checkId(p,p==='s'?'spot':'facility');
-    const fn=document.getElementById(p+'-fname');
-    if(fn&&r&&!fn.dataset.manual) fn.value=r;
+    setPhotoNameFromId(p);
   }
 }
 function onId(p,type){
   document.getElementById(p+'-id').dataset.manual='1';
   checkId(p,type);
+  setPhotoNameFromId(p);
 }
 function checkId(p,type){
   const inp=document.getElementById(p+'-id'), msg=document.getElementById(p+'-id-msg');
@@ -693,20 +693,29 @@ function checkId(p,type){
 // =========================================================
 // PHOTO
 // =========================================================
+function setPhotoNameFromId(p){
+  const id=document.getElementById(p+'-id')?.value.trim();
+  const fn=document.getElementById(p+'-fname');
+  const row=document.getElementById(p+'-nm-row');
+  if(fn&&id&&(S.blobs[p]||row?.style.display==='flex')) fn.value=id;
+}
+function photoBaseName(p){
+  return document.getElementById(p+'-id')?.value.trim()
+    || document.getElementById(p+'-fname')?.value.trim()
+    || 'photo';
+}
 function onPhoto(p,input){
   const file=input.files[0]; if(!file) return;
   S.blobs[p]=file;
   document.getElementById(p+'-prev-img').src=URL.createObjectURL(file);
   document.getElementById(p+'-prev-wrap').style.display='block';
   document.getElementById(p+'-nm-row').style.display='flex';
-  const fn=document.getElementById(p+'-fname');
-  if(!fn.value){ const id=document.getElementById(p+'-id').value.trim(); if(id) fn.value=id; }
+  setPhotoNameFromId(p);
 }
 function dlPhoto(p){
   const blob=S.blobs[p]; if(!blob){toast('写真がありません','err');return;}
-  const fn=document.getElementById(p+'-fname');
   const ext=blob.type.includes('png')?'png':'jpg';
-  const name=(fn.value.trim()||'photo')+'.'+ext;
+  const name=photoBaseName(p)+'.'+ext;
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=name; a.click();
   URL.revokeObjectURL(url);
@@ -748,7 +757,7 @@ async function submitSpot(){
   await gasWrite('spots',S.spots);
   updBadge();
   toast((editing?'✅ スポット「':'✅ スポット「')+name+'」を'+(editing?'更新':'登録'),'ok');
-  resetForm('s'); showTab('hist');
+  resetForm('s'); showTab('spot');
 }
 
 async function submitFac(){

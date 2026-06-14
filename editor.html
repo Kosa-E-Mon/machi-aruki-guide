@@ -217,7 +217,7 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 .s-dot.error{background:var(--accent);}
 
 /* GAS MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;align-items:flex-start;justify-content:center;padding:16px;overflow:auto;}
 .modal-bg.show{display:flex;}
 .modal{background:var(--surface);border-radius:10px;width:700px;max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg);overflow:hidden;}
 .modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
@@ -276,7 +276,7 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 .btn-lbl-toggle.active{background:var(--accent);border-color:var(--accent);color:white;}
 
 /* ══ DIFF MODAL ══ */
-.diff-modal{background:var(--surface);border-radius:10px;width:680px;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg);overflow:hidden;}
+.diff-modal{background:var(--surface);border-radius:10px;width:min(760px,calc(100vw - 32px));max-height:calc(100dvh - 32px);display:flex;flex-direction:column;box-shadow:var(--sh-lg);overflow:hidden;margin:auto 0;}
 .diff-hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--raised);}
 .diff-title{font-size:14px;font-weight:600;}
 .diff-body{flex:1;overflow-y:auto;padding:16px;}
@@ -288,6 +288,8 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 .diff-old{color:var(--accent);text-decoration:line-through;font-family:var(--mono);font-size:11px;}
 .diff-new{color:var(--green);font-family:var(--mono);font-size:11px;font-weight:600;}
 .diff-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;background:var(--raised);}
+
+.map-edit-help{padding:8px 10px;background:var(--blue-l);border-top:1px solid #93C5FD;color:var(--blue);font-size:10px;line-height:1.6;}
 
 /* ══ EDITOR SIZE TOGGLE ══ */
 .size-toggle{display:flex;align-items:center;gap:3px;background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:2px;}
@@ -675,6 +677,37 @@ const CONFIG_DEFS = [
   {key:'area_city',    lbl:'市区町村',    desc:'例: 横手市'},
   {key:'area_town',    lbl:'町名',        desc:'例: 増田町'},
   {key:'area_display', lbl:'表示モード',  desc:'custom / pref / city / town / pref+city / pref+town / city+town / pref+city+town', type:'sel', opts:['custom','pref','city','town','pref+city','pref+town','city+town','pref+city+town']},
+  {key:'prefecture',   lbl:'都道府県（旧項目）', desc:'旧データ互換用。通常は area_pref を使用'},
+  {key:'city',         lbl:'市区町村（旧項目）', desc:'旧データ互換用。通常は area_city を使用'},
+  {key:'area_lat',     lbl:'エリア緯度',    desc:'天気・近くのコース判定の基準地点。例: 39.319826'},
+  {key:'area_lng',     lbl:'エリア経度',    desc:'天気・近くのコース判定の基準地点。例: 140.523891'},
+  {key:'weather_lat',  lbl:'天気取得 緯度', desc:'area_latより優先して天気取得に使う緯度'},
+  {key:'weather_lng',  lbl:'天気取得 経度', desc:'area_lngより優先して天気取得に使う経度'},
+  {key:'max_nearby_courses', lbl:'近くのコース表示数', desc:'現在地に近いコースを最大何件表示するか。例: 3', type:'num'},
+  {key:'lang',         lbl:'UI言語',        desc:'ja / en など。未設定時は ja', type:'sel', opts:['ja','en']},
+  {sec:'☀ 天気・暑さ指数（WBGT）'},
+  {key:'wbgt_enabled',    lbl:'WBGT表示',        desc:'TRUEで暑さ指数バー・注意カードを表示', type:'bool'},
+  {key:'wbgt_point_code', lbl:'WBGT地点コード',   desc:'環境省 暑さ指数情報提供地点一覧の地点コード'},
+  {key:'wbgt_proxy_url',  lbl:'WBGT中継URL',      desc:'環境省データ取得用GASプロキシURL'},
+  {sec:'🌗 ホームテーマ色'},
+  {key:'home_bg_light',            lbl:'ライト 背景色',          desc:'ホーム画面ライトモード背景', type:'color'},
+  {key:'home_card_bg_light',       lbl:'ライト カード背景',      desc:'例: rgba(255,255,255,.75)'},
+  {key:'home_card_border_light',   lbl:'ライト カード枠線',      desc:'例: rgba(28,26,22,.12)'},
+  {key:'home_text_light',          lbl:'ライト 文字色',          desc:'ホーム主要文字色', type:'color'},
+  {key:'home_subtext_light',       lbl:'ライト サブ文字色',      desc:'例: rgba(28,26,22,.55)'},
+  {key:'home_line_light',          lbl:'ライト 区切り線',        desc:'例: rgba(28,26,22,.12)'},
+  {key:'home_toggle_bg_light',     lbl:'ライト 切替ボタン背景',  desc:'例: rgba(255,255,255,.75)'},
+  {key:'home_toggle_border_light', lbl:'ライト 切替ボタン枠線',  desc:'例: rgba(28,26,22,.18)'},
+  {key:'home_toggle_color_light',  lbl:'ライト 切替ボタン文字',  desc:'例: #1C1A16', type:'color'},
+  {key:'home_bg_dark',             lbl:'ダーク 背景色',          desc:'ホーム画面ダークモード背景', type:'color'},
+  {key:'home_card_bg_dark',        lbl:'ダーク カード背景',      desc:'例: rgba(255,255,255,.05)'},
+  {key:'home_card_border_dark',    lbl:'ダーク カード枠線',      desc:'例: rgba(255,255,255,.08)'},
+  {key:'home_text_dark',           lbl:'ダーク 文字色',          desc:'ホーム主要文字色', type:'color'},
+  {key:'home_subtext_dark',        lbl:'ダーク サブ文字色',      desc:'例: rgba(250,247,241,.4)'},
+  {key:'home_line_dark',           lbl:'ダーク 区切り線',        desc:'例: rgba(255,255,255,.07)'},
+  {key:'home_toggle_bg_dark',      lbl:'ダーク 切替ボタン背景',  desc:'例: rgba(0,0,0,.25)'},
+  {key:'home_toggle_border_dark',  lbl:'ダーク 切替ボタン枠線',  desc:'例: rgba(255,255,255,.18)'},
+  {key:'home_toggle_color_dark',   lbl:'ダーク 切替ボタン文字',  desc:'例: #FFFFFF', type:'color'},
   {sec:'⚠ 注意アナウンス（省略可・デフォルト文あり）'},
   {key:'caution_shigaichi',     lbl:'市街地コース 注意テキスト',   desc:'コース開始時に読み上げる注意事項'},
   {key:'caution_koen',          lbl:'公園コース 注意テキスト',     desc:'コース開始時に読み上げる注意事項'},
@@ -706,6 +739,11 @@ const CONFIG_DEFS = [
   {key:'cert_seal_line_height',  lbl:'印鑑行間',           desc:'--cert-seal-line-height。例: 1.5'},
   {sec:'🧭 ナビ設定'},
   {key:'next_lock_sec', lbl:'「次へ」ボタンロック秒数', desc:'到着時に「次へ」ボタンをロックする秒数（保険タイマー）。例: 30（0で無制限待機）'},
+  {key:'walk_speed_limit_kmh', lbl:'歩行カウント停止速度', desc:'この速度を超える移動は歩行距離に加算しません。例: 7', type:'num'},
+  {key:'walk_resume_kmh', lbl:'歩行カウント再開速度', desc:'乗り物判定後、この速度以下で歩行カウントを再開します。例: 5.5', type:'num'},
+  {key:'walk_speed_hits', lbl:'乗り物判定の連続回数', desc:'停止速度超過が何回続いたら乗り物モードにするか。例: 2', type:'num'},
+  {key:'walk_accuracy_max_m', lbl:'歩行加算GPS最大誤差', desc:'GPS精度がこのm数より悪い時は歩行距離に加算しません。例: 50', type:'num'},
+  {key:'walk_segment_max_m', lbl:'歩行加算最大区間距離', desc:'1回のGPS更新でこのm数以上動いた場合はワープ扱いで加算しません。例: 50', type:'num'},
 ];
 
 const COURSE_FIELDS = [
@@ -716,6 +754,10 @@ const COURSE_FIELDS = [
   {key:'recommended',             lbl:'おすすめ★',                   desc:'TRUEで★おすすめ表示', w:70, type:'bool'},
   {key:'duration_min',            lbl:'所要時間（分）',               desc:'目安の所要時間', w:65, type:'num'},
   {key:'distance_m',              lbl:'距離（m）',                    desc:'コース全長の目安', w:60, type:'num'},
+  {key:'course_description',      lbl:'コース紹介文',                 desc:'ホームカード・コース紹介画面に表示', w:260},
+  {key:'course_thumbnail_url',    lbl:'コースサムネイルURL',           desc:'ホームカード・紹介画面の写真。Drive URL可', w:220},
+  {key:'course_audio_url',        lbl:'コース説明音声URL',             desc:'紹介画面で再生する説明音声', w:220, type:'audio'},
+  {key:'course_notes',            lbl:'コース注意メモ',               desc:'紹介画面の注意欄に表示', w:260},
   {key:'start_date',              lbl:'公開開始日',                   desc:'YYYY-MM-DD（空白=常時）'},
   {key:'end_date',                lbl:'公開終了日',                   desc:'YYYY-MM-DD（空白=常時）'},
   {key:'audio_theme_url',         lbl:'テーマナレーション音声URL',    desc:'コース開始時に流れる音声', type:'audio'},
@@ -752,6 +794,7 @@ const SCHEMAS = {
     {key:'audio_url',     lbl:'音声URL',             desc:'近づいたときに再生するMP3等', w:210, type:'audio'},
     {key:'start_date',    lbl:'有効開始日',          desc:'YYYY-MM-DD（空白=常時）', w:95},
     {key:'end_date',      lbl:'有効終了日',          desc:'YYYY-MM-DD（空白=常時）', w:95},
+    {key:'photo_url',     lbl:'写真URL',             desc:'現地調査アプリで保存した施設写真のURL/ファイル名', w:210},
   ],
 };
 
@@ -769,6 +812,8 @@ let currentTab='config';
 let currentAudio=null, currentPlayBtn=null;
 let leafletMap=null, mapLayerGroup=null;
 let selectedRow={courses:null, spots:null, facilities:null};
+let mapEditContext=null;
+let navGuardReady=false;
 
 // ═══════════════════════════════════════════════════════
 // CSV / UTILITIES
@@ -921,6 +966,30 @@ function recChg(sheet,k,oldV,newV){
   else changes[sheet][k]={old:oldV,new:newV};
   document.getElementById('dot-'+sheet)?.classList.toggle('show',Object.keys(changes[sheet]).length>0);
   if(sheet===currentTab) updateChgBadge(sheet);
+}
+function hasUnsavedChanges(){
+  return Object.values(changes).some(sheetChanges=>Object.keys(sheetChanges||{}).length>0);
+}
+function installNavigationGuard(){
+  if(navGuardReady) return;
+  navGuardReady=true;
+  history.replaceState({editorGuard:true},'',location.href);
+  history.pushState({editorGuard:true},'',location.href);
+  window.addEventListener('popstate',()=>{
+    const msg=hasUnsavedChanges()
+      ? '保存していない変更があります。このページを離れますか？'
+      : 'エディタから離れますか？';
+    if(confirm(msg)){
+      history.back();
+    }else{
+      history.pushState({editorGuard:true},'',location.href);
+    }
+  });
+  window.addEventListener('beforeunload',e=>{
+    if(!hasUnsavedChanges()) return;
+    e.preventDefault();
+    e.returnValue='';
+  });
 }
 
 function updateChgBadge(sheet){
@@ -1354,7 +1423,7 @@ function updateConfigPreview(){
 
   const badge=document.createElement('div'); badge.className='sim-badge';
   badge.style.cssText=`border-color:${primary};color:${primary};`;
-  badge.textContent='WALKING GUIDE';
+  badge.textContent=getCfg('home_badge_text')||'WALKING GUIDE';
 
   const ttl=document.createElement('div'); ttl.className='sim-title';
   ttl.style.color=titleColor; ttl.style.fontSize=titleSize; ttl.style.fontFamily=`'${titleFont}', serif`; ttl.textContent=title;
@@ -1420,6 +1489,9 @@ function updateConfigPreview(){
 
 function renderCourses(){
   const body=document.getElementById('ed-body'); body.innerHTML='';
+  if(state.courses.length && !state.courses.some(c=>c.course_id===selectedRow.courses)){
+    selectedRow.courses=state.courses[0].course_id;
+  }
 
   // Change summary
   const totalChg=Object.keys(changes.courses).length+Object.keys(changes.course_spots).length;
@@ -1429,6 +1501,7 @@ function renderCourses(){
 
   state.courses.forEach((course,ci)=>{
     const card=document.createElement('div'); card.className='cc-card';
+    if(course.course_id===selectedRow.courses) card.classList.add('is-sel');
     const isRec=course.recommended==='TRUE'||course.recommended===true;
 
     // HEAD
@@ -1439,6 +1512,7 @@ function renderCourses(){
     const rec=document.createElement('span'); rec.className='cc-rec'; rec.textContent=isRec?'★ おすすめ':'';
     const meta=document.createElement('span'); meta.className='cc-meta'; meta.textContent=`${course.duration_min||'?'}分 / ${course.distance_m||'?'}m`;
     const mapBtn=document.createElement('button'); mapBtn.className='btn-map btn-xs'; mapBtn.textContent='🗺 地図';
+    if(course.course_id===selectedRow.courses) mapBtn.classList.add('active');
     mapBtn.onclick=e=>{e.stopPropagation();selectCourse(course.course_id,card,mapBtn);};
     head.appendChild(toggle); head.appendChild(name); head.appendChild(tag); head.appendChild(rec); head.appendChild(meta); head.appendChild(mapBtn);
 
@@ -1515,6 +1589,7 @@ function renderCourses(){
     // Toggle
     head.onclick=e=>{
       if(e.target===mapBtn||e.target.closest('.btn-map')) return;
+      selectCourse(course.course_id,card,mapBtn);
       const open=!cBody.classList.contains('open');
       cBody.classList.toggle('open',open);
       toggle.classList.toggle('open',open);
@@ -1565,7 +1640,7 @@ function renderSpotsList(courseId, container){
 }
 
 function addCourse(){
-  const newCourse={course_id:'course_'+(Date.now()),course_name:'新しいコース',course_type:'市街地',display_order:'99',recommended:'FALSE',duration_min:'30',distance_m:'1000',start_date:'',end_date:'',audio_theme_url:'',theme_text:'',audio_finish_url:'',finish_text:''};
+  const newCourse={course_id:'course_'+(Date.now()),course_name:'新しいコース',course_type:'市街地',display_order:'99',recommended:'FALSE',duration_min:'30',distance_m:'1000',course_description:'',course_thumbnail_url:'',course_audio_url:'',course_notes:'',start_date:'',end_date:'',audio_theme_url:'',theme_text:'',audio_finish_url:'',finish_text:''};
   state.courses.push(newCourse);
   renderCourses();
   // Scroll to bottom
@@ -1605,6 +1680,39 @@ function renderTable(sn){
 
 function mkTh(tr,html,cls){const th=document.createElement('th');th.innerHTML=html;if(cls)th.className=cls;tr.appendChild(th);return th;}
 
+function bindCellMeta(el,sheet,row,key,origVal){
+  el.dataset.sheet=sheet;
+  el.dataset.row=String(row);
+  el.dataset.key=key;
+  el.dataset.orig=origVal||'';
+}
+
+function updateCellInput(sheet,row,key,value){
+  const el=document.querySelector(`[data-sheet="${sheet}"][data-row="${row}"][data-key="${key}"]`);
+  if(!el) return;
+  el.value=value;
+  el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));
+}
+
+function syncMapFromEditedRow(sheet,rowIdx){
+  if(!mapEditContext || mapEditContext.sheet!==sheet || mapEditContext.row!==rowIdx) return;
+  const row=state[sheet]?.[rowIdx];
+  if(!row) return;
+  if(sheet==='spots') showSpotMap(row);
+  if(sheet==='facilities') showFacilityMap(row);
+}
+
+function selectTableRowOnMap(sn,idx,tr,mapBtn,row){
+  if(sn!=='spots' && sn!=='facilities') return;
+  document.querySelectorAll('.sel-row').forEach(r=>r.classList.remove('sel-row'));
+  tr.classList.add('sel-row');
+  selectedRow[sn]=idx;
+  document.querySelectorAll('.btn-map.active').forEach(b=>b.classList.remove('active'));
+  mapBtn.classList.add('active');
+  if(sn==='spots') showSpotMap(row);
+  else showFacilityMap(row);
+}
+
 function mkRow(sn,schema,row,origRow,idx){
   const tr=document.createElement('tr');
   const tn=document.createElement('td');tn.className='td-n';tn.textContent=idx+1;tr.appendChild(tn);
@@ -1618,25 +1726,29 @@ function mkRow(sn,schema,row,origRow,idx){
     if(col.type==='audio'){
       const wr=document.createElement('div');wr.className='td-au';
       const el=document.createElement('input');el.type='text';el.className='c-in';el.value=val;
+      bindCellMeta(el,sn,idx,col.key,origVal);
       if(col.w)el.style.minWidth=(col.w-85)+'px';
       el.title=isChg?`変更前: ${origVal||'（空）'}`:col.desc||'';
-      el.addEventListener('input',()=>{row[col.key]=el.value;const c=el.value!==origVal;td.classList.toggle('chg',c);recChg(sn,chgKey,origVal,el.value);});
+      el.addEventListener('input',()=>{row[col.key]=el.value;const c=el.value!==origVal;td.classList.toggle('chg',c);recChg(sn,chgKey,origVal,el.value);syncMapFromEditedRow(sn,idx);});
       wr.appendChild(el);wr.appendChild(mkPlayBtn(()=>el.value,col.lbl));td.appendChild(wr);
     }else if(col.type==='bool'){
       const el=document.createElement('select');el.className='c-in';
+      bindCellMeta(el,sn,idx,col.key,origVal);
       ['','TRUE','FALSE'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(val===v)o.selected=true;el.appendChild(o);});
-      el.addEventListener('change',()=>{row[col.key]=el.value;td.classList.toggle('chg',el.value!==origVal);recChg(sn,chgKey,origVal,el.value);});
+      el.addEventListener('change',()=>{row[col.key]=el.value;td.classList.toggle('chg',el.value!==origVal);recChg(sn,chgKey,origVal,el.value);syncMapFromEditedRow(sn,idx);});
       td.appendChild(el);
     }else if(col.type==='sel'&&col.opts){
       const el=document.createElement('select');el.className='c-in';
+      bindCellMeta(el,sn,idx,col.key,origVal);
       ['',...col.opts].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(val===v)o.selected=true;el.appendChild(o);});
-      el.addEventListener('change',()=>{row[col.key]=el.value;td.classList.toggle('chg',el.value!==origVal);recChg(sn,chgKey,origVal,el.value);});
+      el.addEventListener('change',()=>{row[col.key]=el.value;td.classList.toggle('chg',el.value!==origVal);recChg(sn,chgKey,origVal,el.value);syncMapFromEditedRow(sn,idx);});
       td.appendChild(el);
     }else{
       const el=document.createElement('input');el.type='text';el.className='c-in';el.value=val;
+      bindCellMeta(el,sn,idx,col.key,origVal);
       if(col.w)el.style.minWidth=col.w+'px';
       el.title=isChg?`変更前: ${origVal||'（空）'}`:col.desc||'';
-      el.addEventListener('input',()=>{row[col.key]=el.value;const c=el.value!==origVal;td.classList.toggle('chg',c);el.title=c?`変更前: ${origVal||'（空）'}`:col.desc||'';recChg(sn,chgKey,origVal,el.value);});
+      el.addEventListener('input',()=>{row[col.key]=el.value;const c=el.value!==origVal;td.classList.toggle('chg',c);el.title=c?`変更前: ${origVal||'（空）'}`:col.desc||'';recChg(sn,chgKey,origVal,el.value);syncMapFromEditedRow(sn,idx);});
       td.appendChild(el);
     }
     tr.appendChild(td);
@@ -1646,18 +1758,18 @@ function mkRow(sn,schema,row,origRow,idx){
   const ta=document.createElement('td');ta.className='td-act';
   const mapBtn=document.createElement('button');mapBtn.className='btn-map btn-xs';mapBtn.textContent='🗺';
   mapBtn.title=sn==='spots'?`${row.spot_name||'このスポット'}を地図表示`:`${row.facility_name||'この施設'}を地図表示`;
-  mapBtn.onclick=()=>{
-    document.querySelectorAll('.sel-row').forEach(r=>r.classList.remove('sel-row'));
-    tr.classList.add('sel-row');
-    selectedRow[sn]=idx;
-    document.querySelectorAll('.btn-map.active').forEach(b=>b.classList.remove('active'));
-    mapBtn.classList.add('active');
-    if(sn==='spots') showSpotMap(row);
-    else showFacilityMap(row);
-  };
+  mapBtn.onclick=()=>selectTableRowOnMap(sn,idx,tr,mapBtn,row);
   const delBtn=document.createElement('button');delBtn.className='btn-ico btn-xs';delBtn.innerHTML='✕';delBtn.title='削除';delBtn.style.cssText='margin-left:2px;border:1px solid var(--border);border-radius:3px;';
   delBtn.onclick=()=>{if(!confirm(`${idx+1}行目を削除しますか？`))return;state[sn].splice(idx,1);renderTable(sn);};
   ta.appendChild(mapBtn);ta.appendChild(delBtn);tr.appendChild(ta);
+  tr.addEventListener('click',e=>{
+    if(e.target.closest('.td-act')) return;
+    selectTableRowOnMap(sn,idx,tr,mapBtn,row);
+  });
+  tr.addEventListener('focusin',e=>{
+    if(e.target.closest('.td-act')) return;
+    selectTableRowOnMap(sn,idx,tr,mapBtn,row);
+  });
   return tr;
 }
 
@@ -1666,7 +1778,17 @@ function addRow(sn){
   const nr={};schema.forEach(c=>{nr[c.key]='';});state[sn].push(nr);
   updateBadge(sn);
   const tb=document.getElementById('tbody-'+sn);
-  if(tb){const tr=mkRow(sn,schema,nr,{},state[sn].length-1);tb.appendChild(tr);tr.scrollIntoView({behavior:'smooth',block:'nearest'});const fi=tr.querySelector('input,select');if(fi)setTimeout(()=>fi.focus(),80);}
+  if(tb){
+    const newIdx=state[sn].length-1;
+    const tr=mkRow(sn,schema,nr,{},newIdx);
+    tb.appendChild(tr);
+    tr.scrollIntoView({behavior:'smooth',block:'nearest'});
+    const fi=tr.querySelector('input,select');
+    if(fi)setTimeout(()=>fi.focus(),80);
+    if(sn==='spots'||sn==='facilities'){
+      setTimeout(()=>tr.querySelector('.btn-map')?.click(),100);
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1690,6 +1812,7 @@ function makeChgPanel(entries){
 // ═══════════════════════════════════════════════════════
 
 function showRpMap(){
+  mapEditContext=null;
   document.getElementById('rp-config').style.display='none';
   const mapEl=document.getElementById('rp-map'); mapEl.style.display='flex';
   document.getElementById('rp-title').textContent='🗺 地図表示';
@@ -1698,7 +1821,7 @@ function showRpMap(){
   document.getElementById('btn-lbl-toggle').style.display='none';
   document.getElementById('map-legend').innerHTML='<div class="map-empty" style="height:36px;"><span style="font-size:10px;color:var(--dim);">行の🗺ボタンをクリックすると地図が表示されます</span></div>';
   initLeaflet();
-  clearMap();
+  renderCurrentSheetMap();
 }
 
 function initLeaflet(){
@@ -1707,6 +1830,7 @@ function initLeaflet(){
   leafletMap=L.map(el,{zoomControl:true,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(leafletMap);
   mapLayerGroup=L.layerGroup().addTo(leafletMap);
+  leafletMap.on('click',onEditableMapClick);
 }
 
 function clearMap(){
@@ -1719,6 +1843,7 @@ function refreshRightPanel(){
 }
 
 function selectCourse(courseId, card, btn){
+  selectedRow.courses=courseId;
   document.querySelectorAll('.cc-card.is-sel').forEach(c=>c.classList.remove('is-sel'));
   document.querySelectorAll('.btn-map.active').forEach(b=>b.classList.remove('active'));
   card.classList.add('is-sel'); btn.classList.add('active');
@@ -1726,6 +1851,7 @@ function selectCourse(courseId, card, btn){
 }
 
 function showCourseMap(courseId){
+  mapEditContext=null;
   initLeaflet(); clearMap();
   document.getElementById('rp-title').textContent='🗺 コースルート';
 
@@ -1773,12 +1899,153 @@ function showCourseMap(courseId){
   `;
 }
 
+function refreshRightPanel(){
+  if(currentTab==='config'){updateConfigPreview();}
+  else{renderCurrentSheetMap();notify('地図を再表示しました');}
+}
+
+function renderCurrentSheetMap(){
+  if(currentTab==='courses') showSelectedCourseMap();
+  else if(currentTab==='spots') showSelectedSpotOnlyMap();
+  else if(currentTab==='facilities') showAllFacilitiesMap();
+  else clearMap();
+}
+
+function showSelectedCourseMap(){
+  const selectedId=selectedRow.courses && state.courses.some(c=>c.course_id===selectedRow.courses)
+    ? selectedRow.courses
+    : state.courses[0]?.course_id;
+  if(selectedId){
+    selectedRow.courses=selectedId;
+    showCourseMap(selectedId);
+  }else{
+    mapEditContext=null;
+    initLeaflet(); clearMap();
+    const [lat,lng,zoom]=getMapFallbackCenter();
+    leafletMap.setView([lat,lng],zoom);
+    document.getElementById('rp-title').textContent='コース';
+    document.getElementById('map-legend').innerHTML='<div class="map-edit-help">コースがありません。</div>';
+  }
+}
+
+function showSelectedSpotOnlyMap(){
+  const rowIdx=Number.isInteger(selectedRow.spots) ? selectedRow.spots : null;
+  const spot=rowIdx!==null ? state.spots[rowIdx] : null;
+  if(spot){
+    showSpotMap(spot);
+  }else{
+    mapEditContext=null;
+    initLeaflet(); clearMap();
+    const [lat,lng,zoom]=getMapFallbackCenter();
+    leafletMap.setView([lat,lng],zoom);
+    document.getElementById('rp-title').textContent='スポット';
+    document.getElementById('map-legend').innerHTML='<div class="map-edit-help">表示したいスポット行の地図ボタンを押してください。選んだスポットだけを表示します。</div>';
+  }
+}
+
+function showAllSpotsMap(){
+  mapEditContext=null;
+  initLeaflet(); clearMap();
+  document.getElementById('rp-title').textContent='スポット一覧';
+  const coords=[];
+  state.spots.forEach((spot,i)=>{
+    const lat=parseFloat(spot.lat), lng=parseFloat(spot.lng);
+    if(isNaN(lat)||isNaN(lng)) return;
+    coords.push([lat,lng]);
+    const approachDist=parseInt(spot.approach_dist)||50;
+    const arriveDist=parseInt(spot.arrive_dist)||15;
+    L.circle([lat,lng],{radius:approachDist,color:'#2A5A8A',fillColor:'#2A5A8A',fillOpacity:0.06,weight:1.2,dashArray:'5 3'}).addTo(mapLayerGroup);
+    L.circle([lat,lng],{radius:arriveDist,color:'#B83232',fillColor:'#B83232',fillOpacity:0.16,weight:1.6}).addTo(mapLayerGroup);
+    const ic=L.divIcon({html:`<div style="background:#B83232;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.35);font-family:sans-serif;">${i+1}</div>`,iconSize:[22,22],iconAnchor:[11,11],className:''});
+    L.marker([lat,lng],{icon:ic}).addTo(mapLayerGroup).bindPopup(`<strong>${spot.spot_name||spot.spot_id||'スポット'}</strong><br>接近: ${approachDist}m 以内<br>到着: ${arriveDist}m 以内`);
+  });
+  fitMapToCoords(coords);
+  document.getElementById('map-legend').innerHTML=`
+    <div class="legend-item"><div class="legend-dot" style="background:#B83232;"></div>スポット ${coords.length}/${state.spots.length}</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2A5A8A;opacity:.7;"></div>接近レンジ</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#B83232;opacity:.9;"></div>到着レンジ</div>
+    <div class="map-edit-help">一覧表示中です。個別に座標を入れる・修正する場合は、表の行の地図ボタンを押してから地図上をクリックしてください。</div>
+  `;
+}
+
+function showAllFacilitiesMap(){
+  mapEditContext=null;
+  initLeaflet(); clearMap();
+  document.getElementById('rp-title').textContent='施設一覧';
+  const coords=[];
+  state.facilities.forEach((facility,i)=>{
+    const lat=parseFloat(facility.lat), lng=parseFloat(facility.lng);
+    if(isNaN(lat)||isNaN(lng)) return;
+    coords.push([lat,lng]);
+    const trigDist=parseInt(facility.trigger_dist)||30;
+    L.circle([lat,lng],{radius:trigDist,color:'#C06010',fillColor:'#C06010',fillOpacity:0.12,weight:1.6,dashArray:'4 3'}).addTo(mapLayerGroup);
+    const ic=L.divIcon({html:`<div style="background:#C06010;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.35);font-family:sans-serif;">${i+1}</div>`,iconSize:[22,22],iconAnchor:[11,11],className:''});
+    L.marker([lat,lng],{icon:ic}).addTo(mapLayerGroup).bindPopup(`<strong>${facility.facility_name||facility.facility_id||'施設'}</strong><br>通知: ${trigDist}m 以内`);
+  });
+  fitMapToCoords(coords);
+  document.getElementById('map-legend').innerHTML=`
+    <div class="legend-item"><div class="legend-dot" style="background:#C06010;"></div>施設 ${coords.length}/${state.facilities.length}</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#C06010;opacity:.9;"></div>通知レンジ</div>
+    <div class="map-edit-help">一覧表示中です。個別に座標を入れる・修正する場合は、表の行の地図ボタンを押してから地図上をクリックしてください。</div>
+  `;
+}
+
+function fitMapToCoords(coords){
+  if(coords.length>1){
+    leafletMap.fitBounds(L.latLngBounds(coords),{padding:[24,24]});
+  }else if(coords.length===1){
+    leafletMap.setView(coords[0],17);
+  }else{
+    const [lat,lng,zoom]=getMapFallbackCenter();
+    leafletMap.setView([lat,lng],zoom);
+  }
+  setTimeout(()=>leafletMap.invalidateSize(),120);
+}
+
+function getMapFallbackCenter(){
+  const cfgMap={};
+  state.config.forEach(r=>{if(r.key) cfgMap[r.key]=r.value;});
+  const cfgLat=parseFloat(cfgMap.area_lat||cfgMap.weather_lat||cfgMap.lat);
+  const cfgLng=parseFloat(cfgMap.area_lng||cfgMap.weather_lng||cfgMap.lng);
+  if(!isNaN(cfgLat)&&!isNaN(cfgLng)) return [cfgLat,cfgLng,16];
+  const source=[...state.spots,...state.facilities].find(r=>!isNaN(parseFloat(r.lat))&&!isNaN(parseFloat(r.lng)));
+  if(source) return [parseFloat(source.lat),parseFloat(source.lng),17];
+  return [39.319826,140.523891,15];
+}
+
+function renderMapEditLegend(kind,row,hasCoords){
+  const label=kind==='spots'?'スポット':'施設';
+  const range=kind==='spots'
+    ? `<div class="legend-item"><div class="legend-dot" style="background:#2A5A8A;opacity:.7;"></div>接近 ${row.approach_dist||'?'}m</div><div class="legend-item"><div class="legend-dot" style="background:#B83232;opacity:.9;"></div>到着 ${row.arrive_dist||'?'}m</div>`
+    : `<div class="legend-item"><div class="legend-dot" style="background:#C06010;opacity:.9;"></div>通知 ${row.trigger_dist||'?'}m</div>`;
+  document.getElementById('map-legend').innerHTML=`
+    ${range}
+    <div class="map-edit-help">${label}の位置を修正するには、地図上の置きたい場所をクリックしてください。クリックした座標が表の緯度・経度に入ります。${hasCoords?'':'座標が空なので、まず地図上をクリックしてください。'}</div>
+  `;
+}
+
+function onEditableMapClick(e){
+  if(!mapEditContext) return;
+  const {sheet,row}=mapEditContext;
+  const target=state[sheet]?.[row];
+  if(!target) return;
+  const lat=e.latlng.lat.toFixed(6);
+  const lng=e.latlng.lng.toFixed(6);
+  updateCellInput(sheet,row,'lat',lat);
+  updateCellInput(sheet,row,'lng',lng);
+  notify('地図から座標を入力しました');
+}
+
 function showSpotMap(spot){
   initLeaflet(); clearMap();
   document.getElementById('rp-title').textContent=`📍 ${spot.spot_name||'スポット'}`;
+  mapEditContext={sheet:'spots',row:selectedRow.spots};
   const lat=parseFloat(spot.lat), lng=parseFloat(spot.lng);
   if(isNaN(lat)||isNaN(lng)){
-    document.getElementById('map-legend').innerHTML='<div style="font-size:10px;color:var(--dim);padding:8px;">緯度・経度が設定されていません</div>';
+    const [cLat,cLng,zoom]=getMapFallbackCenter();
+    leafletMap.setView([cLat,cLng],zoom);
+    setTimeout(()=>leafletMap.invalidateSize(),120);
+    renderMapEditLegend('spots',spot,false);
     return;
   }
   const approachDist=parseInt(spot.approach_dist)||50;
@@ -1790,19 +2057,19 @@ function showSpotMap(spot){
   L.marker([lat,lng],{icon:ic}).addTo(mapLayerGroup).bindPopup(`<strong>${spot.spot_name}</strong><br>接近: ${approachDist}m 以内<br>到着: ${arriveDist}m 以内`).openPopup();
   leafletMap.setView([lat,lng],17);
   setTimeout(()=>leafletMap.invalidateSize(),120);
-
-  document.getElementById('map-legend').innerHTML=`
-    <div class="legend-item"><div class="legend-dot" style="background:#2A5A8A;opacity:.7;"></div>接近エリア（${approachDist}m）</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#B83232;opacity:.9;"></div>到着判定エリア（${arriveDist}m）</div>
-  `;
+  renderMapEditLegend('spots',spot,true);
 }
 
 function showFacilityMap(facility){
   initLeaflet(); clearMap();
   document.getElementById('rp-title').textContent=`🏛 ${facility.facility_name||'施設'}`;
+  mapEditContext={sheet:'facilities',row:selectedRow.facilities};
   const lat=parseFloat(facility.lat), lng=parseFloat(facility.lng);
   if(isNaN(lat)||isNaN(lng)){
-    document.getElementById('map-legend').innerHTML='<div style="font-size:10px;color:var(--dim);padding:8px;">緯度・経度が設定されていません</div>';
+    const [cLat,cLng,zoom]=getMapFallbackCenter();
+    leafletMap.setView([cLat,cLng],zoom);
+    setTimeout(()=>leafletMap.invalidateSize(),120);
+    renderMapEditLegend('facilities',facility,false);
     return;
   }
   const trigDist=parseInt(facility.trigger_dist)||30;
@@ -1811,10 +2078,7 @@ function showFacilityMap(facility){
   L.marker([lat,lng],{icon:ic}).addTo(mapLayerGroup).bindPopup(`<strong>${facility.facility_name}</strong><br>通知トリガー: ${trigDist}m 以内`).openPopup();
   leafletMap.setView([lat,lng],17);
   setTimeout(()=>leafletMap.invalidateSize(),120);
-
-  document.getElementById('map-legend').innerHTML=`
-    <div class="legend-item"><div class="legend-dot" style="background:#C06010;opacity:.9;"></div>通知トリガーエリア（${trigDist}m）</div>
-  `;
+  renderMapEditLegend('facilities',facility,true);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1894,7 +2158,7 @@ async function copyGasCode(){
   catch(e){notify('コピーに失敗しました。手動でコードを選択してコピーしてください',true);}
 }
 
-const APP_BASE_URL = 'https://kosa-e-mon.github.io/local-walk-guide/';
+const APP_BASE_URL = 'https://kosa-e-mon.github.io/machi-aruki-guide/';
 
 function buildQrTargetUrl(){
   const raw=(document.getElementById('qr-sheet-url')?.value||'').trim();
@@ -1943,8 +2207,8 @@ function getQrCanvas(){
 }
 
 function qrFileName(){
-  const title=(getCfg('area_name')||getCfg('app_title')||'local-walk-guide').replace(/[\\/:*?"<>|]/g,'_').trim();
-  return (title||'local-walk-guide') + '_QR.png';
+  const title=(getCfg('area_name')||getCfg('app_title')||'machi-aruki-guide').replace(/[\\/:*?"<>|]/g,'_').trim();
+  return (title||'machi-aruki-guide') + '_QR.png';
 }
 
 function downloadQrPng(){
@@ -1994,6 +2258,7 @@ function hideLd(){document.getElementById('ld-mask').classList.remove('show');}
 let nt=null;
 function notify(m,err){const el=document.getElementById('notif');el.textContent=(err?'⚠ ':'✓ ')+m;el.className='notif'+(err?' err':'')+' show';if(nt)clearTimeout(nt);nt=setTimeout(()=>el.classList.remove('show'),3500);}
 window.addEventListener('DOMContentLoaded',()=>{
+  installNavigationGuard();
   showTab('config');
   document.getElementById('gas-code-display').textContent=GAS_CODE;
   initResizeHandle();

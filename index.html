@@ -1077,6 +1077,7 @@ let watchId = null, approachNotified = false, arrivedDetected = false;
 let lastVoiceText = '', lastVoiceUrl = null, announcedFacilities = new Set();
 let leafletMap = null, userMarker = null, destMarker = null, destCircle = null;
 let totalWalkDist = 0, lastWalkPos = null;
+let walkSpeedOverCount = 0, walkVehicleMode = false;
 let facilityTimer = null;
 let arStream = null, arWatchId = null, arLastDist = 0;
 let voicePlaying = false; // 音声重複再生ロック
@@ -2220,6 +2221,8 @@ function selectCourse(course) {
 
 function startWalk(playStartAnnounce) {
   lastWalkPos = null;
+  walkSpeedOverCount = 0;
+  walkVehicleMode = false;
   announcedFacilities = new Set();
   updateNavScreen();
   pushNavHistory();
@@ -2650,6 +2653,48 @@ function stopGPS() {
   if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId=null; }
 }
 
+function walkCfgNum(key, fallback) {
+  const n = parseFloat(cfg[key]);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getSegmentSpeedKmh(pos, distanceM, dtSec) {
+  const gpsSpeed = pos.coords && typeof pos.coords.speed === 'number' && pos.coords.speed >= 0
+    ? pos.coords.speed * 3.6
+    : null;
+  if (gpsSpeed !== null) return gpsSpeed;
+  if (dtSec > 0) return (distanceM / dtSec) * 3.6;
+  return null;
+}
+
+function shouldCountWalkSegment(pos, distanceM, dtSec) {
+  const accuracy = pos.coords?.accuracy || Infinity;
+  const maxAccuracy = walkCfgNum('walk_accuracy_max_m', 50);
+  const maxSegment = walkCfgNum('walk_segment_max_m', 50);
+  const limitKmh = walkCfgNum('walk_speed_limit_kmh', 7);
+  const resumeKmh = walkCfgNum('walk_resume_kmh', 5.5);
+  const hitsNeeded = Math.max(1, parseInt(cfg.walk_speed_hits) || 2);
+
+  if (accuracy > maxAccuracy) return false;
+  if (distanceM <= 0 || distanceM >= maxSegment) return false;
+
+  const speedKmh = getSegmentSpeedKmh(pos, distanceM, dtSec);
+  if (speedKmh === null) return true;
+
+  if (speedKmh > limitKmh) {
+    walkSpeedOverCount++;
+    if (walkSpeedOverCount >= hitsNeeded) walkVehicleMode = true;
+    return false;
+  }
+
+  if (speedKmh <= resumeKmh) {
+    walkSpeedOverCount = 0;
+    walkVehicleMode = false;
+  }
+
+  return !walkVehicleMode;
+}
+
 function onGPSUpdate(pos) {
   const { latitude:lat, longitude:lng, accuracy } = pos.coords;
   setGPSStatus('active', tf('精度 ±{n}m', {n: Math.round(accuracy)}));
@@ -2657,7 +2702,8 @@ function onGPSUpdate(pos) {
   // 歩行距離
   if (lastWalkPos) {
     const d = haversine(lastWalkPos.lat, lastWalkPos.lng, lat, lng);
-    if (d < 50) {
+    const dtSec = ((pos.timestamp || Date.now()) - (lastWalkPos.t || 0)) / 1000;
+    if (shouldCountWalkSegment(pos, d, dtSec)) {
       totalWalkDist += d;
       document.getElementById('walk-val').textContent = formatDist(totalWalkDist);
       // 50m刻みでいいねを加算
@@ -2666,7 +2712,7 @@ function onGPSUpdate(pos) {
       }
     }
   }
-  lastWalkPos = { lat, lng };
+  lastWalkPos = { lat, lng, t: pos.timestamp || Date.now() };
   refreshWeather(false, { lat, lng });
 
   // 地図現在地
@@ -3185,7 +3231,7 @@ function showGoal() {
   }
 
   // クラウド自動同期（完走時）
-  setTimeout(() => syncCloud(), 1500);
+  setTimeout(() => syncCloud({ background: true }), 1500);
 }
 
 // ══════════════════════════════════════
@@ -3587,6 +3633,9 @@ let gTokenExpiry  = 0;
 let gTokenClient  = null;
 let gUserEmail    = '';
 let gBackupFileId = null;
+let cloudSyncInFlight = false;
+let cloudLastSyncAttempt = 0;
+const CLOUD_BACKGROUND_MIN_MS = 10 * 60 * 1000;
 
 // ── 初期化 ──
 function initGoogleAuth() {
@@ -3616,6 +3665,8 @@ function initGoogleAuth() {
   if (saved?.email) {
     gUserEmail = saved.email;
     updateCloudUI();
+    showSyncStatus('idle', t('必要なときに同期できます'));
+    return;
     // サイレントでトークンを再取得して自動同期（ユーザー操作不要）
     showSyncStatus('syncing', t('同期中…'));
     const silentClient = google.accounts.oauth2.initTokenClient({
@@ -3797,9 +3848,18 @@ function mergeBackup(cloud, local) {
 }
 
 // ── 同期メイン処理 ──
-async function syncCloud() {
-  if (!isSignedIn()) return; // 未ログインは何もしない
-  showSyncStatus('syncing', t('同期中…'));
+async function syncCloud(options = {}) {
+  const background = !!options.background;
+  const nowMs = Date.now();
+  if (!isSignedIn()) return;
+  if (cloudSyncInFlight) {
+    if (!background) showSyncStatus('idle', t('同期中です'));
+    return;
+  }
+  if (background && nowMs - cloudLastSyncAttempt < CLOUD_BACKGROUND_MIN_MS) return;
+  cloudSyncInFlight = true;
+  cloudLastSyncAttempt = nowMs;
+  showSyncStatus('syncing', background ? t('バックアップ中…') : t('同期中…'));
 
   try {
     if (!await ensureToken()) {
@@ -3838,6 +3898,8 @@ async function syncCloud() {
     console.error('Sync error:', e);
     const msg = e.message === 'token_unavailable' ? t('再ログインが必要です') : t('同期に失敗しました');
     showSyncStatus('error', msg);
+  } finally {
+    cloudSyncInFlight = false;
   }
 }
 
