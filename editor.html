@@ -1579,6 +1579,7 @@ function renderCourses(){
       state.course_spots.push({course_id:course.course_id,spot_id:sel.value,order:String(maxOrder+1)});
       recChg('course_spots',`${course.course_id}:${sel.value}:追加`,'','order:'+(maxOrder+1));
       renderSpotsList(course.course_id,spotsList);
+      refreshCourseMapAfterEdit(course.course_id);
       sel.value='';
     };
     addRow.appendChild(sel); addRow.appendChild(addBtn);
@@ -1621,13 +1622,13 @@ function renderSpotsList(courseId, container){
     dist.textContent=spot?`接近:${spot.approach_dist||'?'}m 到着:${spot.arrive_dist||'?'}m`:'スポット未登録';
 
     const upBtn=document.createElement('button'); upBtn.className='btn btn-o btn-xs'; upBtn.textContent='↑'; upBtn.title='上へ';
-    upBtn.onclick=()=>{if(i>0){const tmp=courseSpots[i-1];[courseSpots[i-1],courseSpots[i]]=[courseSpots[i],courseSpots[i-1]];courseSpots.forEach((cs2,j)=>{cs2.order=String(j+1);});recChg('course_spots',`${courseId}:並び替え`,'',(Date.now()+''));renderSpotsList(courseId,container);}};
+    upBtn.onclick=()=>{if(i>0){const tmp=courseSpots[i-1];[courseSpots[i-1],courseSpots[i]]=[courseSpots[i],courseSpots[i-1]];courseSpots.forEach((cs2,j)=>{cs2.order=String(j+1);});recChg('course_spots',`${courseId}:並び替え`,'',(Date.now()+''));renderSpotsList(courseId,container);refreshCourseMapAfterEdit(courseId);}};
     const dnBtn=document.createElement('button'); dnBtn.className='btn btn-o btn-xs'; dnBtn.textContent='↓'; dnBtn.title='下へ';
-    dnBtn.onclick=()=>{if(i<total-1){[courseSpots[i],courseSpots[i+1]]=[courseSpots[i+1],courseSpots[i]];courseSpots.forEach((cs2,j)=>{cs2.order=String(j+1);});recChg('course_spots',`${courseId}:並び替え`,'',(Date.now()+''));renderSpotsList(courseId,container);}};
+    dnBtn.onclick=()=>{if(i<total-1){[courseSpots[i],courseSpots[i+1]]=[courseSpots[i+1],courseSpots[i]];courseSpots.forEach((cs2,j)=>{cs2.order=String(j+1);});recChg('course_spots',`${courseId}:並び替え`,'',(Date.now()+''));renderSpotsList(courseId,container);refreshCourseMapAfterEdit(courseId);}};
     const rmBtn=document.createElement('button'); rmBtn.className='btn btn-o btn-xs'; rmBtn.style.color='var(--accent)'; rmBtn.textContent='✕'; rmBtn.title='削除';
     rmBtn.onclick=()=>{
       const idx=state.course_spots.findIndex(c2=>c2===cs);
-      if(idx>=0){state.course_spots.splice(idx,1);recChg('course_spots',`${courseId}:${cs.spot_id}:削除`,cs.spot_id,'（削除）');renderSpotsList(courseId,container);}
+      if(idx>=0){state.course_spots.splice(idx,1);recChg('course_spots',`${courseId}:${cs.spot_id}:削除`,cs.spot_id,'（削除）');renderSpotsList(courseId,container);refreshCourseMapAfterEdit(courseId);}
     };
     row.appendChild(num); row.appendChild(info); row.appendChild(dist); row.appendChild(upBtn); row.appendChild(dnBtn); row.appendChild(rmBtn);
     container.appendChild(row);
@@ -1637,6 +1638,12 @@ function renderSpotsList(courseId, container){
     empty.textContent='スポットが設定されていません。下のセレクトから追加してください。';
     container.appendChild(empty);
   }
+}
+
+function refreshCourseMapAfterEdit(courseId){
+  if(currentTab!=='courses') return;
+  selectedRow.courses=courseId;
+  showSelectedCourseMap();
 }
 
 function addCourse(){
