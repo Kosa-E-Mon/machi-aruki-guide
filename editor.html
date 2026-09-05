@@ -154,6 +154,78 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 .td-au .c-in{flex:1;padding:4px 6px;}
 .add-row-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:8px;margin-top:9px;background:var(--surface);border:2px dashed var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;width:100%;transition:all .15s;font-weight:500;}
 .add-row-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-l);}
+.view-mode-controls{display:none;align-items:center;border:1px solid var(--border2);border-radius:6px;overflow:hidden;background:var(--raised);}
+.view-mode-btn{border:0;border-right:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--sans);font-size:11px;padding:5px 10px;cursor:pointer;}
+.view-mode-btn:last-child{border-right:0;}
+.view-mode-btn.active{background:var(--blue);color:#fff;}
+.record-view{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;min-height:100%;}
+.record-list{border-right:1px solid var(--border);padding-right:14px;}
+.record-list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:11px;font-weight:600;color:var(--muted);}
+.record-list-items{display:flex;flex-direction:column;gap:4px;}
+.record-list-item{width:100%;border:1px solid var(--border);border-radius:5px;background:var(--surface);padding:8px 9px;text-align:left;cursor:pointer;color:var(--text);font-family:var(--sans);}
+.record-list-item:hover{border-color:var(--blue);}
+.record-list-item.active{border-color:var(--blue);background:var(--blue-l);box-shadow:inset 3px 0 0 var(--blue);}
+.record-list-name{display:block;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.record-list-id{display:block;font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.record-form{min-width:0;}
+.record-form-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.record-form-title{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.record-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;}
+.record-field{min-width:0;}
+.record-field.wide{grid-column:1/-1;}
+.record-field-label{font-size:10px;font-weight:600;color:var(--muted);margin-bottom:3px;}
+.record-field-key{font-family:var(--mono);font-size:8px;color:var(--gold);margin-left:5px;}
+.record-field-desc{font-size:9px;color:var(--dim);line-height:1.4;margin-bottom:4px;}
+.record-field-input{width:100%;min-width:0;background:var(--surface);border:1.5px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 9px;outline:none;}
+.record-field-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-m);}
+.record-field.changed .record-field-input{background:var(--changed);border-color:var(--changed-b);}
+.record-audio-row{display:flex;align-items:center;gap:6px;}
+.record-audio-row .record-field-input{flex:1;}
+.record-field-input.id-err{border-color:var(--accent);background:var(--accent-l);}
+.record-field-input.id-ok{border-color:var(--green);background:var(--green-l);}
+.record-field-idmsg{font-size:9px;font-weight:600;margin-top:3px;display:none;}
+.record-field-idmsg.show{display:block;}
+.record-field-idmsg.err{color:var(--accent);}
+.record-field-idmsg.ok{color:var(--green);}
+.media-check{font-size:9px;font-weight:600;margin-top:3px;display:none;font-family:var(--mono);line-height:1.5;word-break:break-all;}
+.media-check.show{display:block;}
+.media-check.ok{color:var(--green);}
+.media-check.err{color:var(--accent);}
+.media-check.wait{color:var(--dim);}
+.audit-ov{position:fixed;inset:0;background:rgba(20,16,10,.45);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.audit-box{background:var(--surface);border:2px solid var(--border);border-radius:12px;max-width:640px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg);}
+.audit-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1.5px solid var(--border);font-weight:700;font-size:14px;}
+.audit-head .spacer{flex:1;}
+.audit-body{overflow-y:auto;padding:14px 18px;}
+.audit-sum{font-size:12px;margin-bottom:12px;line-height:1.8;}
+.audit-sum .ok{color:var(--green);font-weight:700;}
+.audit-sum .ng{color:var(--accent);font-weight:700;}
+.audit-grp{margin-bottom:12px;}
+.audit-grp-name{font-size:12px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.audit-edit{font-size:10px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 7px;cursor:pointer;white-space:nowrap;}
+.audit-edit:hover{background:var(--accent);color:#fff;}
+.audit-files{font-family:var(--mono);font-size:10px;line-height:1.9;color:var(--accent);word-break:break-all;padding-left:12px;}
+.audit-files .opt{color:var(--dim);}
+.audit-files [data-fn]{cursor:pointer;}
+.audit-files [data-fn]:hover{text-decoration:underline;background:var(--accent-l);}
+.audit-script{color:var(--gold);font-weight:700;margin-left:8px;cursor:pointer;}
+.audit-script:hover{text-decoration:underline;}
+.audit-noscript{color:var(--dim);margin-left:8px;font-weight:400;}
+.ttsmemo{border:1.5px solid var(--gold);background:#FFFBF0;border-radius:8px;padding:10px 12px;margin-bottom:14px;}
+:root[data-theme="dark"] .ttsmemo{background:rgba(154,122,58,.12);}
+.ttsmemo-head{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px;}
+.ttsmemo-row{font-size:12px;line-height:1.9;cursor:pointer;border-radius:4px;padding:2px 6px;word-break:break-word;}
+.ttsmemo-row:hover{background:var(--gold);color:#fff;}
+.ttsmemo-row b{font-weight:700;}
+.ttsmemo-row.empty,.ttsmemo-row.plain{cursor:default;}
+.ttsmemo-row.empty:hover,.ttsmemo-row.plain:hover{background:transparent;color:inherit;}
+.ttsmemo-row.empty{color:var(--dim);}
+.ttsmemo-row.empty span,.ttsmemo-row.plain span{font-weight:400;color:var(--dim);}
+.ttsmemo-copy{font-size:10px;color:var(--gold);font-weight:700;margin-left:6px;white-space:nowrap;}
+.ttsmemo-row:hover .ttsmemo-copy{color:#fff;}
+.audit-empty{text-align:center;color:var(--green);font-weight:700;font-size:13px;padding:24px 0;}
+.record-empty{display:flex;align-items:center;justify-content:center;min-height:240px;color:var(--dim);font-size:12px;text-align:center;}
+@media(max-width:900px){.record-view{grid-template-columns:170px minmax(0,1fr)}.record-form-grid{grid-template-columns:1fr}.record-field.wide{grid-column:auto}}
 
 /* COURSES MERGED VIEW */
 .course-cards{max-width:860px;}
@@ -424,7 +496,14 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
     <div class="ed-bar">
       <span class="ed-bar-title" id="ed-title">SHEET: <em>CONFIG（設定）</em></span>
       <span class="chg-badge" id="chg-badge">変更あり</span>
+      <div class="view-mode-controls" id="view-mode-controls">
+        <button class="view-mode-btn active" id="view-mode-table" onclick="setTableViewMode('table')">表</button>
+        <button class="view-mode-btn" id="view-mode-form" onclick="setTableViewMode('form')">フォーム</button>
+      </div>
       <div class="spacer"></div>
+      <button class="btn btn-blue btn-sm" onclick="openMediaUploader()">⇧ メディア変換</button>
+      <button class="btn btn-o btn-sm" onclick="window.open('https://aistudio.google.com/generate-speech','_blank')">🎙 音声作成 (AI Studio)</button>
+      <button class="btn btn-o btn-sm" onclick="runMediaAudit()">🔍 メディア一括チェック</button>
       <button class="btn btn-o btn-sm" onclick="exportCurrentSheet()">⬇ CSVダウンロード</button>
       <button class="btn btn-g btn-sm" id="save-btn" style="display:none" onclick="saveCurrentSheet()">💾 スプレッドシートに保存</button>
     </div>
@@ -642,6 +721,13 @@ const CONFIG_DEFS = [
   {key:'app_title',    lbl:'アプリタイトル',       desc:'アプリのメインタイトル。例: 増田まち歩きガイド'},
   {key:'app_subtitle', lbl:'サブタイトル',          desc:'タイトル下に小さく表示。例: 重要伝統的建造物群保存地区'},
   {key:'area_name',    lbl:'エリア名（従来）',      desc:'プライズの「どこで達成したか」に使用。area_pref/city/town 未設定時のフォールバック'},
+  {sec:'📁 メディアリポジトリ（URL自動導出）'},
+  {key:'photo_repo', lbl:'写真リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の写真URLを {ID}.webp の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-photo'},
+  {key:'audio_repo', lbl:'音声リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の音声URLを {ID}_役割.mp3 の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-audio'},
+  {sec:'🎙 音声生成メモ（AI Studio）'},
+  {key:'tts_scene',          lbl:'Scene（貼付用）',          desc:'AI Studioの「Scene」欄にそのまま貼り付ける文面。一括チェック画面からワンクリックでコピーできる。例: 落ち着いたドキュメンタリー番組・街歩き番組のナレーション'},
+  {key:'tts_sample_context', lbl:'Sample Context（貼付用）', desc:'AI Studioの「Sample Context」欄にそのまま貼り付ける文面。ワンクリックでコピーできる'},
+  {key:'tts_speakers',       lbl:'よく使う話者',              desc:'よく使う話者を手入力でメモ（「あれ？誰にしたっけ？」防止）。例: 男性=Charon（接近・出発・次へ・注意喚起）／女性=Kore（到着・解説）'},
   {sec:'🎨 カラー設定'},
   {key:'color_bg',      lbl:'背景色',               desc:'画面全体の背景 (--bg)。例: #F4EFE4', type:'color'},
   {key:'color_paper',   lbl:'カード背景色',         desc:'カード・白い領域 (--paper)。例: #FAF7F1', type:'color'},
@@ -747,7 +833,7 @@ const CONFIG_DEFS = [
 ];
 
 const COURSE_FIELDS = [
-  {key:'course_id',               lbl:'コースID',                     desc:'一意の識別子（英数字）', w:140},
+  {key:'course_id',               lbl:'コースID',                     desc:'一意の識別子。小文字英数字と _ のみ（例: rekishi_01）', w:140},
   {key:'course_name',             lbl:'コース名',                     desc:'画面に表示される名前', w:150},
   {key:'course_type',             lbl:'コースタイプ',                 desc:'注意アナウンスの種別', w:80, type:'sel', opts:['市街地','公園','混在']},
   {key:'display_order',           lbl:'表示順',                       desc:'数値が小さいほど上', w:45, type:'num'},
@@ -755,46 +841,46 @@ const COURSE_FIELDS = [
   {key:'duration_min',            lbl:'所要時間（分）',               desc:'目安の所要時間', w:65, type:'num'},
   {key:'distance_m',              lbl:'距離（m）',                    desc:'コース全長の目安', w:60, type:'num'},
   {key:'course_description',      lbl:'コース紹介文',                 desc:'ホームカード・コース紹介画面に表示', w:260},
-  {key:'course_thumbnail_url',    lbl:'コースサムネイルURL',           desc:'ホームカード・紹介画面の写真。Drive URL可', w:220},
-  {key:'course_audio_url',        lbl:'コース説明音声URL',             desc:'紹介画面で再生する説明音声', w:220, type:'audio'},
+  {key:'course_thumbnail_url',    lbl:'コースサムネイルURL',           desc:'ホームカード・紹介画面の写真。空欄なら {course_id}.webp を自動使用', w:220},
+  {key:'course_audio_url',        lbl:'コース説明音声URL',             desc:'紹介画面で再生する説明音声。空欄なら {course_id}_intro.mp3 を自動使用(ファイルがある場合のみ)', w:220, type:'audio'},
   {key:'course_notes',            lbl:'コース注意メモ',               desc:'紹介画面の注意欄に表示', w:260},
   {key:'start_date',              lbl:'公開開始日',                   desc:'YYYY-MM-DD（空白=常時）'},
   {key:'end_date',                lbl:'公開終了日',                   desc:'YYYY-MM-DD（空白=常時）'},
-  {key:'audio_theme_url',         lbl:'テーマナレーション音声URL',    desc:'コース開始時に流れる音声', type:'audio'},
+  {key:'audio_theme_url',         lbl:'テーマナレーション音声URL',    desc:'コース開始時に流れる音声。空欄なら {course_id}_start.mp3 を自動使用(ファイルがある場合のみ。無ければ注意喚起が流れる)', type:'audio'},
   {key:'theme_text',              lbl:'テーマナレーション テキスト',  desc:'音声がない場合に読み上げ'},
-  {key:'audio_finish_url',        lbl:'完走音声URL',                  desc:'ゴール到達時に流れる音声（なければTTS）', type:'audio'},
+  {key:'audio_finish_url',        lbl:'完走音声URL',                  desc:'ゴール到達時に流れる音声（なければTTS）。空欄なら {course_id}_goal.mp3 を自動使用(ファイルがある場合のみ)', type:'audio'},
   {key:'finish_text',             lbl:'完走テキスト',                 desc:'ゴール時に読み上げるテキスト（音声URLがない場合に使用）'},
 ];
 
 const SCHEMAS = {
   spots:[
-    {key:'spot_id',            lbl:'スポットID',              desc:'一意の識別子（英数字）', w:140},
+    {key:'spot_id',            lbl:'スポットID',              desc:'一意の識別子。小文字英数字と _ のみ（例: manpukuji）', w:140},
     {key:'spot_name',          lbl:'スポット名',              desc:'画面・音声に使われる名称', w:150},
     {key:'lat',                lbl:'緯度',                    desc:'例: 39.319826', w:95},
     {key:'lng',                lbl:'経度',                    desc:'例: 140.523891', w:95},
     {key:'approach_dist',      lbl:'接近距離（m）',           desc:'この距離以内で「まもなく」を再生', w:70, type:'num'},
     {key:'arrive_dist',        lbl:'到着判定距離（m）',       desc:'この距離以内で到着と判定', w:75, type:'num'},
-    {key:'audio_start_url',    lbl:'出発音声URL',             desc:'このスポットへ向かう時に流れる', w:210, type:'audio'},
-    {key:'audio_approach_url', lbl:'接近音声URL',             desc:'近づいたときに流れる', w:210, type:'audio'},
-    {key:'audio_arrive_url',   lbl:'到着音声URL',             desc:'到着時に流れる', w:210, type:'audio'},
-    {key:'audio_explain_url',  lbl:'解説音声URL',             desc:'到着後の解説（到着音声の次に再生）', w:210, type:'audio'},
-    {key:'audio_next_url',     lbl:'次スポット誘導音声URL',   desc:'次スポットへ移動を促す', w:210, type:'audio'},
-    {key:'audio_goal_url',     lbl:'ゴール音声URL',           desc:'最終スポット到着時に流れる', w:210, type:'audio'},
+    {key:'audio_start_url',    lbl:'出発音声URL',             desc:'このスポットへ向かう時に流れる。空欄なら {spot_id}_start.mp3 を自動使用', w:210, type:'audio'},
+    {key:'audio_approach_url', lbl:'接近音声URL',             desc:'近づいたときに流れる。空欄なら {spot_id}_approach.mp3 を自動使用', w:210, type:'audio'},
+    {key:'audio_arrive_url',   lbl:'到着音声URL',             desc:'到着時に流れる。空欄なら {spot_id}_arrive.mp3 を自動使用', w:210, type:'audio'},
+    {key:'audio_explain_url',  lbl:'解説音声URL',             desc:'到着後の解説（到着音声の次に再生）。規約対象外・必要な場合のみ入力', w:210, type:'audio'},
+    {key:'audio_next_url',     lbl:'次スポット誘導音声URL',   desc:'次スポットへ移動を促す。空欄なら {spot_id}_next.mp3 を自動使用', w:210, type:'audio'},
+    {key:'audio_goal_url',     lbl:'ゴール音声URL',           desc:'最終スポット到着時に流れる。空欄なら {spot_id}_goal.mp3 を自動使用', w:210, type:'audio'},
     {key:'description',        lbl:'説明テキスト',            desc:'到着画面に表示される説明文', w:250},
     {key:'keywords',           lbl:'キーワード',              desc:'カンマ区切り。例: 江戸時代,内蔵', w:150},
-    {key:'photo_url',          lbl:'写真URL',                 desc:'Google DriveのURLまたは直接URL', w:210},
+    {key:'photo_url',          lbl:'写真URL',                 desc:'空欄なら {spot_id}.webp を自動使用。上書きする場合のみ入力', w:210},
   ],
   facilities:[
-    {key:'facility_id',   lbl:'施設ID',              desc:'一意の識別子（英数字）', w:140},
+    {key:'facility_id',   lbl:'施設ID',              desc:'一意の識別子。小文字英数字と _ のみ（例: annaiban_01）', w:140},
     {key:'facility_name', lbl:'施設名',              desc:'トースト通知に表示される名称', w:150},
     {key:'lat',           lbl:'緯度',                desc:'施設の緯度', w:95},
     {key:'lng',           lbl:'経度',                desc:'施設の経度', w:95},
     {key:'trigger_dist',  lbl:'通知距離（m）',       desc:'この距離以内に近づいたら通知', w:70, type:'num'},
     {key:'announce_text', lbl:'アナウンステキスト',  desc:'通知バナーと音声フォールバックに使用', w:220},
-    {key:'audio_url',     lbl:'音声URL',             desc:'近づいたときに再生するMP3等', w:210, type:'audio'},
+    {key:'audio_url',     lbl:'音声URL',             desc:'近づいたときに再生するMP3等。空欄なら {facility_id}.mp3 を自動使用', w:210, type:'audio'},
     {key:'start_date',    lbl:'有効開始日',          desc:'YYYY-MM-DD（空白=常時）', w:95},
     {key:'end_date',      lbl:'有効終了日',          desc:'YYYY-MM-DD（空白=常時）', w:95},
-    {key:'photo_url',     lbl:'写真URL',             desc:'現地調査アプリで保存した施設写真のURL/ファイル名', w:210},
+    {key:'photo_url',     lbl:'写真URL',             desc:'空欄なら {facility_id}.webp を自動使用。上書きする場合のみ入力', w:210},
   ],
 };
 
@@ -814,6 +900,7 @@ let leafletMap=null, mapLayerGroup=null;
 let selectedRow={courses:null, spots:null, facilities:null};
 let mapEditContext=null;
 let navGuardReady=false;
+const tableViewMode={spots:'table',facilities:'table'};
 
 // ═══════════════════════════════════════════════════════
 // CSV / UTILITIES
@@ -844,7 +931,9 @@ function parseSheetId(input){
 // ═══════════════════════════════════════════════════════
 
 async function fetchGviz(sid,sheet){
-  const res=await fetch(`https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`);
+  // headers=1: 1行目のみをヘッダー扱いにする。無いとgvizの型推定(数値・ブール混在)で
+  // 複数行がヘッダーに巻き込まれ、configの大半が読めなくなる(本体index.htmlと同じ対策)
+  const res=await fetch(`https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}&headers=1`);
   if(!res.ok) throw new Error(`シート「${sheet}」の取得に失敗 (${res.status})`);
   return(await res.text()).replace(/^\uFEFF/,'');
 }
@@ -998,6 +1087,17 @@ function updateChgBadge(sheet){
   if(b){b.classList.toggle('show',n>0);if(n>0)b.textContent=`${n}件の変更あり`;}
 }
 
+function openMediaUploader(){
+  // configのphoto_repo/audio_repo("owner/repo"形式)をURLパラメータで引き継ぎ、
+  // media-uploader側の設定入力を省略できるようにする
+  const u=new URL('media-uploader.html',location.href);
+  const p=String(getCfg('photo_repo')||'').trim();
+  const a=String(getCfg('audio_repo')||'').trim();
+  if(p.includes('/')){u.searchParams.set('owner',p.split('/')[0]);u.searchParams.set('image_repo',p.split('/')[1]);}
+  if(a.includes('/')){if(!u.searchParams.get('owner'))u.searchParams.set('owner',a.split('/')[0]);u.searchParams.set('audio_repo',a.split('/')[1]);}
+  window.open(u.href,'_blank','noopener');
+}
+
 function resetChanges(){
   if(!state.loaded) return;
   if(!confirm('このシートの変更をすべて元に戻しますか？')) return;
@@ -1017,6 +1117,7 @@ function showTab(tab){
   document.querySelectorAll('.nav-it').forEach(el=>el.classList.remove('active'));
   document.getElementById('nav-'+tab)?.classList.add('active');
   document.getElementById('config-rail')?.classList.toggle('show', tab==='config');
+  updateViewModeControls(tab);
   document.getElementById('ed-title').innerHTML=`SHEET: <em>${TAB_LABELS[tab]||tab}</em>`;
   if(!state.loaded){document.getElementById('ed-body').innerHTML='<div class="empty-st"><div class="empty-ic">📂</div>先にデータを読み込んでください</div>';return;}
   if(tab==='config'){renderConfig();showRpConfig();}
@@ -1024,6 +1125,25 @@ function showTab(tab){
   else if(tab==='spots'){renderTable('spots');showRpMap();}
   else if(tab==='facilities'){renderTable('facilities');showRpMap();}
   updateChgBadge(tab);
+}
+
+function updateViewModeControls(tab){
+  const controls=document.getElementById('view-mode-controls');
+  const enabled=tab==='spots'||tab==='facilities';
+  if(!controls) return;
+  controls.style.display=enabled?'flex':'none';
+  if(!enabled) return;
+  document.getElementById('view-mode-table')?.classList.toggle('active',tableViewMode[tab]==='table');
+  document.getElementById('view-mode-form')?.classList.toggle('active',tableViewMode[tab]==='form');
+}
+
+function setTableViewMode(mode){
+  if(currentTab!=='spots'&&currentTab!=='facilities') return;
+  tableViewMode[currentTab]=mode==='form'?'form':'table';
+  if(tableViewMode[currentTab]==='form'&&!Number.isInteger(selectedRow[currentTab])) selectedRow[currentTab]=0;
+  updateViewModeControls(currentTab);
+  renderTable(currentTab);
+  renderCurrentSheetMap();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1498,6 +1618,7 @@ function renderCourses(){
   if(totalChg>0) body.appendChild(makeChgPanel([...Object.entries(changes.courses),...Object.entries(changes.course_spots)]));
 
   const wrap=document.createElement('div'); wrap.className='course-cards';
+  mediaRefreshers.length=0;
 
   state.courses.forEach((course,ci)=>{
     const card=document.createElement('div'); card.className='cc-card';
@@ -1536,9 +1657,12 @@ function renderCourses(){
       if(col.type==='audio'){
         const row=document.createElement('div'); row.className='cc-field-in-row';
         const inp=document.createElement('input'); inp.type='text'; inp.className='cc-field-in'+(val!==origVal?' chg':''); inp.value=val;
-        inp.addEventListener('input',()=>{course[col.key]=inp.value;inp.classList.toggle('chg',inp.value!==origVal);recChg('courses',chgKey,origVal,inp.value);});
+        let mTimer=null;
+        inp.addEventListener('input',()=>{course[col.key]=inp.value;inp.classList.toggle('chg',inp.value!==origVal);recChg('courses',chgKey,origVal,inp.value);if(mRefresh){clearTimeout(mTimer);mTimer=setTimeout(mRefresh,600);}});
         row.appendChild(inp); row.appendChild(mkPlayBtn(()=>inp.value,col.lbl));
         f.appendChild(row);
+        const mRefresh=attachMediaCheck('courses',col.key,()=>course.course_id,()=>inp.value,f);
+        if(mRefresh) mediaRefreshers.push(mRefresh);
       }else if(col.type==='bool'){
         const sel=document.createElement('select'); sel.className='cc-field-in'+(val!==origVal?' chg':'');
         ['','TRUE','FALSE'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v||'—';if(val===v)o.selected=true;sel.appendChild(o);});
@@ -1551,8 +1675,11 @@ function renderCourses(){
         f.appendChild(sel);
       }else{
         const inp=document.createElement('input'); inp.type='text'; inp.className='cc-field-in'+(val!==origVal?' chg':''); inp.value=val;
-        inp.addEventListener('input',()=>{course[col.key]=inp.value;inp.classList.toggle('chg',inp.value!==origVal);recChg('courses',chgKey,origVal,inp.value);if(col.key==='course_name')name.textContent=inp.value||'（名称未設定）';});
+        let mTimer=null;
+        inp.addEventListener('input',()=>{course[col.key]=inp.value;inp.classList.toggle('chg',inp.value!==origVal);recChg('courses',chgKey,origVal,inp.value);if(col.key==='course_name')name.textContent=inp.value||'（名称未設定）';if(col.key==='course_id')scheduleMediaRefreshAll();if(mRefresh){clearTimeout(mTimer);mTimer=setTimeout(mRefresh,600);}});
         f.appendChild(inp);
+        const mRefresh=attachMediaCheck('courses',col.key,()=>course.course_id,()=>inp.value,f);
+        if(mRefresh) mediaRefreshers.push(mRefresh);
       }
       fields.appendChild(f);
     });
@@ -1667,6 +1794,12 @@ function renderTable(sn){
   const chgCount=Object.keys(changes[sn]).length;
   if(chgCount>0) body.appendChild(makeChgPanel(Object.entries(changes[sn])));
 
+  if(tableViewMode[sn]==='form'){
+    renderRecordForm(sn,schema,rows,origRows,body);
+    updateChgBadge(sn);
+    return;
+  }
+
   const wrap=document.createElement('div'); wrap.className='tbl-wrap';
   const tbl=document.createElement('table'); tbl.className='dt';
   const thead=document.createElement('thead'),tr=document.createElement('tr');
@@ -1683,6 +1816,293 @@ function renderTable(sn){
   addBtn.innerHTML='＋ 行を追加'; addBtn.onclick=()=>addRow(sn);
   wrap.appendChild(addBtn); body.appendChild(wrap);
   updateChgBadge(sn);
+}
+
+function renderRecordForm(sn,schema,rows,origRows,body){
+  mediaRefreshers.length=0;
+  if(rows.length&&(!Number.isInteger(selectedRow[sn])||selectedRow[sn]>=rows.length)) selectedRow[sn]=0;
+  if(!rows.length) selectedRow[sn]=null;
+
+  const view=document.createElement('div');view.className='record-view';
+  const list=document.createElement('aside');list.className='record-list';
+  const listHead=document.createElement('div');listHead.className='record-list-head';
+  const count=document.createElement('span');count.textContent=`一覧（${rows.length}件）`;
+  const newBtn=document.createElement('button');newBtn.className='btn btn-p btn-xs';newBtn.textContent='＋ 新規';newBtn.onclick=()=>addRow(sn);
+  listHead.appendChild(count);listHead.appendChild(newBtn);list.appendChild(listHead);
+  const items=document.createElement('div');items.className='record-list-items';
+  rows.forEach((row,idx)=>{
+    const btn=document.createElement('button');btn.className='record-list-item'+(idx===selectedRow[sn]?' active':'');
+    const nameKey=sn==='spots'?'spot_name':'facility_name';
+    const idKey=sn==='spots'?'spot_id':'facility_id';
+    btn.innerHTML=`<span class="record-list-name"></span><span class="record-list-id"></span>`;
+    btn.querySelector('.record-list-name').textContent=row[nameKey]||`名称未設定 ${idx+1}`;
+    btn.querySelector('.record-list-id').textContent=row[idKey]||'ID未設定';
+    btn.onclick=()=>{selectedRow[sn]=idx;renderTable(sn);if(sn==='spots')showSpotMap(row);else showFacilityMap(row);};
+    items.appendChild(btn);
+  });
+  list.appendChild(items);view.appendChild(list);
+
+  const form=document.createElement('section');form.className='record-form';
+  const idx=selectedRow[sn];
+  const row=Number.isInteger(idx)?rows[idx]:null;
+  if(!row){
+    const empty=document.createElement('div');empty.className='record-empty';empty.textContent='「＋ 新規」から登録を始めてください。';form.appendChild(empty);
+  }else{
+    const origRow=origRows[idx]||{};
+    const nameKey=sn==='spots'?'spot_name':'facility_name';
+    const head=document.createElement('div');head.className='record-form-head';
+    const title=document.createElement('div');title.className='record-form-title';title.textContent=row[nameKey]||`名称未設定 ${idx+1}`;
+    const spacer=document.createElement('div');spacer.className='spacer';
+    const mapBtn=document.createElement('button');mapBtn.className='btn btn-blue btn-sm';mapBtn.textContent='地図で確認';mapBtn.onclick=()=>sn==='spots'?showSpotMap(row):showFacilityMap(row);
+    const delBtn=document.createElement('button');delBtn.className='btn btn-o btn-sm';delBtn.textContent='削除';
+    delBtn.onclick=()=>{if(!confirm(`${idx+1}行目を削除しますか？`))return;rows.splice(idx,1);selectedRow[sn]=Math.min(idx,rows.length-1);renderTable(sn);renderCurrentSheetMap();};
+    head.appendChild(title);head.appendChild(spacer);head.appendChild(mapBtn);head.appendChild(delBtn);form.appendChild(head);
+
+    const grid=document.createElement('div');grid.className='record-form-grid';
+    schema.forEach(col=>grid.appendChild(makeRecordField(sn,row,origRow,idx,col,title,items,rows)));
+    form.appendChild(grid);
+  }
+  view.appendChild(form);body.appendChild(view);
+}
+
+// ═══ メディア規約導出＋実在チェック ═══
+// config の photo_repo / audio_repo（"owner/repo" 形式）が設定されていれば、
+// URL列が空欄のとき {ID}_{役割} 規約で導出されるURLを表示し、
+// GitHub Pages 上にファイルが実在するか HEAD リクエストで確認する。
+const MEDIA_RULES={
+  spots:{photo_url:['photo',''],audio_approach_url:['audio','approach'],audio_arrive_url:['audio','arrive'],audio_start_url:['audio','start'],audio_next_url:['audio','next'],audio_goal_url:['audio','goal']},
+  courses:{course_thumbnail_url:['photo',''],audio_theme_url:['audio','start'],audio_finish_url:['audio','goal'],course_audio_url:['audio','intro']},
+  facilities:{photo_url:['photo',''],audio_url:['audio',null]},
+};
+function mediaRepoBase(kind){
+  const v=String(getCfg(kind==='photo'?'photo_repo':'audio_repo')||'').trim();
+  if(!v||!v.includes('/'))return null;
+  const parts=v.split('/');
+  if(!parts[0]||!parts[1])return null;
+  return `https://${parts[0]}.github.io/${parts[1]}`;
+}
+function mediaDerivedUrl(sn,colKey,id){
+  const rule=(MEDIA_RULES[sn]||{})[colKey];
+  if(!rule||!id)return null;
+  const base=mediaRepoBase(rule[0]);
+  if(!base)return null;
+  if(rule[0]==='photo')return `${base}/${id}.webp`;
+  return rule[1]?`${base}/${id}_${rule[1]}.mp3`:`${base}/${id}.mp3`;
+}
+const urlExistCache=new Map();
+function checkUrlExists(url){
+  if(!urlExistCache.has(url)){
+    urlExistCache.set(url,fetch(url,{method:'HEAD'}).then(r=>r.ok).catch(()=>null));
+  }
+  return urlExistCache.get(url);
+}
+// container にステータス表示を追加し、再チェック関数を返す（対象外の列なら null）
+function attachMediaCheck(sn,colKey,getId,getVal,container){
+  if(!(MEDIA_RULES[sn]||{})[colKey])return null;
+  const st=document.createElement('div'); st.className='media-check';
+  container.appendChild(st);
+  let seq=0;
+  const refresh=async()=>{
+    const my=++seq;
+    const explicit=String(getVal()||'').trim();
+    const id=String(getId()||'').trim();
+    let url=null,label='';
+    if(explicit){
+      if(!/^https?:\/\//.test(explicit)){st.className='media-check show err';st.textContent='✗ URL形式ではありません（https:// で始まる必要）';return;}
+      url=explicit;label=explicit.split('/').pop();
+    }else{
+      url=mediaDerivedUrl(sn,colKey,id);
+      if(url)label='自動: '+url.split('/').pop();
+    }
+    if(!url){st.className='media-check';st.textContent='';return;}
+    st.className='media-check show wait';st.textContent='⏳ '+label+' を確認中…';
+    const ok=await checkUrlExists(url);
+    if(my!==seq)return;
+    if(ok===true){st.className='media-check show ok';st.textContent='✓ '+label+'（ファイルあり）';}
+    else if(ok===false){st.className='media-check show err';st.textContent='✗ '+label+' が見つかりません（未アップロード？）';}
+    else{st.className='media-check show wait';st.textContent='？ '+label+'（外部URLのため確認できません）';}
+  };
+  refresh();
+  return refresh;
+}
+const mediaRefreshers=[];
+let mediaRefreshTimer=null;
+function scheduleMediaRefreshAll(){
+  clearTimeout(mediaRefreshTimer);
+  mediaRefreshTimer=setTimeout(()=>mediaRefreshers.forEach(f=>f()),600);
+}
+
+// ═══ メディア一括チェック: 全スポット/コース/施設の写真・音声の実在をまとめて確認 ═══
+const AUDIT_ROLE_LBL={
+  photo_url:'写真', audio_approach_url:'接近', audio_arrive_url:'到着',
+  audio_start_url:'出発', audio_next_url:'次へ', audio_goal_url:'ゴール',
+  course_thumbnail_url:'サムネイル', audio_theme_url:'テーマ',
+  audio_finish_url:'完走', course_audio_url:'説明', audio_url:'音声',
+};
+const AUDIT_OPTIONAL=new Set(['audio_theme_url','audio_finish_url','course_audio_url']);
+// 音声URL列 → 対応する原稿テキスト列(AI Studio等で音声生成する際にコピーできるように)
+const AUDIT_TXT_COL={
+  audio_approach_url:'audio_approach_txt', audio_arrive_url:'audio_arrive_txt',
+  audio_start_url:'audio_start_txt', audio_next_url:'audio_next_txt',
+  audio_goal_url:'audio_goal_txt', audio_theme_url:'theme_text',
+  audio_finish_url:'finish_text', audio_url:'announce_text',
+};
+async function runMediaAudit(){
+  if(!state.loaded){notify('先にスプレッドシートを読み込んでください','err');return;}
+  if(!mediaRepoBase('photo')&&!mediaRepoBase('audio')){notify('CONFIGの photo_repo / audio_repo を設定してください','err');return;}
+  notify('メディアを一括チェック中…');
+  const jobs=[];
+  const collect=(sn,rows,idKey,nameKey,groupLbl)=>{
+    (rows||[]).forEach((r,rowIdx)=>{
+      const id=(r[idKey]||'').trim(); if(!id)return;
+      Object.keys(MEDIA_RULES[sn]).forEach(col=>{
+        const explicit=(r[col]||'').trim();
+        const url=explicit||mediaDerivedUrl(sn,col,id);
+        if(!url)return;
+        const txtCol=AUDIT_TXT_COL[col];
+        jobs.push({group:`${groupLbl} ${r[nameKey]||''}（${id}）`, sn, rowIdx, col, url,
+          script: txtCol?(r[txtCol]||'').trim():'',
+          isAudio: !!txtCol,
+          badFormat: explicit&&!/^https?:\/\//.test(explicit)});
+      });
+    });
+  };
+  collect('spots',state.spots,'spot_id','spot_name','📍');
+  collect('courses',state.courses,'course_id','course_name','📋');
+  collect('facilities',state.facilities,'facility_id','facility_name','🏛');
+  const results=await Promise.all(jobs.map(async j=>{
+    if(j.badFormat) return {...j, ok:false, note:'URL形式エラー'};
+    const ok=await checkUrlExists(j.url);
+    return {...j, ok: ok===true};
+  }));
+  const missing=results.filter(r=>!r.ok);
+  const okCount=results.length-missing.length;
+  const groups={};
+  missing.forEach(r=>{(groups[r.group]=groups[r.group]||[]).push(r);});
+  const ov=document.createElement('div'); ov.className='audit-ov';
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  const grpHtml=Object.entries(groups).map(([g,items])=>{
+    const first=items[0];
+    const files=items.map(r=>{
+      const fn=r.url.split('/').pop();
+      const opt=AUDIT_OPTIONAL.has(r.col);
+      let scriptHtml='';
+      if(r.isAudio){
+        scriptHtml=r.script
+          ? `<span class="audit-script" data-script="${esc(r.script)}" title="クリックで原稿をコピー">📝 原稿コピー</span>`
+          : `<span class="audit-noscript">原稿列も未記入</span>`;
+      }
+      return `<div class="${opt?'opt':''}" data-fn="${esc(fn)}" title="クリックでファイル名をコピー">✗ ${esc(fn)}（${esc(AUDIT_ROLE_LBL[r.col]||r.col)}${opt?'・任意':''}${r.note?'・'+r.note:''}）${scriptHtml}</div>`;
+    }).join('');
+    const editBtn=`<span class="audit-edit" data-edit-sn="${esc(first.sn)}" data-edit-idx="${first.rowIdx}" title="この項目の編集画面へ移動">✏ 編集へ</span>`;
+    return `<div class="audit-grp"><div class="audit-grp-name">${esc(g)}${editBtn}</div><div class="audit-files">${files}</div></div>`;
+  }).join('');
+  // 音声生成メモ(configのtts_*)を先頭パネルに常時表示。貼付用の行はクリックでコピー
+  const ttsScene=String(getCfg('tts_scene')||'').trim();
+  const ttsSampleContext=String(getCfg('tts_sample_context')||'').trim();
+  const ttsSpeakers=String(getCfg('tts_speakers')||'').trim();
+  const memoCopyRow=(icon,label,val)=> val
+    ? `<div class="ttsmemo-row" data-script="${esc(val)}" title="クリックでコピー → AI Studioの「${label}」欄に貼り付け">${icon} <b>${label}：</b>${esc(val)} <span class="ttsmemo-copy">📋 コピー</span></div>`
+    : `<div class="ttsmemo-row empty">${icon} <b>${label}：</b><span>未設定（CONFIGの「🎙 音声生成メモ」で登録できます）</span></div>`;
+  const memoPlainRow=(icon,label,val)=> `<div class="ttsmemo-row plain">${icon} <b>${label}：</b>${val?esc(val):'<span>未設定（CONFIGの「🎙 音声生成メモ」で登録できます）</span>'}</div>`;
+  const memoHtml=`<div class="ttsmemo"><div class="ttsmemo-head">🎙 音声生成メモ（クリックでコピー→AI Studioの各欄へ貼り付け）</div>${memoCopyRow('🎬','Scene',ttsScene)}${memoCopyRow('💬','Sample Context',ttsSampleContext)}${memoPlainRow('🗣','よく使う話者',ttsSpeakers)}</div>`;
+  ov.innerHTML=`<div class="audit-box"><div class="audit-head">🔍 メディア一括チェック結果<div class="spacer"></div><button class="btn btn-o btn-sm" onclick="window.open('https://aistudio.google.com/generate-speech','_blank')">🎙 音声作成 (AI Studio)</button><button class="btn btn-o btn-sm" onclick="this.closest('.audit-ov').remove()">閉じる</button></div><div class="audit-body">${memoHtml}<div class="audit-sum"><span class="ok">✓ ${okCount}件 OK</span>　<span class="ng">✗ ${missing.length}件 未アップロード</span>（全${results.length}件を確認）<br><small>ファイル名をクリックするとコピーできます。その名前でアップロードすれば、シートに触れず自動で反映されます。灰色は任意項目です。音声はAI Studioで生成→「⇧ メディア変換」でアップロードできます。</small></div>${missing.length?grpHtml:'<div class="audit-empty">🎉 すべてのメディアが揃っています</div>'}</div></div>`;
+  const copyFn=t=>{
+    const legacy=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');notify('コピーしました: '+t,'ok');}catch(e){}ta.remove();};
+    if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>notify('コピーしました: '+t,'ok')).catch(legacy);
+    else legacy();
+  };
+  ov.addEventListener('click',e=>{
+    const ed=e.target.closest('[data-edit-sn]');
+    if(ed){ov.remove();jumpToEdit(ed.dataset.editSn,parseInt(ed.dataset.editIdx));return;}
+    const s=e.target.closest('[data-script]');
+    if(s){copyFn(s.dataset.script);return;}
+    const d=e.target.closest('[data-fn]');
+    if(d) copyFn(d.dataset.fn);
+  });
+  document.body.appendChild(ov);
+}
+
+// 一括チェックから該当項目の編集画面へジャンプ
+function jumpToEdit(sn, idx){
+  if(sn==='spots'||sn==='facilities'){
+    tableViewMode[sn]='form';           // フォーム表示に
+    selectedRow[sn]=idx;                // 対象行を選択
+    showTab(sn);
+  }else if(sn==='courses'){
+    selectedRow.courses=state.courses[idx]?.course_id||null;
+    showTab('courses');
+  }
+  // 画面上部へスクロール
+  document.querySelector('.ed-body')?.scrollTo({top:0,behavior:'smooth'});
+}
+
+const ID_FIELD_KEYS=['spot_id','course_id','facility_id'];
+function checkIdField(key,val,rows,idx){
+  if(!ID_FIELD_KEYS.includes(key)) return null;
+  if(!val) return null;
+  if(!/^[a-z][a-z0-9_]*$/.test(val)) return{ok:false,msg:'⚠ 小文字英数字と _ のみ、先頭は英字（例: manpukuji）'};
+  const dup=(rows||[]).some((r,i)=>i!==idx&&r[key]===val);
+  if(dup) return{ok:false,msg:'⚠ このIDは他の行ですでに使われています'};
+  return{ok:true,msg:'✓ 使用可能'};
+}
+
+function makeRecordField(sn,row,origRow,idx,col,title,listItems,rows){
+  const val=row[col.key]||'',origVal=origRow[col.key]||'';
+  const wide=col.type==='audio'||['description','announce_text','keywords','photo_url'].includes(col.key);
+  const field=document.createElement('label');field.className='record-field'+(wide?' wide':'')+(val!==origVal?' changed':'');
+  const label=document.createElement('div');label.className='record-field-label';label.textContent=col.lbl;
+  const key=document.createElement('span');key.className='record-field-key';key.textContent=col.key;label.appendChild(key);field.appendChild(label);
+  if(col.desc){const desc=document.createElement('div');desc.className='record-field-desc';desc.textContent=col.desc;field.appendChild(desc);}
+
+  let el;
+  if(col.type==='bool'||(col.type==='sel'&&col.opts)){
+    el=document.createElement('select');
+    const values=col.type==='bool'?['','TRUE','FALSE']:['',...col.opts];
+    values.forEach(v=>{const option=document.createElement('option');option.value=v;option.textContent=v||'—';if(v===val)option.selected=true;el.appendChild(option);});
+  }else if(['description','announce_text'].includes(col.key)){
+    el=document.createElement('textarea');el.rows=4;el.value=val;
+  }else{
+    el=document.createElement('input');el.type='text';el.value=val;
+  }
+  el.className='record-field-input';bindCellMeta(el,sn,idx,col.key,origVal);
+
+  let idMsg=null;
+  if(ID_FIELD_KEYS.includes(col.key)){
+    idMsg=document.createElement('div');idMsg.className='record-field-idmsg';
+  }
+  const runIdCheck=()=>{
+    if(!idMsg) return;
+    const r=checkIdField(col.key,el.value.trim(),rows,idx);
+    if(!r){el.classList.remove('id-err','id-ok');idMsg.className='record-field-idmsg';return;}
+    el.classList.toggle('id-err',!r.ok);el.classList.toggle('id-ok',r.ok);
+    idMsg.textContent=r.msg;idMsg.className='record-field-idmsg show '+(r.ok?'ok':'err');
+  };
+
+  let mediaRefresh=null,mediaTimer=null;
+  const eventName=el.tagName==='SELECT'?'change':'input';
+  el.addEventListener(eventName,()=>{
+    row[col.key]=el.value;
+    field.classList.toggle('changed',el.value!==origVal);
+    recChg(sn,`${idx+1}行目:${col.lbl}`,origVal,el.value);
+    syncMapFromEditedRow(sn,idx);
+    const nameKey=sn==='spots'?'spot_name':'facility_name';
+    const idKey=sn==='spots'?'spot_id':'facility_id';
+    if(col.key===nameKey){title.textContent=el.value||`名称未設定 ${idx+1}`;listItems.children[idx]?.querySelector('.record-list-name')?.replaceChildren(document.createTextNode(el.value||`名称未設定 ${idx+1}`));}
+    if(col.key===idKey){listItems.children[idx]?.querySelector('.record-list-id')?.replaceChildren(document.createTextNode(el.value||'ID未設定'));scheduleMediaRefreshAll();}
+    runIdCheck();
+    if(mediaRefresh){clearTimeout(mediaTimer);mediaTimer=setTimeout(mediaRefresh,600);}
+  });
+  runIdCheck();
+
+  if(col.type==='audio'){
+    const audioRow=document.createElement('div');audioRow.className='record-audio-row';audioRow.appendChild(el);audioRow.appendChild(mkPlayBtn(()=>el.value,col.lbl));field.appendChild(audioRow);
+  }else field.appendChild(el);
+  if(idMsg) field.appendChild(idMsg);
+  const rowIdKey=sn==='spots'?'spot_id':'facility_id';
+  mediaRefresh=attachMediaCheck(sn,col.key,()=>row[rowIdKey],()=>el.value,field);
+  if(mediaRefresh) mediaRefreshers.push(mediaRefresh);
+  return field;
 }
 
 function mkTh(tr,html,cls){const th=document.createElement('th');th.innerHTML=html;if(cls)th.className=cls;tr.appendChild(th);return th;}
@@ -1784,6 +2204,14 @@ function addRow(sn){
   const schema=SCHEMAS[sn];if(!schema)return;
   const nr={};schema.forEach(c=>{nr[c.key]='';});state[sn].push(nr);
   updateBadge(sn);
+  if(tableViewMode[sn]==='form'){
+    selectedRow[sn]=state[sn].length-1;
+    renderTable(sn);
+    if(sn==='spots') showSpotMap(nr);
+    else if(sn==='facilities') showFacilityMap(nr);
+    setTimeout(()=>document.querySelector('.record-form input,.record-form select,.record-form textarea')?.focus(),80);
+    return;
+  }
   const tb=document.getElementById('tbody-'+sn);
   if(tb){
     const newIdx=state[sn].length-1;
