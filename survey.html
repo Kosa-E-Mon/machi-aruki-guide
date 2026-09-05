@@ -152,7 +152,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
 .st-msg.info{background:var(--amber-bg);color:var(--amber);border:1.5px solid var(--amber-bd);}
 
 /* TOAST */
-.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--text);color:#fff;border-radius:24px;padding:11px 22px;font-size:14px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:all .2s;white-space:nowrap;max-width:92vw;text-align:center;pointer-events:none;}
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--text);color:#fff;border-radius:24px;padding:11px 22px;font-size:14px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:all .2s;white-space:normal;line-height:1.6;max-width:92vw;text-align:center;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.ok{background:var(--green);}
 .toast.err{background:var(--red);}
@@ -440,7 +440,7 @@ const KM = (()=>{
     'ジャ':'ja','ジュ':'ju','ジョ':'jo',
     'ビャ':'bya','ビョ':'byo','ピャ':'pya','ピョ':'pyo',
     'ァ':'a','ィ':'i','ゥ':'u','ェ':'e','ォ':'o',
-    'ッ':'x','ー':'-',
+    'ッ':'x','ー':'',
   };
   const m={};
   Object.entries(b).forEach(([k,v])=>{
@@ -464,11 +464,11 @@ function toRomaji(str){
     if(t!==undefined){out+=t;i+=2;continue;}
     const o=KM[s[i]];
     if(o!==undefined){out+=o;i++;continue;}
-    if(/[ \u3000]/.test(s[i])){out+='_';i++;continue;}
-    if(/[a-zA-Z0-9_-]/.test(s[i])){out+=s[i].toLowerCase();i++;continue;}
+    if(/[ \u3000-]/.test(s[i])){out+='_';i++;continue;}
+    if(/[a-zA-Z0-9_]/.test(s[i])){out+=s[i].toLowerCase();i++;continue;}
     i++;
   }
-  return out.replace(/_+/g,'_').replace(/^_|_$/g,'').replace(/-+/g,'-').toLowerCase().slice(0,40);
+  return out.replace(/_+/g,'_').replace(/^_|_$/g,'').toLowerCase().slice(0,40);
 }
 
 // =========================================================
@@ -673,9 +673,9 @@ function checkId(p,type){
   const inp=document.getElementById(p+'-id'), msg=document.getElementById(p+'-id-msg');
   const val=inp.value.trim();
   if(!val){inp.className='field-in mono';msg.className='id-msg';return;}
-  if(!/^[a-zA-Z0-9_-]+$/.test(val)){
+  if(!/^[a-z][a-z0-9_]*$/.test(val)){
     inp.className='field-in mono err'; msg.className='id-msg dup';
-    msg.textContent='⚠ 半角英数字 _ - のみ使用可'; return;
+    msg.textContent='⚠ 小文字英数字と _ のみ、先頭は英字'; return;
   }
   const arr=type==='spot'?S.spots:S.facilities;
   const key=type==='spot'?'spot_id':'facility_id';
@@ -715,11 +715,12 @@ function onPhoto(p,input){
 function dlPhoto(p){
   const blob=S.blobs[p]; if(!blob){toast('写真がありません','err');return;}
   const ext=blob.type.includes('png')?'png':'jpg';
-  const name=photoBaseName(p)+'.'+ext;
+  const base=photoBaseName(p);
+  const name=base+'.'+ext;
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=name; a.click();
   URL.revokeObjectURL(url);
-  toast('「'+name+'」を保存','ok');
+  toast('「'+name+'」を保存しました。後で「'+base+'.webp」に変換してアップロードしてください','ok',5000);
 }
 
 // =========================================================
@@ -730,7 +731,7 @@ async function submitSpot(){
   const name=document.getElementById('s-name').value.trim();
   const editing=S.edit&&S.edit.type==='spot';
   if(!id||!name){toast('名前とIDを入力してください','err');return;}
-  if(!/^[a-zA-Z0-9_-]+$/.test(id)){toast('IDの形式が不正です','err');return;}
+  if(!/^[a-z][a-z0-9_]*$/.test(id)){toast('IDの形式が不正です（小文字英数字と _ のみ、先頭は英字）','err');return;}
   if(S.spots.some(r=>r.spot_id===id&&(!editing||r.spot_id!==S.edit.id))){toast('このIDはすでに登録済みです','err');return;}
   if(!MK['s']){toast('位置情報を取得してください','err');return;}
   const pos=MK['s'].getLatLng();
@@ -743,7 +744,9 @@ async function submitSpot(){
     audio_start_url:'', audio_approach_url:'', audio_arrive_url:'',
     audio_next_url:'', audio_goal_url:'',
     description:'', keywords:'',
-    photo_url:fn?fn+'.jpg':'',
+    // photo_urlは書き込まない: 空欄なら {spot_id}.webp が自動導出される。
+    // 撮影した写真は端末に保存→webp変換→アップロードの流れ(仮の.jpg名を書くと導出を上書きして壊す)
+    photo_url:'',
   };
   if(editing){
     const idx=S.spots.findIndex(r=>r.spot_id===S.edit.id);
@@ -765,7 +768,7 @@ async function submitFac(){
   const name=document.getElementById('f-name').value.trim();
   const editing=S.edit&&S.edit.type==='facility';
   if(!id||!name){toast('名前とIDを入力してください','err');return;}
-  if(!/^[a-zA-Z0-9_-]+$/.test(id)){toast('IDの形式が不正です','err');return;}
+  if(!/^[a-z][a-z0-9_]*$/.test(id)){toast('IDの形式が不正です（小文字英数字と _ のみ、先頭は英字）','err');return;}
   if(S.facilities.some(r=>r.facility_id===id&&(!editing||r.facility_id!==S.edit.id))){toast('このIDはすでに登録済みです','err');return;}
   if(!MK['f']){toast('位置情報を取得してください','err');return;}
   const pos=MK['f'].getLatLng();
@@ -778,7 +781,8 @@ async function submitFac(){
     audio_url:'',
     start_date:document.getElementById('f-start').value,
     end_date:document.getElementById('f-end').value,
-    photo_url:fn?fn+'.jpg':'',
+    // photo_urlは書き込まない: 空欄なら {facility_id}.webp が自動導出される(仮の.jpg名は導出を壊す)
+    photo_url:'',
   };
   if(editing){
     const idx=S.facilities.findIndex(r=>r.facility_id===S.edit.id);
@@ -993,7 +997,8 @@ function showTab(tab){
 // UTILITIES
 // =========================================================
 async function fetchGviz(sid,sheet){
-  const r=await fetch('https://docs.google.com/spreadsheets/d/'+sid+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(sheet));
+  // headers=1: gvizの型推定による複数行ヘッダー巻き込みを防ぐ(本体index.htmlと同じ対策)
+  const r=await fetch('https://docs.google.com/spreadsheets/d/'+sid+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(sheet)+'&headers=1');
   if(!r.ok) throw new Error('シート取得失敗: '+sheet);
   return (await r.text()).replace(/^\uFEFF/,'');
 }
@@ -1029,10 +1034,10 @@ function lsj(k,v){
 function setSt(id,msg,cls){const e=document.getElementById(id);e.className='st-msg show '+cls;e.textContent=msg;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 let tT;
-function toast(msg,type=''){
+function toast(msg,type='',dur=3000){
   const e=document.getElementById('toast');
   e.textContent=msg; e.className='toast show'+(type?' '+type:'');
-  clearTimeout(tT); tT=setTimeout(()=>{e.className='toast';},3000);
+  clearTimeout(tT); tT=setTimeout(()=>{e.className='toast';},dur);
 }
 init();
 </script>

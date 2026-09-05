@@ -1607,6 +1607,64 @@ async function fetchSheet(sid, sheet) {
   return text.replace(/^\uFEFF/, ''); // BOM除去
 }
 
+// URL規約導出: config.photo_repo / config.audio_repo（"owner/repo"形式）があれば、
+// 空欄のURL列を {ID}_{役割} の命名規則から自動生成する。記入済みURLは常に優先。
+// configにキーが無ければ何もしない＝挙動は従来どおり。
+function repoBaseUrl(repoKey) {
+  const v = String(cfg[repoKey] || '').trim();
+  if (!v || !v.includes('/')) return null;
+  const parts = v.split('/');
+  const owner = parts[0], repo = parts[1];
+  if (!owner || !repo) return null;
+  return `https://${owner}.github.io/${repo}`;
+}
+
+function derivePhotoUrl(id) {
+  if (!id) return null;
+  const base = repoBaseUrl('photo_repo');
+  return base ? `${base}/${id}.webp` : null;
+}
+
+function deriveAudioUrl(id, role) {
+  if (!id) return null;
+  const base = repoBaseUrl('audio_repo');
+  if (!base) return null;
+  return role ? `${base}/${id}_${role}.mp3` : `${base}/${id}.mp3`;
+}
+
+// 導出URLのファイルが実在する場合のみフィールドに設定する(既に値があれば何もしない)
+function setIfExists(obj, key, url) {
+  if (!url || obj[key]) return;
+  fetch(url, { method: 'HEAD' })
+    .then(res => { if (res.ok) obj[key] = url; })
+    .catch(() => {});
+}
+
+function applyUrlConventions() {
+  allSpots.forEach(function(s) {
+    s.photo_url          = s.photo_url          || derivePhotoUrl(s.spot_id);
+    s.audio_approach_url = s.audio_approach_url || deriveAudioUrl(s.spot_id, 'approach');
+    s.audio_arrive_url   = s.audio_arrive_url   || deriveAudioUrl(s.spot_id, 'arrive');
+    s.audio_start_url    = s.audio_start_url    || deriveAudioUrl(s.spot_id, 'start');
+    s.audio_next_url     = s.audio_next_url     || deriveAudioUrl(s.spot_id, 'next');
+    s.audio_goal_url     = s.audio_goal_url     || deriveAudioUrl(s.spot_id, 'goal');
+  });
+  // コースの音声(テーマ/完走/説明)は「ファイルが実在する場合のみ」導出URLを採用する。
+  // audio_theme_url の有無が「テーマを流すか caution(注意喚起)を流すか」の分岐に、
+  // course_audio_url の有無が説明ボタン表示に使われるため、404のURLを無条件に
+  // 入れると注意喚起スキップや無音ボタンが起きる。HEADで実在確認してから採用する
+  allCourses.forEach(function(c) {
+    c.course_thumbnail_url = c.course_thumbnail_url || derivePhotoUrl(c.course_id);
+    setIfExists(c, 'audio_theme_url',  deriveAudioUrl(c.course_id, 'start'));
+    setIfExists(c, 'audio_finish_url', deriveAudioUrl(c.course_id, 'goal'));
+    setIfExists(c, 'course_audio_url', deriveAudioUrl(c.course_id, 'intro'));
+  });
+  allFacilities.forEach(function(f) {
+    f.photo_url = f.photo_url || derivePhotoUrl(f.facility_id);
+    f.audio_url = f.audio_url || deriveAudioUrl(f.facility_id, null);
+  });
+}
+
 // ══════════════════════════════════════
 // 初期化
 // ══════════════════════════════════════
@@ -1670,6 +1728,8 @@ async function initApp() {
       lng: parseFloat(f.lng),
       trigger_dist: parseInt(f.trigger_dist) || 30,
     }));
+
+    applyUrlConventions();
 
     // 訪問記録
     recordVisit(currentSheetId, cfg.app_title || 'まち歩き');
