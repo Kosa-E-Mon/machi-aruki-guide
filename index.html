@@ -527,6 +527,10 @@ body {
   color: var(--cert-seal-text-color, #B83232);
   line-height: var(--cert-seal-line-height, 1.4);
 }
+.cert-sho-seal.has-image { border: none; background: transparent; }
+.cert-sho-seal-img { display: none; width: 100%; height: 100%; object-fit: contain; }
+.cert-sho-seal.has-image .cert-sho-seal-img { display: block; }
+.cert-sho-seal.has-image .cert-sho-seal-text { display: none; }
 /* ボタン */
 .cert-sho-buttons { display: flex; flex-direction: column; gap: 8px; }
 .cert-sho-btn-primary { background: #9A7A3A; color: white; border: none; padding: 13px; font-family: var(--font-title); font-size: 13px; letter-spacing: .12em; border-radius: 4px; cursor: pointer; transition: opacity .2s; width: 100%; }
@@ -988,7 +992,7 @@ body {
         <!-- 発行者・印鑑 -->
         <div class="cert-sho-footer">
           <div class="cert-sho-issuer" id="cert-issuer"></div>
-          <div class="cert-sho-seal"><div class="cert-sho-seal-text" id="cert-seal-text"></div></div>
+          <div class="cert-sho-seal" id="cert-seal"><img class="cert-sho-seal-img" id="cert-seal-img" alt="印鑑"><div class="cert-sho-seal-text" id="cert-seal-text"></div></div>
         </div>
         <!-- スクショヒント -->
         <div class="cert-sho-screenshot">📸 スクリーンショットで記念に保存できます</div>
@@ -3250,6 +3254,16 @@ function showGoal() {
   document.getElementById('cert-issuer').textContent   = issuer;
   document.getElementById('cert-seal-text').textContent = sealText;
   document.getElementById('cert-body-extra').textContent = bodyExtra;
+  const sealEl = document.getElementById('cert-seal');
+  const sealImg = document.getElementById('cert-seal-img');
+  const sealSvgUrl = driveUrl(cfg.cert_seal_svg_url || '');
+  sealEl.classList.toggle('has-image', !!sealSvgUrl);
+  sealImg.removeAttribute('src');
+  sealImg.onerror = () => {
+    sealEl.classList.remove('has-image');
+    sealImg.removeAttribute('src');
+  };
+  if (sealSvgUrl) sealImg.src = sealSvgUrl;
 
   // スポット一覧
   const cs = document.getElementById('cert-spots'); cs.innerHTML='';
@@ -3319,7 +3333,18 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
   return y + lineHeight;
 }
 
-function downloadCertificate() {
+function loadCertificateImage(url) {
+  return new Promise(resolve => {
+    if (!url) { resolve(null); return; }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = driveUrl(url);
+  });
+}
+
+async function downloadCertificate() {
   const canvas = document.createElement('canvas');
   const w = 1200, h = 1700;
   canvas.width = w; canvas.height = h;
@@ -3332,6 +3357,7 @@ function downloadCertificate() {
   const dist = certText('cert-dist', '0');
   const like = certText('cert-like', '0');
   const count = certText('cert-count', String(courseSpots.length));
+  const sealImage = await loadCertificateImage(cfg.cert_seal_svg_url);
 
   ctx.fillStyle = '#2A2218';
   ctx.fillRect(0, 0, w, h);
@@ -3404,21 +3430,25 @@ function downloadCertificate() {
   ctx.font = '34px serif';
   ctx.fillText(issuer, 820, 1255);
 
-  ctx.textAlign = 'center';
-  ctx.strokeStyle = '#B83232';
-  ctx.fillStyle = 'rgba(184,50,50,.05)';
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.arc(930, 1228, 78, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(930, 1228, 61, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.fillStyle = '#B83232';
-  ctx.font = 'bold 30px serif';
-  drawWrappedText(ctx, seal, 930, 1218, 86, 34);
+  if (sealImage) {
+    ctx.drawImage(sealImage, 850, 1148, 160, 160);
+  } else {
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = '#B83232';
+    ctx.fillStyle = 'rgba(184,50,50,.05)';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(930, 1228, 78, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(930, 1228, 61, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#B83232';
+    ctx.font = 'bold 30px serif';
+    drawWrappedText(ctx, seal, 930, 1218, 86, 34);
+  }
 
   const link = document.createElement('a');
   const safeName = (course || 'certificate').replace(/[\\/:*?"<>|]/g, '').slice(0, 40);

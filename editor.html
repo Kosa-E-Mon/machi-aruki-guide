@@ -810,6 +810,7 @@ const CONFIG_DEFS = [
   {sec:'🏅 賞状（修了書）設定'},
   {key:'cert_award_title', lbl:'修了証タイトル',     desc:'賞状の大見出し。例: 修了証　（デフォルト: 修了証）'},
   {key:'cert_issuer',      lbl:'発行者名',            desc:'賞状の発行者欄。例: 増田町観光協会（area_nameがフォールバック）'},
+  {key:'cert_seal_svg_url',lbl:'印鑑SVG URL',         desc:'GitHub Pages等のSVG直接URL。入力時は印鑑テキストより優先'},
   {key:'cert_seal_text',   lbl:'印鑑テキスト',        desc:'印鑑（丸印）に表示するテキスト。例: 増田\n観光'},
   {key:'cert_body_text',   lbl:'本文追加テキスト',    desc:'賞状本文に付け加えるテキスト。例: 今後もまち歩きをお楽しみください。'},
   {key:'cert_title_font_family',     lbl:'賞状タイトルフォント',   desc:'--cert-title-font-family。例: Yuji Syuku'},
@@ -1371,8 +1372,11 @@ function renderCertPreview(rp,c){
   issuer.style.cssText='font-size:11px;align-self:flex-end;margin-right:10px;';
 
   const seal=document.createElement('div');
-  seal.textContent=getCfg('cert_seal_text')||'修了';
+  const sealSvgUrl=getCfg('cert_seal_svg_url');
+  if(sealSvgUrl){const img=document.createElement('img');img.src=driveUrl(sealSvgUrl);img.alt='印鑑';img.style.cssText='width:100%;height:100%;object-fit:contain;';seal.appendChild(img);}
+  else seal.textContent=getCfg('cert_seal_text')||'修了';
   seal.style.cssText=`position:absolute;right:18px;bottom:18px;width:${getCfg('cert_seal_size')||'64px'};height:${getCfg('cert_seal_size')||'64px'};border-radius:50%;border:${getCfg('cert_seal_border_width')||'2px'} solid ${getCfg('cert_seal_border_color')||c.primary};background:${getCfg('cert_seal_bg')||'transparent'};color:${getCfg('cert_seal_text_color')||c.primary};font-family:'${getCfg('cert_seal_font_family')||'serif'}';font-size:${getCfg('cert_seal_text_size')||'12px'};line-height:${getCfg('cert_seal_line_height')||'1.5'};display:flex;align-items:center;justify-content:center;white-space:pre-line;`;
+  if(sealSvgUrl){seal.style.border='none';seal.style.background='transparent';}
 
   cert.appendChild(award); cert.appendChild(name); cert.appendChild(text); cert.appendChild(issuer); cert.appendChild(seal);
   body.appendChild(cert); phone.appendChild(notch); phone.appendChild(body);
@@ -1462,8 +1466,11 @@ function renderCertPreview(rp,c){
   issuer.textContent=getCfg('cert_issuer')||getCfg('area_name')||c.title;
   issuer.style.cssText='font-size:13px;color:#2A1A0A;letter-spacing:.08em;line-height:1.7;text-align:right;';
   const seal=document.createElement('div');
-  seal.textContent=getCfg('cert_seal_text')||'修了';
+  const sealSvgUrl=getCfg('cert_seal_svg_url');
+  if(sealSvgUrl){const img=document.createElement('img');img.src=driveUrl(sealSvgUrl);img.alt='印鑑';img.style.cssText='width:100%;height:100%;object-fit:contain;';seal.appendChild(img);}
+  else seal.textContent=getCfg('cert_seal_text')||'修了';
   seal.style.cssText=`width:${getCfg('cert_seal_size')||'60px'};height:${getCfg('cert_seal_size')||'60px'};border-radius:50%;border:${getCfg('cert_seal_border_width')||'3px'} double ${getCfg('cert_seal_border_color')||c.primary};background:${getCfg('cert_seal_bg')||'rgba(184,50,50,.04)'};color:${getCfg('cert_seal_text_color')||c.primary};font-family:'${getCfg('cert_seal_font_family')||'serif'}';font-size:${getCfg('cert_seal_text_size')||'10px'};line-height:${getCfg('cert_seal_line_height')||'1.4'};display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-line;`;
+  if(sealSvgUrl){seal.style.border='none';seal.style.background='transparent';}
   const footer=document.createElement('div');
   footer.style.cssText='display:flex;justify-content:flex-end;align-items:center;gap:14px;padding-top:10px;border-top:1px solid #D4C9B0;margin-bottom:20px;';
   footer.appendChild(issuer); footer.appendChild(seal);
