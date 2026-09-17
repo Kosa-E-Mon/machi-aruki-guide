@@ -2530,18 +2530,32 @@ function pushNavHistory() {
   history.pushState({ screen: 'walk' }, '');
 }
 
+// ページを開いた直後から、ホーム以外の画面でブラウザバックを捕捉できるようにする
+function armBackNavigationGuard() {
+  history.replaceState({ screen: 'home' }, '', location.href);
+  history.pushState({ screen: 'app' }, '', location.href);
+}
+
+let allowBrowserBack = false;
 window.addEventListener('popstate', () => {
   const active = document.querySelector('.screen.active');
   if (!active) return;
-  // 常に再pushして実際のページ遷移を防ぐ
-  history.pushState({ screen: 'walk' }, '');
+  if (allowBrowserBack) { allowBrowserBack = false; return; }
+  // それ以外は再pushして、確認が終わるまでページを離れない
+  history.pushState({ screen: 'app' }, '');
   const id = active.id;
-  if (id === 'screen-nav' || id === 'screen-explain') {
+  if (id === 'screen-home') {
+    showModal(
+      t('アプリを終了しますか？'),
+      t('またいつでもこのページを開けます。'),
+      t('終了'), t('キャンセル'),
+      () => { allowBrowserBack = true; history.back(); },
+      null
+    );
+  } else if (id === 'screen-nav' || id === 'screen-explain' || id === 'screen-intro' || id === 'screen-goal' || id === 'screen-prizes') {
     confirmGoHome();
   } else if (id === 'screen-ar') {
     closeAR();
-  } else if (id === 'screen-goal' || id === 'screen-prizes') {
-    goHome();
   }
 });
 
@@ -4039,6 +4053,7 @@ window.addEventListener('load', () => {
   document.head.appendChild(link);
   // Google OAuth初期化
   initGoogleAuth();
+  armBackNavigationGuard();
   initApp();
 
   // Page Visibility API: バックグラウンドから復帰時に音声状態をリセット
