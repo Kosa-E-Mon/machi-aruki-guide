@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="現地調査">
-<title>現地調査 — まち歩き</title>
+<title>現地調査 — まちあるき</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -80,7 +80,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
 .map-ph{height:200px;background:var(--raised);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dim);font-size:13px;text-align:center;padding:20px;line-height:1.9;}
 .map-ph-ic{font-size:40px;opacity:.25;}
 #spot-map,#fac-map{height:240px;display:none;}
-.dist-ov{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.97);border:2px solid var(--border2);border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:12px;line-height:2;z-index:500;box-shadow:0 2px 10px rgba(0,0,0,.12);display:none;min-width:145px;}
+.dist-ov{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.97);border:2px solid var(--border2);border-radius:8px;padding:8px 12px 26px;font-family:var(--mono);font-size:12px;line-height:2;z-index:500;box-shadow:0 2px 10px rgba(0,0,0,.12);display:none;min-width:145px;}
+.dist-ov.pos-rb{top:auto;bottom:8px;right:8px;}
+.dist-ov.pos-lb{top:auto;bottom:8px;left:8px;right:auto;}
 .dist-ov.show{display:block;}
 .dist-row{display:flex;align-items:center;gap:6px;}
 .dist-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
@@ -88,6 +90,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
 .dist-val.outside{color:var(--dim);}
 .dist-val.approach{color:var(--amber);}
 .dist-val.arrive{color:var(--green);}
+.dist-move{position:absolute;right:5px;bottom:2px;border:0;background:transparent;color:var(--dim);font:700 10px var(--sans);padding:1px 4px;cursor:pointer;}
+.dist-move:active{color:var(--text);}
 .map-hint{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:4px 9px;border-radius:4px;z-index:500;pointer-events:none;}
 
 /* RANGE */
@@ -161,7 +165,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
 </head>
 <body>
 <div class="hdr">
-  <div class="hdr-title">📍 現地調査 <small>まち歩きガイド</small></div>
+  <div class="hdr-title">📍 現地調査 <small>まちあるきガイド</small></div>
   <div class="gps-pill" id="gps-pill"><div class="gps-dot"></div><span id="gps-txt">GPS待機</span></div>
 </div>
 
@@ -221,6 +225,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
         <div class="dist-dot" style="background:#1050B0"></div>
         現在&nbsp;<span class="dist-val" id="s-dist-now">—</span>m
       </div>
+      <button class="dist-move" type="button" onclick="cycleDistOverlay('s')">位置 ↗</button>
     </div>
     <div class="map-hint">📌 マーカーをドラッグして調整</div>
   </div>
@@ -311,6 +316,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
         <div class="dist-dot" style="background:#1050B0"></div>
         現在&nbsp;<span class="dist-val" id="f-dist-now">—</span>m
       </div>
+      <button class="dist-move" type="button" onclick="cycleDistOverlay('f')">位置 ↗</button>
     </div>
     <div class="map-hint">📌 マーカーをドラッグして調整</div>
   </div>
@@ -551,7 +557,7 @@ function initMap(p,lat,lng){
     MK[p].setLatLng([lat,lng]);
     Object.values(MC[p]).forEach(c=>c.setLatLng([lat,lng]));
     MP[p].setView([lat,lng],18);
-    updDist(p); return;
+    refreshMapSize(p); updDist(p); return;
   }
 
   const m=L.map(mid,{zoomControl:true,attributionControl:false});
@@ -588,8 +594,38 @@ function initMap(p,lat,lng){
 
   m.setView([lat,lng],18);
   document.getElementById(p+'-dist-ov').classList.add('show');
+  refreshMapSize(p);
   updDist(p);
 }
+
+function refreshMapSize(p){
+  const m=MP[p]; if(!m) return;
+  [0,80,250,600].forEach(ms=>setTimeout(()=>m.invalidateSize({pan:false,animate:false}),ms));
+}
+
+const DIST_POSITIONS=['rt','rb','lb'];
+function cycleDistOverlay(p){
+  const el=document.getElementById(p+'-dist-ov'); if(!el) return;
+  const key='survey_dist_pos_'+p;
+  const current=localStorage.getItem(key)||'rt';
+  const next=DIST_POSITIONS[(DIST_POSITIONS.indexOf(current)+1)%DIST_POSITIONS.length];
+  el.classList.remove('pos-rb','pos-lb');
+  if(next==='rb') el.classList.add('pos-rb');
+  if(next==='lb') el.classList.add('pos-lb');
+  localStorage.setItem(key,next);
+}
+
+function restoreDistOverlayPosition(p){
+  const pos=localStorage.getItem('survey_dist_pos_'+p)||'rt';
+  const el=document.getElementById(p+'-dist-ov'); if(!el) return;
+  el.classList.remove('pos-rb','pos-lb');
+  if(pos==='rb') el.classList.add('pos-rb');
+  if(pos==='lb') el.classList.add('pos-lb');
+}
+
+window.addEventListener('resize',()=>Object.keys(MP).forEach(refreshMapSize));
+window.addEventListener('orientationchange',()=>Object.keys(MP).forEach(refreshMapSize));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden) Object.keys(MP).forEach(refreshMapSize);});
 
 function updC(p){
   if(!MC[p]) return;
@@ -990,7 +1026,8 @@ function showTab(tab){
   });
   document.querySelector('.content').scrollTop=0;
   if(tab==='hist') renderHist();
-  setTimeout(()=>{if(MP[tab]) MP[tab].invalidateSize();},60);
+  if(MP[tab]) refreshMapSize(tab);
+  restoreDistOverlayPosition(tab);
 }
 
 // =========================================================
