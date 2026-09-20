@@ -417,6 +417,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
   <div class="sec-hdr">地図上の距離表示</div>
   <div class="sett-g">
     <div class="sett-lbl">到着圏・接近圏パネルの背景</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:8px;"><input type="checkbox" id="dist-overlay-visible" checked> 距離表示パネルを表示する</label>
     <div class="sett-row" style="align-items:center;">
       <input type="color" id="dist-bg-color" value="#ffffff" style="width:48px;height:38px;padding:2px;border:2px solid var(--border2);border-radius:8px;">
       <label style="flex:1;font-size:12px;color:var(--muted);">透明度 <input type="number" id="dist-bg-opacity" min="0.2" max="1" step="0.01" value="0.82" style="width:76px;" class="field-in"> </label>
@@ -520,8 +521,11 @@ function init(){
   const bg=document.getElementById('dist-bg-color'), op=document.getElementById('dist-bg-opacity');
   if(bg) bg.value=lsg('distBgColor')||'#ffffff';
   if(op) op.value=lsg('distBgOpacity')||'0.82';
+  const vis=document.getElementById('dist-overlay-visible');
+  if(vis) vis.checked=lsg('distOverlayVisible')!=='false';
   bg?.addEventListener('input',previewDistOverlayStyle);
   op?.addEventListener('input',previewDistOverlayStyle);
+  vis?.addEventListener('change',previewDistOverlayStyle);
   updBadge();
   startWatch();
 }
@@ -620,14 +624,28 @@ function initMap(p,lat,lng){
 
   m.setView([lat,lng],18);
   document.getElementById(p+'-dist-ov').classList.add('show');
+  applyDistOverlayVisibility();
   refreshMapSize(p);
   updDist(p);
+}
+
+function applyDistOverlayVisibility(){
+  const visible=(lsg('distOverlayVisible')||'true')!=='false';
+  ['s','f'].forEach(p=>{
+    const el=document.getElementById(p+'-dist-ov');
+    if(el) el.style.display=visible&&el.classList.contains('show')?'block':'none';
+  });
+  const preview=document.getElementById('dist-preview-panel');
+  if(preview) preview.style.display=visible?'block':'none';
 }
 
 function previewDistOverlayStyle(){
   const color=document.getElementById('dist-bg-color')?.value||'#ffffff';
   const opacity=Math.min(1,Math.max(.2,parseFloat(document.getElementById('dist-bg-opacity')?.value||'.82')));
   document.documentElement.style.setProperty('--dist-overlay-bg',hexToRgba(color,opacity));
+  const visible=document.getElementById('dist-overlay-visible')?.checked!==false;
+  document.documentElement.style.setProperty('--dist-overlay-display',visible?'block':'none');
+  applyDistOverlayVisibility();
   updateDistPreview();
 }
 
@@ -639,11 +657,15 @@ function applyDistOverlayStyle(){
   const color=lsg('distBgColor')||'#ffffff';
   const opacity=Math.min(1,Math.max(.2,parseFloat(lsg('distBgOpacity')||'.82')));
   document.documentElement.style.setProperty('--dist-overlay-bg',hexToRgba(color,opacity));
+  document.documentElement.style.setProperty('--dist-overlay-display',(lsg('distOverlayVisible')||'true')==='false'?'none':'block');
+  applyDistOverlayVisibility();
 }
 function saveDistOverlayStyle(){
   const color=document.getElementById('dist-bg-color')?.value||'#ffffff';
   const opacity=Math.min(1,Math.max(.2,parseFloat(document.getElementById('dist-bg-opacity')?.value||'.82')));
-  lsg('distBgColor',color); lsg('distBgOpacity',String(opacity)); applyDistOverlayStyle(); updateDistPreview();
+  lsg('distBgColor',color); lsg('distBgOpacity',String(opacity));
+  lsg('distOverlayVisible',String(document.getElementById('dist-overlay-visible')?.checked!==false));
+  applyDistOverlayStyle(); previewDistOverlayStyle(); updateDistPreview();
   const op=document.getElementById('dist-bg-opacity'); if(op) op.value=opacity.toFixed(2);
   setSt('dist-style-st','✅ 表示設定を保存しました','ok');
 }
@@ -1143,6 +1165,18 @@ function toast(msg,type='',dur=3000){
   e.textContent=msg; e.className='toast show'+(type?' '+type:'');
   clearTimeout(tT); tT=setTimeout(()=>{e.className='toast';},dur);
 }
+// ブラウザの戻る操作で調査画面から意図せず離れないよう確認する
+history.replaceState({survey:'base'},'',location.href);
+history.pushState({survey:'app'},'',location.href);
+let allowSurveyBack=false;
+window.addEventListener('popstate',()=>{
+  if(allowSurveyBack){allowSurveyBack=false;return;}
+  history.pushState({survey:'app'},'',location.href);
+  if(confirm('アプリを終了しますか？')){
+    allowSurveyBack=true;
+    history.back();
+  }
+});
 init();
 </script>
 </body>
