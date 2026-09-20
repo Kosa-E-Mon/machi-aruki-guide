@@ -80,7 +80,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
 .map-ph{height:200px;background:var(--raised);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dim);font-size:13px;text-align:center;padding:20px;line-height:1.9;}
 .map-ph-ic{font-size:40px;opacity:.25;}
 #spot-map,#fac-map{height:240px;display:none;}
-.dist-ov{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.97);border:2px solid var(--border2);border-radius:8px;padding:8px 12px 26px;font-family:var(--mono);font-size:12px;line-height:2;z-index:500;box-shadow:0 2px 10px rgba(0,0,0,.12);display:none;min-width:145px;}
+.dist-ov{position:absolute;top:8px;right:8px;background:var(--dist-overlay-bg,rgba(255,255,255,.82));border:2px solid var(--border2);border-radius:8px;padding:8px 12px 26px;font-family:var(--mono);font-size:13px;line-height:2;z-index:500;box-shadow:0 2px 10px rgba(0,0,0,.12);display:none;min-width:145px;backdrop-filter:blur(3px);}
 .dist-ov.pos-rb{top:auto;bottom:8px;right:8px;}
 .dist-ov.pos-lb{top:auto;bottom:8px;left:8px;right:auto;}
 .dist-ov.show{display:block;}
@@ -409,6 +409,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);max-width:48
       <button class="btn-a danger" onclick="clearData('all')">全削除</button>
     </div>
   </div>
+
+  <div class="sec-hdr">地図上の距離表示</div>
+  <div class="sett-g">
+    <div class="sett-lbl">到着圏・接近圏パネルの背景</div>
+    <div class="sett-row" style="align-items:center;">
+      <input type="color" id="dist-bg-color" value="#ffffff" style="width:48px;height:38px;padding:2px;border:2px solid var(--border2);border-radius:8px;">
+      <label style="flex:1;font-size:12px;color:var(--muted);">透明度 <input type="number" id="dist-bg-opacity" min="0.2" max="1" step="0.01" value="0.82" style="width:76px;" class="field-in"> </label>
+    </div>
+    <div class="sett-row"><button class="btn-a primary" onclick="saveDistOverlayStyle()">💾 表示設定を保存</button></div>
+    <div class="st-msg" id="dist-style-st"></div>
+  </div>
 </div>
 
 </div><!-- /content -->
@@ -496,6 +507,10 @@ function init(){
   const si=document.getElementById('sheet-id-in');
   if(gu) gu.value=S.gasUrl;
   if(si) si.value=S.sheetId;
+  applyDistOverlayStyle();
+  const bg=document.getElementById('dist-bg-color'), op=document.getElementById('dist-bg-opacity');
+  if(bg) bg.value=lsg('distBgColor')||'#ffffff';
+  if(op) op.value=lsg('distBgOpacity')||'0.82';
   updBadge();
   startWatch();
 }
@@ -596,6 +611,23 @@ function initMap(p,lat,lng){
   document.getElementById(p+'-dist-ov').classList.add('show');
   refreshMapSize(p);
   updDist(p);
+}
+
+function hexToRgba(hex,alpha){
+  const m=String(hex||'').match(/^#([0-9a-f]{6})$/i); if(!m) return `rgba(255,255,255,${alpha})`;
+  const n=parseInt(m[1],16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${alpha})`;
+}
+function applyDistOverlayStyle(){
+  const color=lsg('distBgColor')||'#ffffff';
+  const opacity=Math.min(1,Math.max(.2,parseFloat(lsg('distBgOpacity')||'.82')));
+  document.documentElement.style.setProperty('--dist-overlay-bg',hexToRgba(color,opacity));
+}
+function saveDistOverlayStyle(){
+  const color=document.getElementById('dist-bg-color')?.value||'#ffffff';
+  const opacity=Math.min(1,Math.max(.2,parseFloat(document.getElementById('dist-bg-opacity')?.value||'.82')));
+  lsg('distBgColor',color); lsg('distBgOpacity',String(opacity)); applyDistOverlayStyle();
+  const op=document.getElementById('dist-bg-opacity'); if(op) op.value=opacity.toFixed(2);
+  setSt('dist-style-st','✅ 表示設定を保存しました','ok');
 }
 
 function refreshMapSize(p){
