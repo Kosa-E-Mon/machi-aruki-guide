@@ -593,7 +593,7 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
         <div class="step-title"><span class="step-n">4</span>表示された「ウェブアプリのURL」をコピーして、エディタのGAS URLフィールドに貼り付け → 「接続テスト」</div>
       </div>
       <div class="modal-note">
-        🔑 <strong>書き込みトークン:</strong> 上記コード内の <code id="gas-token-display" style="font-family:var(--mono);"></code> は、このブラウザの「書き込みトークン」欄に自動で入力済みです。<strong>別のパソコン・スマホでこのシートに接続する場合は、GAS URLとあわせてこのトークンも控えて、その端末の「書き込みトークン」欄に貼り付けてください。</strong>他人にURLだけ知られても書き込みできなくなる、簡易的な鍵の役割です。
+        🔑 <strong>書き込みトークン:</strong> 上記コード内の <code id="gas-token-display" style="font-family:var(--mono);"></code> は、このスプレッドシート専用に自動生成した値で、「書き込みトークン」欄に自動で入力済みです(同じパソコンで別のスプレッドシートを設定しても、シートごとに別のトークンが作られます)。<strong>別のパソコン・スマホでこのシートに接続する場合は、GAS URLとあわせてこのトークンも控えて、その端末の「書き込みトークン」欄に貼り付けてください。</strong>他人にURLだけ知られても書き込みできなくなる、簡易的な鍵の役割です。
       </div>
       <div class="modal-note">
         ⚠ <strong>注意:</strong> スクリプトを変更した場合は「新しいデプロイ」でバージョンを上げてください。URLは同じまま使い続けられます。初回実行時にGoogleアカウントの認証が求められます。既存のシートを使っている場合も、このコードに貼り替えてバージョンを上げれば、書き込みトークン認証・保存前バックアップが有効になります。
@@ -753,11 +753,18 @@ function out(obj, callback) {
   return ContentService.createTextOutput(text).setMimeType(mime);
 }`;
 
+function gasTokenStorageKey(){
+  // シートIDごとにトークンを分ける(同じパソコンで複数地域を設定しても鍵が共用にならないように)
+  const raw = (document.getElementById('sheet-url')?.value || '').trim();
+  const sid = (typeof parseSheetId === 'function' ? parseSheetId(raw) : null) || raw || 'default';
+  return 'lwg_editor_gas_token__' + sid;
+}
 function getGasToken(){
-  let t = localStorage.getItem('lwg_editor_gas_token');
+  const key = gasTokenStorageKey();
+  let t = localStorage.getItem(key);
   if (!t) {
     t = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join('');
-    localStorage.setItem('lwg_editor_gas_token', t);
+    localStorage.setItem(key, t);
   }
   return t;
 }
@@ -1008,6 +1015,10 @@ async function loadData(){
     Object.keys(changes).forEach(k=>{changes[k]={};});
     state.loaded=true;
     updateBadges(); showTab(currentTab);
+    // このシート用に保存済みの書き込みトークンがあれば反映(無ければ空のまま。地域を切り替えたときに前のシートのトークンを誤って使わないように)
+    const savedToken=localStorage.getItem(gasTokenStorageKey());
+    document.getElementById('gas-token').value=savedToken||'';
+    state.gasToken=savedToken||null;
     setStat('ok',`読み込み完了 ✓ — コース:${state.courses.length} / スポット:${state.spots.length} / コース構成:${state.course_spots.length} / 施設:${state.facilities.length}`);
     notify('読み込み完了しました ✓');
   }catch(e){console.error(e);setStat('error',e.message);notify(e.message,true);}
@@ -1025,7 +1036,7 @@ function onGasUrlChange(){
 }
 function onGasTokenChange(){
   state.gasToken=document.getElementById('gas-token').value.trim()||null;
-  if(state.gasToken) localStorage.setItem('lwg_editor_gas_token', state.gasToken);
+  if(state.gasToken) localStorage.setItem(gasTokenStorageKey(), state.gasToken);
 }
 
 async function testGas(){
@@ -2778,7 +2789,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   installNavigationGuard();
   showTab('config');
   document.getElementById('gas-code-display').textContent=buildGasCode();
-  const savedToken=localStorage.getItem('lwg_editor_gas_token');
+  const savedToken=localStorage.getItem(gasTokenStorageKey());
   if(savedToken){ document.getElementById('gas-token').value=savedToken; state.gasToken=savedToken; }
   initResizeHandle();
   initEditorSize();
