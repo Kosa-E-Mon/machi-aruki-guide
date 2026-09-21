@@ -212,6 +212,7 @@ body {
 .btn-prizes-home:active { border-color: var(--gold); color: var(--gold); }
 
 .credit { text-align: center; padding: 16px 0 4px; font-size: 10px; color: rgba(250,247,241,.18); letter-spacing: .06em; line-height: 1.8; }
+.privacy-note { text-align: center; padding: 4px 20px 16px; font-size: 11px; color: var(--home-subtext, rgba(250,247,241,.45)); letter-spacing: .02em; line-height: 1.6; }
 
 /* ホーム画面内の見えにくい文字をテーマ色に寄せる */
 #screen-home .home-section-label,
@@ -2054,6 +2055,12 @@ function renderHome() {
   credit.className = 'credit';
   credit.innerHTML = '企画・開発　Masato KOSAKA<br>（増田町観光協会 理事／増田町観光ガイドの会 理事）<br>観光デジタルCKK部';
   body.appendChild(credit);
+
+  // プライバシー注記（固定）
+  const privacyNote = document.createElement('div');
+  privacyNote.className = 'privacy-note';
+  privacyNote.textContent = t('位置情報は近接判定のみに使用し、外部へ送信しません。匿名の利用状況を統計情報として取得しています。');
+  body.appendChild(privacyNote);
 }
 
 function sectionLabel(text) {

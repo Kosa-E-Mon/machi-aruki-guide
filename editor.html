@@ -439,6 +439,10 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
     <div class="hdr-lbl">GAS ウェブアプリURL（直接書き込み用）<span id="gas-status-lbl" style="margin-left:4px;"></span></div>
     <input class="hdr-in" id="gas-url" placeholder="https://script.google.com/macros/s/..." oninput="onGasUrlChange()">
   </div>
+  <div class="hdr-field">
+    <div class="hdr-lbl">書き込みトークン</div>
+    <input class="hdr-in" id="gas-token" placeholder="「GAS設定方法」で自動生成" oninput="onGasTokenChange()">
+  </div>
   <button class="btn btn-o btn-sm" onclick="testGas()">接続テスト</button>
   <button class="btn btn-blue btn-sm" onclick="showGasModal()">📋 GAS設定方法</button>
   <div class="spacer"></div>
@@ -589,7 +593,10 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
         <div class="step-title"><span class="step-n">4</span>表示された「ウェブアプリのURL」をコピーして、エディタのGAS URLフィールドに貼り付け → 「接続テスト」</div>
       </div>
       <div class="modal-note">
-        ⚠ <strong>注意:</strong> スクリプトを変更した場合は「新しいデプロイ」でバージョンを上げてください。URLは同じまま使い続けられます。初回実行時にGoogleアカウントの認証が求められます。
+        🔑 <strong>書き込みトークン:</strong> 上記コード内の <code id="gas-token-display" style="font-family:var(--mono);"></code> は、このブラウザの「書き込みトークン」欄に自動で入力済みです。<strong>別のパソコン・スマホでこのシートに接続する場合は、GAS URLとあわせてこのトークンも控えて、その端末の「書き込みトークン」欄に貼り付けてください。</strong>他人にURLだけ知られても書き込みできなくなる、簡易的な鍵の役割です。
+      </div>
+      <div class="modal-note">
+        ⚠ <strong>注意:</strong> スクリプトを変更した場合は「新しいデプロイ」でバージョンを上げてください。URLは同じまま使い続けられます。初回実行時にGoogleアカウントの認証が求められます。既存のシートを使っている場合も、このコードに貼り替えてバージョンを上げれば、書き込みトークン認証・保存前バックアップが有効になります。
       </div>
     </div>
   </div>
@@ -650,17 +657,24 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
 // GAS SCRIPT CODE (displayed in modal)
 // ═══════════════════════════════════════════════════════
 
-const GAS_CODE = `/**
- * まち歩きエディタ v3 — Google Apps Script
+const GAS_CODE_TEMPLATE = `/**
+ * まち歩きエディタ v4 — Google Apps Script
  * スプレッドシートの「拡張機能」→「Apps Script」に貼り付けてください。
  * デプロイ設定: ウェブアプリ / アクセス: 全員
+ * ※ WRITE_TOKEN はこのエディタが自動生成した値です。手動で書き換えないでください
+ *   （エディタ側の「書き込みトークン」欄と値が一致している必要があります）。
  */
+
+const WRITE_TOKEN = '__TOKEN__';
 
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
+    if (body.token !== WRITE_TOKEN) {
+      return out({ok: false, error: '認証エラー: 書き込みトークンが一致しません'});
+    }
     if (body.action === 'write') {
-      writeSheet(body.sheet, body.rows);
+      writeSheet(body.sheet, body.rows, !!body.force);
       return out({ok: true});
     }
     return out({ok: false, error: 'Unknown action'});
@@ -673,7 +687,7 @@ function doGet(e) {
   const cb = e.parameter.callback;
   try {
     if (e.parameter.action === 'ping') {
-      return out({ok: true, version: '3.0'}, cb);
+      return out({ok: true, version: '4.0'}, cb);
     }
     return out({ok: false, error: 'GET is for ping only'}, cb);
   } catch(ex) {
@@ -681,7 +695,7 @@ function doGet(e) {
   }
 }
 
-function writeSheet(sheetName, rows) {
+function writeSheet(sheetName, rows, force) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) throw new Error('シートが見つかりません: ' + sheetName);
@@ -691,8 +705,19 @@ function writeSheet(sheetName, rows) {
   const headers = sheet.getRange(1, 1, 1, lastCol)
     .getValues()[0].map(h => String(h).trim());
 
-  // ヘッダー行(1行目)を残してデータをクリア
   const lastRow = sheet.getLastRow();
+  const existingCount = Math.max(0, lastRow - 1);
+  const newCount = rows ? rows.length : 0;
+
+  // 件数が大きく減る場合は誤操作の可能性が高いため中断（エディタ側の確認後はforce:trueで再送される）
+  if (!force && existingCount >= 5 && newCount < existingCount * 0.5) {
+    throw new Error('件数が' + existingCount + '件から' + newCount + '件に大きく減ります。誤操作の可能性があるため保存を中断しました');
+  }
+
+  // 上書き前に1世代分だけバックアップ（_backup_シート名 という非表示シートに保存。万一のときは手動で戻せます）
+  backupSheet(ss, sheetName, sheet, lastCol, lastRow);
+
+  // ヘッダー行(1行目)を残してデータをクリア
   if (lastRow > 1) {
     sheet.getRange(2, 1, lastRow - 1, lastCol).clearContent();
   }
@@ -703,6 +728,22 @@ function writeSheet(sheetName, rows) {
   SpreadsheetApp.flush();
 }
 
+function backupSheet(ss, sheetName, sheet, lastCol, lastRow) {
+  const backupName = '_backup_' + sheetName;
+  let bk = ss.getSheetByName(backupName);
+  if (!bk) {
+    bk = ss.insertSheet(backupName);
+    bk.hideSheet();
+  } else {
+    bk.clearContents();
+  }
+  if (lastRow > 0 && lastCol > 0) {
+    const vals = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    bk.getRange(1, 1, lastRow, lastCol).setValues(vals);
+  }
+  bk.getRange(1, lastCol + 2).setValue('backup_at: ' + new Date().toISOString());
+}
+
 function out(obj, callback) {
   const json = JSON.stringify(obj);
   const text = callback ? callback + '(' + json + ')' : json;
@@ -711,6 +752,18 @@ function out(obj, callback) {
     : ContentService.MimeType.JSON;
   return ContentService.createTextOutput(text).setMimeType(mime);
 }`;
+
+function getGasToken(){
+  let t = localStorage.getItem('lwg_editor_gas_token');
+  if (!t) {
+    t = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join('');
+    localStorage.setItem('lwg_editor_gas_token', t);
+  }
+  return t;
+}
+function buildGasCode(){
+  return GAS_CODE_TEMPLATE.replace('__TOKEN__', getGasToken());
+}
 
 // ═══════════════════════════════════════════════════════
 // SCHEMA DEFINITIONS
@@ -890,7 +943,7 @@ const SCHEMAS = {
 // ═══════════════════════════════════════════════════════
 
 const state={
-  sheetId:null, gasUrl:null, gasConnected:false, loaded:false,
+  sheetId:null, gasUrl:null, gasToken:null, gasConnected:false, loaded:false,
   config:[], courses:[], spots:[], course_spots:[], facilities:[],
   originals:{},
 };
@@ -970,6 +1023,10 @@ function onGasUrlChange(){
   state.gasConnected=false;
   updateGasUI();
 }
+function onGasTokenChange(){
+  state.gasToken=document.getElementById('gas-token').value.trim()||null;
+  if(state.gasToken) localStorage.setItem('lwg_editor_gas_token', state.gasToken);
+}
 
 async function testGas(){
   const url=document.getElementById('gas-url').value.trim();
@@ -993,9 +1050,10 @@ function gasPing(url){
   });
 }
 
-async function gasWrite(sheetName,rows){
+async function gasWrite(sheetName,rows,force){
   if(!state.gasUrl) throw new Error('GAS URLが設定されていません');
-  await fetch(state.gasUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'write',sheet:sheetName,rows})});
+  if(!state.gasToken) throw new Error('書き込みトークンが設定されていません。「GAS設定方法」を確認してください');
+  await fetch(state.gasUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'write',sheet:sheetName,rows,token:state.gasToken,force:!!force})});
 }
 
 function updateGasUI(){
@@ -1023,13 +1081,25 @@ function updateGasUI(){
 async function saveCurrentSheet(){
   if(!state.loaded){notify('データを読み込んでください',true);return;}
   if(!state.gasConnected){exportCurrentSheet();notify('GAS未接続のためCSVでダウンロードします');return;}
+  if(!state.gasToken){notify('書き込みトークンが未設定です。「GAS設定方法」を確認してください',true);return;}
+
+  const sheetsToSave=currentTab==='courses'?['courses','course_spots']:[currentTab];
+  const forceMap={};
+  for(const s of sheetsToSave){
+    const rows=s==='config'?cleanConfigRows(state.config):state[s];
+    const existing=(state.originals[s]||[]).length;
+    if(existing>=5 && rows.length<existing*0.5){
+      const ok=confirm('「'+s+'」シートが '+existing+'件 → '+rows.length+'件 に大きく減ります。\n意図した操作であれば「OK」を押してください。\n心当たりがない場合は「キャンセル」して内容を確認してください。');
+      if(!ok){notify('保存を中止しました',true);return;}
+      forceMap[s]=true;
+    }
+  }
 
   showLd('スプレッドシートに保存中…'); setStat('loading','保存中…');
   try{
-    const sheetsToSave=currentTab==='courses'?['courses','course_spots']:[currentTab];
     for(const s of sheetsToSave){
       const rows=s==='config'?cleanConfigRows(state.config):state[s];
-      await gasWrite(s,rows);
+      await gasWrite(s,rows,forceMap[s]);
     }
     // Re-read after short delay
     await new Promise(r=>setTimeout(r,2200));
@@ -2591,12 +2661,17 @@ function exportAll(){
 // ═══════════════════════════════════════════════════════
 
 function showGasModal(){
-  document.getElementById('gas-code-display').textContent=GAS_CODE;
+  const token=getGasToken();
+  document.getElementById('gas-code-display').textContent=buildGasCode();
+  document.getElementById('gas-token-display').textContent=token;
+  // このブラウザで生成したトークンを、書き込みトークン欄にも反映しておく
+  const inp=document.getElementById('gas-token');
+  if(inp && !inp.value){ inp.value=token; onGasTokenChange(); }
   document.getElementById('gas-modal').classList.add('show');
 }
 function closeGasModal(){document.getElementById('gas-modal').classList.remove('show');}
 async function copyGasCode(){
-  try{await navigator.clipboard.writeText(GAS_CODE);notify('GASコードをクリップボードにコピーしました ✓');}
+  try{await navigator.clipboard.writeText(buildGasCode());notify('GASコードをクリップボードにコピーしました ✓');}
   catch(e){notify('コピーに失敗しました。手動でコードを選択してコピーしてください',true);}
 }
 
@@ -2702,7 +2777,9 @@ function notify(m,err){const el=document.getElementById('notif');el.textContent=
 window.addEventListener('DOMContentLoaded',()=>{
   installNavigationGuard();
   showTab('config');
-  document.getElementById('gas-code-display').textContent=GAS_CODE;
+  document.getElementById('gas-code-display').textContent=buildGasCode();
+  const savedToken=localStorage.getItem('lwg_editor_gas_token');
+  if(savedToken){ document.getElementById('gas-token').value=savedToken; state.gasToken=savedToken; }
   initResizeHandle();
   initEditorSize();
   initPreviewPan();
