@@ -68,8 +68,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100vh
 
 /* EDITOR AREA */
 .ed-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
-.ed-bar{height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:9px;flex-shrink:0;}
-.ed-bar-title{font-size:11px;font-weight:600;color:var(--muted);}
+.ed-bar{height:auto;min-height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;flex-wrap:wrap;padding:5px 14px;gap:9px;flex-shrink:0;}
+.ed-bar-title{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.ed-bar>.btn{flex-shrink:0;}
 .ed-bar-title em{color:var(--text);font-style:normal;}
 .chg-badge{background:var(--changed);border:1px solid var(--changed-b);color:#7A5A00;font-size:10px;font-weight:600;padding:2px 8px;border-radius:9px;display:none;}
 .chg-badge.show{display:inline-block;}
@@ -154,8 +155,9 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 .td-au .c-in{flex:1;padding:4px 6px;}
 .add-row-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:8px;margin-top:9px;background:var(--surface);border:2px dashed var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;width:100%;transition:all .15s;font-weight:500;}
 .add-row-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-l);}
-.view-mode-controls{display:none;align-items:center;border:1px solid var(--border2);border-radius:6px;overflow:hidden;background:var(--raised);}
-.view-mode-btn{border:0;border-right:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--sans);font-size:11px;padding:5px 10px;cursor:pointer;}
+.view-mode-controls{display:none;align-items:center;border:1px solid var(--accent);border-radius:6px;overflow:hidden;background:var(--raised);flex-shrink:0;}
+.view-mode-label{font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.view-mode-btn{border:0;border-right:1px solid var(--border2);background:transparent;color:var(--accent);font-family:var(--sans);font-size:11px;font-weight:600;padding:5px 12px;cursor:pointer;white-space:nowrap;}
 .view-mode-btn:last-child{border-right:0;}
 .view-mode-btn.active{background:var(--blue);color:#fff;}
 .record-view{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;min-height:100%;}
@@ -501,6 +503,7 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
     <div class="ed-bar">
       <span class="ed-bar-title" id="ed-title">SHEET: <em>CONFIG（設定）</em></span>
       <span class="chg-badge" id="chg-badge">変更あり</span>
+      <span class="view-mode-label" id="view-mode-label" style="display:none;">表示:</span>
       <div class="view-mode-controls" id="view-mode-controls">
         <button class="view-mode-btn active" id="view-mode-table" onclick="setTableViewMode('table')">表</button>
         <button class="view-mode-btn" id="view-mode-form" onclick="setTableViewMode('form')">フォーム</button>
@@ -784,18 +787,10 @@ function buildGasCode(){
 // ═══════════════════════════════════════════════════════
 
 const CONFIG_DEFS = [
-  {sec:'🏷 アプリ基本設定'},
+  {sec:'🌐 全体共通（複数画面で使用）'},
   {key:'app_title',    lbl:'アプリタイトル',       desc:'アプリのメインタイトル。例: 増田まち歩きガイド'},
   {key:'app_subtitle', lbl:'サブタイトル',          desc:'タイトル下に小さく表示。例: 重要伝統的建造物群保存地区'},
-  {key:'area_name',    lbl:'エリア名（従来）',      desc:'プライズの「どこで達成したか」に使用。area_pref/city/town 未設定時のフォールバック'},
-  {sec:'📁 メディアリポジトリ（URL自動導出）'},
-  {key:'photo_repo', lbl:'写真リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の写真URLを {ID}.webp の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-photo'},
-  {key:'audio_repo', lbl:'音声リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の音声URLを {ID}_役割.mp3 の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-audio'},
-  {sec:'🎙 音声生成メモ（AI Studio）'},
-  {key:'tts_scene',          lbl:'Scene（貼付用）',          desc:'AI Studioの「Scene」欄にそのまま貼り付ける文面。一括チェック画面からワンクリックでコピーできる。例: 落ち着いたドキュメンタリー番組・街歩き番組のナレーション'},
-  {key:'tts_sample_context', lbl:'Sample Context（貼付用）', desc:'AI Studioの「Sample Context」欄にそのまま貼り付ける文面。ワンクリックでコピーできる'},
-  {key:'tts_speakers',       lbl:'よく使う話者',              desc:'よく使う話者を手入力でメモ（「あれ？誰にしたっけ？」防止）。例: 男性=Charon（接近・出発・次へ・注意喚起）／女性=Kore（到着・解説）'},
-  {sec:'🎨 カラー設定'},
+  {key:'lang',         lbl:'UI言語',        desc:'ja / en など。未設定時は ja', type:'sel', opts:['ja','en']},
   {key:'color_bg',      lbl:'背景色',               desc:'画面全体の背景 (--bg)。例: #F4EFE4', type:'color'},
   {key:'color_paper',   lbl:'カード背景色',         desc:'カード・白い領域 (--paper)。例: #FAF7F1', type:'color'},
   {key:'color_ink',     lbl:'文字・暗背景色',       desc:'テキストやホーム画面の背景 (--ink)。例: #1C1A16', type:'color'},
@@ -803,17 +798,28 @@ const CONFIG_DEFS = [
   {key:'color_gold',    lbl:'ゴールドカラー',       desc:'プライズ・ゴール・装飾 (--gold)。例: #9A7A3A', type:'color'},
   {key:'color_muted',   lbl:'ミュート色',           desc:'サブテキスト・補助情報 (--muted)。例: #7A7060', type:'color'},
   {key:'color_border',  lbl:'ボーダー色',           desc:'罫線・区切り線 (--border)。例: #D4C9B0', type:'color'},
-  {sec:'🔤 フォント設定'},
   {key:'font_title',         lbl:'タイトルフォント',     desc:'見出し用フォント名。例: Noto Serif JP'},
   {key:'font_body',          lbl:'本文フォント',         desc:'本文用フォント名。例: Noto Sans JP'},
   {key:'font_size_base',     lbl:'本文フォントサイズ',   desc:'--font-size-base の値。例: 14px'},
   {key:'font_size_heading',  lbl:'見出しフォントサイズ', desc:'--font-size-heading の値。例: 20px'},
   {key:'font_size_explain',  lbl:'解説フォントサイズ',   desc:'--font-size-explain の値。例: 14px'},
-  {sec:'🖼 ヘッダー画像'},
+  {key:'area_name',    lbl:'エリア名（従来）',      desc:'プライズの「どこで達成したか」に使用。area_pref/city/town 未設定時のフォールバック'},
+  {key:'area_pref',    lbl:'都道府県',    desc:'例: 秋田県'},
+  {key:'area_city',    lbl:'市区町村',    desc:'例: 横手市'},
+  {key:'area_town',    lbl:'町名',        desc:'例: 増田町'},
+  {key:'area_display', lbl:'表示モード',  desc:'custom / pref / city / town / pref+city / pref+town / city+town / pref+city+town', type:'sel', opts:['custom','pref','city','town','pref+city','pref+town','city+town','pref+city+town']},
+  {key:'prefecture',   lbl:'都道府県（旧項目）', desc:'旧データ互換用。通常は area_pref を使用'},
+  {key:'city',         lbl:'市区町村（旧項目）', desc:'旧データ互換用。通常は area_city を使用'},
+  {key:'area_lat',     lbl:'エリア緯度',    desc:'天気・近くのコース判定の基準地点。例: 39.319826'},
+  {key:'area_lng',     lbl:'エリア経度',    desc:'天気・近くのコース判定の基準地点。例: 140.523891'},
+  {key:'weather_lat',  lbl:'天気取得 緯度', desc:'area_latより優先して天気取得に使う緯度'},
+  {key:'weather_lng',  lbl:'天気取得 経度', desc:'area_lngより優先して天気取得に使う経度'},
+  {key:'photo_repo', lbl:'写真リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の写真URLを {ID}.webp の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-photo'},
+  {key:'audio_repo', lbl:'音声リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の音声URLを {ID}_役割.mp3 の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-audio'},
+  {sec:'🏠 トップ画面（ホーム）'},
   {key:'header_type',      lbl:'ヘッダータイプ',            desc:'「image」で画像表示 / 「none」で非表示'},
   {key:'header_style',     lbl:'ヘッダースタイル',          desc:'A: グラデ標準 / B: 写真ゾーン分離 / C: テキストシャドウ（デフォルト: A）'},
   {key:'header_image_url', lbl:'ヘッダー画像URL（優先）',   desc:'GitHub Pages等の直接URL（こちらが優先）'},
-  {sec:'🏷 ホームバッジ設定'},
   {key:'home_badge_text',          lbl:'バッジテキスト',        desc:'ヘッダー内バッジに表示するテキスト。例: MACHI ARUKI GUIDE'},
   {key:'home_badge_font_size',     lbl:'バッジフォントサイズ',  desc:'例: 9px'},
   {key:'home_badge_color',         lbl:'バッジ文字色',          desc:'例: #B83232', type:'color'},
@@ -825,24 +831,10 @@ const CONFIG_DEFS = [
   {key:'home_badge_right',         lbl:'バッジ右位置',          desc:'例: auto（デフォルト）'},
   {key:'home_badge_top',           lbl:'バッジ上位置',          desc:'例: 40px（デフォルト）'},
   {key:'home_badge_bottom',        lbl:'バッジ下位置',          desc:'例: auto（デフォルト）'},
-  {sec:'🗺 エリア表示設定'},
-  {key:'area_pref',    lbl:'都道府県',    desc:'例: 秋田県'},
-  {key:'area_city',    lbl:'市区町村',    desc:'例: 横手市'},
-  {key:'area_town',    lbl:'町名',        desc:'例: 増田町'},
-  {key:'area_display', lbl:'表示モード',  desc:'custom / pref / city / town / pref+city / pref+town / city+town / pref+city+town', type:'sel', opts:['custom','pref','city','town','pref+city','pref+town','city+town','pref+city+town']},
-  {key:'prefecture',   lbl:'都道府県（旧項目）', desc:'旧データ互換用。通常は area_pref を使用'},
-  {key:'city',         lbl:'市区町村（旧項目）', desc:'旧データ互換用。通常は area_city を使用'},
-  {key:'area_lat',     lbl:'エリア緯度',    desc:'天気・近くのコース判定の基準地点。例: 39.319826'},
-  {key:'area_lng',     lbl:'エリア経度',    desc:'天気・近くのコース判定の基準地点。例: 140.523891'},
-  {key:'weather_lat',  lbl:'天気取得 緯度', desc:'area_latより優先して天気取得に使う緯度'},
-  {key:'weather_lng',  lbl:'天気取得 経度', desc:'area_lngより優先して天気取得に使う経度'},
-  {key:'max_nearby_courses', lbl:'近くのコース表示数', desc:'現在地に近いコースを最大何件表示するか。例: 3', type:'num'},
-  {key:'lang',         lbl:'UI言語',        desc:'ja / en など。未設定時は ja', type:'sel', opts:['ja','en']},
-  {sec:'☀ 天気・暑さ指数（WBGT）'},
   {key:'wbgt_enabled',    lbl:'WBGT表示',        desc:'TRUEで暑さ指数バー・注意カードを表示', type:'bool'},
   {key:'wbgt_point_code', lbl:'WBGT地点コード',   desc:'環境省 暑さ指数情報提供地点一覧の地点コード'},
   {key:'wbgt_proxy_url',  lbl:'WBGT中継URL',      desc:'環境省データ取得用GASプロキシURL'},
-  {sec:'🌗 ホームテーマ色'},
+  {key:'max_nearby_courses', lbl:'近くのコース表示数', desc:'現在地に近いコースを最大何件表示するか。例: 3', type:'num'},
   {key:'home_bg_light',            lbl:'ライト 背景色',          desc:'ホーム画面ライトモード背景', type:'color'},
   {key:'home_card_bg_light',       lbl:'ライト カード背景',      desc:'例: rgba(255,255,255,.75)'},
   {key:'home_card_border_light',   lbl:'ライト カード枠線',      desc:'例: rgba(28,26,22,.12)'},
@@ -861,24 +853,29 @@ const CONFIG_DEFS = [
   {key:'home_toggle_bg_dark',      lbl:'ダーク 切替ボタン背景',  desc:'例: rgba(0,0,0,.25)'},
   {key:'home_toggle_border_dark',  lbl:'ダーク 切替ボタン枠線',  desc:'例: rgba(255,255,255,.18)'},
   {key:'home_toggle_color_dark',   lbl:'ダーク 切替ボタン文字',  desc:'例: #FFFFFF', type:'color'},
-  {sec:'⚠ 注意アナウンス（省略可・デフォルト文あり）'},
+  {sec:'🚶 まちあるき画面（ナビ・注意アナウンス・特別イベント）'},
   {key:'caution_shigaichi',     lbl:'市街地コース 注意テキスト',   desc:'コース開始時に読み上げる注意事項'},
   {key:'caution_koen',          lbl:'公園コース 注意テキスト',     desc:'コース開始時に読み上げる注意事項'},
   {key:'caution_konzai',        lbl:'混在コース 注意テキスト',     desc:'コース開始時に読み上げる注意事項'},
   {key:'caution_shigaichi_url', lbl:'市街地 注意音声URL',         desc:'MP3等のURL（テキストより優先）', type:'audio'},
   {key:'caution_koen_url',      lbl:'公園 注意音声URL',           desc:'MP3等のURL（テキストより優先）', type:'audio'},
   {key:'caution_konzai_url',    lbl:'混在 注意音声URL',           desc:'MP3等のURL（テキストより優先）', type:'audio'},
-  {sec:'🎉 特別イベント設定'},
   {key:'special_enabled',         lbl:'特別イベント有効',          desc:'TRUEで特別アナウンス有効（全コース共通）', type:'bool'},
   {key:'special_start_date',      lbl:'特別イベント開始日',        desc:'YYYY-MM-DD（空白=常時有効）'},
   {key:'special_end_date',        lbl:'特別イベント終了日',        desc:'YYYY-MM-DD（空白=常時有効）'},
   {key:'audio_special_start_url', lbl:'特別スタート音声URL',       desc:'特別期間のスタート時に再生（全コース共通）', type:'audio'},
   {key:'audio_special_goal_url',  lbl:'特別ゴール音声URL',         desc:'特別期間のゴール到達時に再生（全コース共通）', type:'audio'},
-  {sec:'🏅 賞状（修了書）設定'},
+  {key:'next_lock_sec', lbl:'「次へ」ボタンロック秒数', desc:'到着時に「次へ」ボタンをロックする秒数（保険タイマー）。例: 30（0で無制限待機）'},
+  {key:'walk_speed_limit_kmh', lbl:'歩行カウント停止速度', desc:'この速度を超える移動は歩行距離に加算しません。例: 7', type:'num'},
+  {key:'walk_resume_kmh', lbl:'歩行カウント再開速度', desc:'乗り物判定後、この速度以下で歩行カウントを再開します。例: 5.5', type:'num'},
+  {key:'walk_speed_hits', lbl:'乗り物判定の連続回数', desc:'停止速度超過が何回続いたら乗り物モードにするか。例: 2', type:'num'},
+  {key:'walk_accuracy_max_m', lbl:'歩行加算GPS最大誤差', desc:'GPS精度がこのm数より悪い時は歩行距離に加算しません。例: 50', type:'num'},
+  {key:'walk_segment_max_m', lbl:'歩行加算最大区間距離', desc:'1回のGPS更新でこのm数以上動いた場合はワープ扱いで加算しません。例: 50', type:'num'},
+  {sec:'🏅 修了証画面'},
   {key:'cert_award_title', lbl:'修了証タイトル',     desc:'賞状の大見出し。例: 修了証　（デフォルト: 修了証）'},
   {key:'cert_issuer',      lbl:'発行者名',            desc:'賞状の発行者欄。例: 増田町観光協会（area_nameがフォールバック）'},
-  {key:'cert_seal_svg_url',lbl:'印鑑SVG URL',         desc:'GitHub Pages等のSVG直接URL。入力時は印鑑テキストより優先'},
   {key:'cert_seal_text',   lbl:'印鑑テキスト',        desc:'印鑑（丸印）に表示するテキスト。例: 増田\n観光'},
+  {key:'cert_seal_svg_url',lbl:'印鑑SVG URL',         desc:'GitHub Pages等のSVG直接URL。入力時は印鑑テキストより優先'},
   {key:'cert_body_text',   lbl:'本文追加テキスト',    desc:'賞状本文に付け加えるテキスト。例: 今後もまち歩きをお楽しみください。'},
   {key:'cert_title_font_family',     lbl:'賞状タイトルフォント',   desc:'--cert-title-font-family。例: Yuji Syuku'},
   {key:'cert_title_font_size',       lbl:'賞状タイトルサイズ',     desc:'--cert-title-font-size。例: 32px'},
@@ -891,13 +888,10 @@ const CONFIG_DEFS = [
   {key:'cert_seal_text_size',    lbl:'印鑑テキストサイズ', desc:'--cert-seal-text-size。例: 12px'},
   {key:'cert_seal_text_color',   lbl:'印鑑テキスト色',     desc:'--cert-seal-text-color。例: #B83232', type:'color'},
   {key:'cert_seal_line_height',  lbl:'印鑑行間',           desc:'--cert-seal-line-height。例: 1.5'},
-  {sec:'🧭 ナビ設定'},
-  {key:'next_lock_sec', lbl:'「次へ」ボタンロック秒数', desc:'到着時に「次へ」ボタンをロックする秒数（保険タイマー）。例: 30（0で無制限待機）'},
-  {key:'walk_speed_limit_kmh', lbl:'歩行カウント停止速度', desc:'この速度を超える移動は歩行距離に加算しません。例: 7', type:'num'},
-  {key:'walk_resume_kmh', lbl:'歩行カウント再開速度', desc:'乗り物判定後、この速度以下で歩行カウントを再開します。例: 5.5', type:'num'},
-  {key:'walk_speed_hits', lbl:'乗り物判定の連続回数', desc:'停止速度超過が何回続いたら乗り物モードにするか。例: 2', type:'num'},
-  {key:'walk_accuracy_max_m', lbl:'歩行加算GPS最大誤差', desc:'GPS精度がこのm数より悪い時は歩行距離に加算しません。例: 50', type:'num'},
-  {key:'walk_segment_max_m', lbl:'歩行加算最大区間距離', desc:'1回のGPS更新でこのm数以上動いた場合はワープ扱いで加算しません。例: 50', type:'num'},
+  {sec:'🎙 制作メモ（AI Studio・画面設定ではない）'},
+  {key:'tts_scene',          lbl:'Scene（貼付用）',          desc:'AI Studioの「Scene」欄にそのまま貼り付ける文面。一括チェック画面からワンクリックでコピーできる。例: 落ち着いたドキュメンタリー番組・街歩き番組のナレーション'},
+  {key:'tts_sample_context', lbl:'Sample Context（貼付用）', desc:'AI Studioの「Sample Context」欄にそのまま貼り付ける文面。ワンクリックでコピーできる'},
+  {key:'tts_speakers',       lbl:'よく使う話者',              desc:'よく使う話者を手入力でメモ（「あれ？誰にしたっけ？」防止）。例: 男性=Charon（接近・出発・次へ・注意喚起）／女性=Kore（到着・解説）'},
 ];
 
 const COURSE_FIELDS = [
@@ -1218,9 +1212,11 @@ function showTab(tab){
 
 function updateViewModeControls(tab){
   const controls=document.getElementById('view-mode-controls');
+  const label=document.getElementById('view-mode-label');
   const enabled=tab==='spots'||tab==='facilities';
   if(!controls) return;
   controls.style.display=enabled?'flex':'none';
+  if(label) label.style.display=enabled?'inline':'none';
   if(!enabled) return;
   document.getElementById('view-mode-table')?.classList.toggle('active',tableViewMode[tab]==='table');
   document.getElementById('view-mode-form')?.classList.toggle('active',tableViewMode[tab]==='form');
@@ -1261,18 +1257,13 @@ const TITLE_STYLE_DEFS = [
 ];
 
 function getConfigDisplayDefs(){
-  const areaStart = CONFIG_DEFS.findIndex((d,i)=>d.sec && CONFIG_DEFS[i+1]?.key === 'area_pref');
-  if(areaStart < 0) return CONFIG_DEFS;
-  let areaEnd = CONFIG_DEFS.findIndex((d,i)=>i > areaStart && d.sec);
-  if(areaEnd < 0) areaEnd = CONFIG_DEFS.length;
-  const areaBlock = CONFIG_DEFS.slice(areaStart, areaEnd);
+  // CONFIG_DEFSの並び順(セクション構成)を素通りしつつ、TITLE_STYLE_DEFSだけをapp_subtitleの直後に差し込む。
+  // セクションの構成が変わってもここは影響を受けない(area_pref直前が必ずセクション見出し、という前提には依存しない)。
   const out = [];
-  CONFIG_DEFS.forEach((def, idx)=>{
-    if(idx >= areaStart && idx < areaEnd) return;
+  CONFIG_DEFS.forEach(def=>{
     if(def.key === 'header_image_id') return;
     out.push(def);
     if(def.key === 'app_subtitle') out.push(...TITLE_STYLE_DEFS);
-    if(def.key === 'area_name') out.push(...areaBlock);
   });
   return out;
 }
