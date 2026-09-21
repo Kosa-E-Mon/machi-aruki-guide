@@ -757,7 +757,13 @@ function gasTokenStorageKey(){
   // シートIDごとにトークンを分ける(同じパソコンで複数地域を設定しても鍵が共用にならないように)
   const raw = (document.getElementById('sheet-url')?.value || '').trim();
   const sid = (typeof parseSheetId === 'function' ? parseSheetId(raw) : null) || raw || 'default';
-  return 'lwg_editor_gas_token__' + sid;
+  const key = 'lwg_editor_gas_token__' + sid;
+  // 旧形式(シート横断で1個だけ)のトークンが既にあれば、このシート用として引き継ぐ(既存デプロイのトークンを無効化しないため)
+  if (!localStorage.getItem(key)) {
+    const old = localStorage.getItem('lwg_editor_gas_token');
+    if (old) localStorage.setItem(key, old);
+  }
+  return key;
 }
 function getGasToken(){
   const key = gasTokenStorageKey();
