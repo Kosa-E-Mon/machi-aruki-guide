@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>まち歩きガイド — データエディタ v4</title>
+<title>まちあるきガイド — エディター</title>
+<link rel="stylesheet" href="editor-ui.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -68,8 +69,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100vh
 
 /* EDITOR AREA */
 .ed-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
-.ed-bar{height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:9px;flex-shrink:0;}
-.ed-bar-title{font-size:11px;font-weight:600;color:var(--muted);}
+.ed-bar{height:auto;min-height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;flex-wrap:wrap;padding:5px 14px;gap:9px;flex-shrink:0;}
+.ed-bar-title{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.ed-bar>.btn{flex-shrink:0;}
 .ed-bar-title em{color:var(--text);font-style:normal;}
 .chg-badge{background:var(--changed);border:1px solid var(--changed-b);color:#7A5A00;font-size:10px;font-weight:600;padding:2px 8px;border-radius:9px;display:none;}
 .chg-badge.show{display:inline-block;}
@@ -154,8 +156,9 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 .td-au .c-in{flex:1;padding:4px 6px;}
 .add-row-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:8px;margin-top:9px;background:var(--surface);border:2px dashed var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;width:100%;transition:all .15s;font-weight:500;}
 .add-row-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-l);}
-.view-mode-controls{display:none;align-items:center;border:1px solid var(--border2);border-radius:6px;overflow:hidden;background:var(--raised);}
-.view-mode-btn{border:0;border-right:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--sans);font-size:11px;padding:5px 10px;cursor:pointer;}
+.view-mode-controls{display:none;align-items:center;border:1px solid var(--accent);border-radius:6px;overflow:hidden;background:var(--raised);flex-shrink:0;}
+.view-mode-label{font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.view-mode-btn{border:0;border-right:1px solid var(--border2);background:transparent;color:var(--accent);font-family:var(--sans);font-size:11px;font-weight:600;padding:5px 12px;cursor:pointer;white-space:nowrap;}
 .view-mode-btn:last-child{border-right:0;}
 .view-mode-btn.active{background:var(--blue);color:#fff;}
 .record-view{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;min-height:100%;}
@@ -387,9 +390,10 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 :root{--editor-font-size:13px;}
 html{height:100%;overflow:hidden;}
 body{height:100dvh;overflow:hidden;}
-.hdr{height:auto;min-height:56px;max-height:112px;flex-wrap:wrap;align-content:center;padding:7px 14px;overflow-y:auto;overflow-x:hidden;}
+.hdr{height:auto;min-height:56px;max-height:168px;flex-wrap:wrap;align-content:center;padding:7px 14px;overflow-y:auto;overflow-x:hidden;}
 .hdr-field{min-width:0;}
 .hdr-in{width:clamp(180px,22vw,300px);}
+#gas-token{width:clamp(120px,10vw,160px);}
 .hdr>.spacer{display:block;order:19;flex:0 0 100%;height:0;}
 .hdr-qr{order:20;}
 .hdr-qr-btn{order:21;}
@@ -438,6 +442,10 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
   <div class="hdr-field">
     <div class="hdr-lbl">GAS ウェブアプリURL（直接書き込み用）<span id="gas-status-lbl" style="margin-left:4px;"></span></div>
     <input class="hdr-in" id="gas-url" placeholder="https://script.google.com/macros/s/..." oninput="onGasUrlChange()">
+  </div>
+  <div class="hdr-field">
+    <div class="hdr-lbl">書き込みトークン</div>
+    <input class="hdr-in" id="gas-token" placeholder="「GAS設定方法」で自動生成" oninput="onGasTokenChange()">
   </div>
   <button class="btn btn-o btn-sm" onclick="testGas()">接続テスト</button>
   <button class="btn btn-blue btn-sm" onclick="showGasModal()">📋 GAS設定方法</button>
@@ -496,6 +504,7 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
     <div class="ed-bar">
       <span class="ed-bar-title" id="ed-title">SHEET: <em>CONFIG（設定）</em></span>
       <span class="chg-badge" id="chg-badge">変更あり</span>
+      <span class="view-mode-label" id="view-mode-label" style="display:none;">表示:</span>
       <div class="view-mode-controls" id="view-mode-controls">
         <button class="view-mode-btn active" id="view-mode-table" onclick="setTableViewMode('table')">表</button>
         <button class="view-mode-btn" id="view-mode-form" onclick="setTableViewMode('form')">フォーム</button>
@@ -589,7 +598,10 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
         <div class="step-title"><span class="step-n">4</span>表示された「ウェブアプリのURL」をコピーして、エディタのGAS URLフィールドに貼り付け → 「接続テスト」</div>
       </div>
       <div class="modal-note">
-        ⚠ <strong>注意:</strong> スクリプトを変更した場合は「新しいデプロイ」でバージョンを上げてください。URLは同じまま使い続けられます。初回実行時にGoogleアカウントの認証が求められます。
+        🔑 <strong>書き込みトークン:</strong> 上記コード内の <code id="gas-token-display" style="font-family:var(--mono);"></code> は、このスプレッドシート専用に自動生成した値で、「書き込みトークン」欄に自動で入力済みです(同じパソコンで別のスプレッドシートを設定しても、シートごとに別のトークンが作られます)。<strong>別のパソコン・スマホでこのシートに接続する場合は、GAS URLとあわせてこのトークンも控えて、その端末の「書き込みトークン」欄に貼り付けてください。</strong>他人にURLだけ知られても書き込みできなくなる、簡易的な鍵の役割です。
+      </div>
+      <div class="modal-note">
+        ⚠ <strong>注意:</strong> スクリプトを変更した場合は「新しいデプロイ」でバージョンを上げてください。URLは同じまま使い続けられます。初回実行時にGoogleアカウントの認証が求められます。既存のシートを使っている場合も、このコードに貼り替えてバージョンを上げれば、書き込みトークン認証・保存前バックアップが有効になります。
       </div>
     </div>
   </div>
@@ -650,17 +662,24 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
 // GAS SCRIPT CODE (displayed in modal)
 // ═══════════════════════════════════════════════════════
 
-const GAS_CODE = `/**
- * まち歩きエディタ v3 — Google Apps Script
+const GAS_CODE_TEMPLATE = `/**
+ * まち歩きエディタ v4 — Google Apps Script
  * スプレッドシートの「拡張機能」→「Apps Script」に貼り付けてください。
  * デプロイ設定: ウェブアプリ / アクセス: 全員
+ * ※ WRITE_TOKEN はこのエディタが自動生成した値です。手動で書き換えないでください
+ *   （エディタ側の「書き込みトークン」欄と値が一致している必要があります）。
  */
+
+const WRITE_TOKEN = '__TOKEN__';
 
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
+    if (body.token !== WRITE_TOKEN) {
+      return out({ok: false, error: '認証エラー: 書き込みトークンが一致しません'});
+    }
     if (body.action === 'write') {
-      writeSheet(body.sheet, body.rows);
+      writeSheet(body.sheet, body.rows, !!body.force);
       return out({ok: true});
     }
     return out({ok: false, error: 'Unknown action'});
@@ -673,7 +692,7 @@ function doGet(e) {
   const cb = e.parameter.callback;
   try {
     if (e.parameter.action === 'ping') {
-      return out({ok: true, version: '3.0'}, cb);
+      return out({ok: true, version: '4.0'}, cb);
     }
     return out({ok: false, error: 'GET is for ping only'}, cb);
   } catch(ex) {
@@ -681,7 +700,7 @@ function doGet(e) {
   }
 }
 
-function writeSheet(sheetName, rows) {
+function writeSheet(sheetName, rows, force) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) throw new Error('シートが見つかりません: ' + sheetName);
@@ -691,8 +710,19 @@ function writeSheet(sheetName, rows) {
   const headers = sheet.getRange(1, 1, 1, lastCol)
     .getValues()[0].map(h => String(h).trim());
 
-  // ヘッダー行(1行目)を残してデータをクリア
   const lastRow = sheet.getLastRow();
+  const existingCount = Math.max(0, lastRow - 1);
+  const newCount = rows ? rows.length : 0;
+
+  // 件数が大きく減る場合は誤操作の可能性が高いため中断（エディタ側の確認後はforce:trueで再送される）
+  if (!force && existingCount >= 5 && newCount < existingCount * 0.5) {
+    throw new Error('件数が' + existingCount + '件から' + newCount + '件に大きく減ります。誤操作の可能性があるため保存を中断しました');
+  }
+
+  // 上書き前に1世代分だけバックアップ（_backup_シート名 という非表示シートに保存。万一のときは手動で戻せます）
+  backupSheet(ss, sheetName, sheet, lastCol, lastRow);
+
+  // ヘッダー行(1行目)を残してデータをクリア
   if (lastRow > 1) {
     sheet.getRange(2, 1, lastRow - 1, lastCol).clearContent();
   }
@@ -701,6 +731,22 @@ function writeSheet(sheetName, rows) {
   const data = rows.map(row => headers.map(h => String(row[h] ?? '')));
   sheet.getRange(2, 1, data.length, headers.length).setValues(data);
   SpreadsheetApp.flush();
+}
+
+function backupSheet(ss, sheetName, sheet, lastCol, lastRow) {
+  const backupName = '_backup_' + sheetName;
+  let bk = ss.getSheetByName(backupName);
+  if (!bk) {
+    bk = ss.insertSheet(backupName);
+    bk.hideSheet();
+  } else {
+    bk.clearContents();
+  }
+  if (lastRow > 0 && lastCol > 0) {
+    const vals = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    bk.getRange(1, 1, lastRow, lastCol).setValues(vals);
+  }
+  bk.getRange(1, lastCol + 2).setValue('backup_at: ' + new Date().toISOString());
 }
 
 function out(obj, callback) {
@@ -712,23 +758,43 @@ function out(obj, callback) {
   return ContentService.createTextOutput(text).setMimeType(mime);
 }`;
 
+function gasTokenStorageKey(){
+  // シートIDごとにトークンを分ける(同じパソコンで複数地域を設定しても鍵が共用にならないように)
+  const raw = (document.getElementById('sheet-url')?.value || '').trim();
+  const sid = (typeof parseSheetId === 'function' ? parseSheetId(raw) : null) || raw || 'default';
+  const key = 'lwg_editor_gas_token__' + sid;
+  // 旧形式(シート横断で1個だけ)のトークンが既にあれば、このシート用として引き継ぐ(既存デプロイのトークンを無効化しないため)
+  if (!localStorage.getItem(key)) {
+    const old = localStorage.getItem('lwg_editor_gas_token');
+    if (old && !localStorage.getItem('lwg_editor_legacy_token_migrated')) {
+      localStorage.setItem(key, old);
+      localStorage.setItem('lwg_editor_legacy_token_migrated', sid);
+    }
+  }
+  return key;
+}
+function getGasToken(){
+  const key = gasTokenStorageKey();
+  let t = document.getElementById('gas-token')?.value.trim() || localStorage.getItem(key);
+  if (!t) {
+    t = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join('');
+    localStorage.setItem(key, t);
+  }
+  return t;
+}
+function buildGasCode(){
+  return GAS_CODE_TEMPLATE.replace("'__TOKEN__'", JSON.stringify(getGasToken()));
+}
+
 // ═══════════════════════════════════════════════════════
 // SCHEMA DEFINITIONS
 // ═══════════════════════════════════════════════════════
 
 const CONFIG_DEFS = [
-  {sec:'🏷 アプリ基本設定'},
+  {sec:'🌐 全体共通（複数画面で使用）'},
   {key:'app_title',    lbl:'アプリタイトル',       desc:'アプリのメインタイトル。例: 増田まち歩きガイド'},
   {key:'app_subtitle', lbl:'サブタイトル',          desc:'タイトル下に小さく表示。例: 重要伝統的建造物群保存地区'},
-  {key:'area_name',    lbl:'エリア名（従来）',      desc:'プライズの「どこで達成したか」に使用。area_pref/city/town 未設定時のフォールバック'},
-  {sec:'📁 メディアリポジトリ（URL自動導出）'},
-  {key:'photo_repo', lbl:'写真リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の写真URLを {ID}.webp の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-photo'},
-  {key:'audio_repo', lbl:'音声リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の音声URLを {ID}_役割.mp3 の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-audio'},
-  {sec:'🎙 音声生成メモ（AI Studio）'},
-  {key:'tts_scene',          lbl:'Scene（貼付用）',          desc:'AI Studioの「Scene」欄にそのまま貼り付ける文面。一括チェック画面からワンクリックでコピーできる。例: 落ち着いたドキュメンタリー番組・街歩き番組のナレーション'},
-  {key:'tts_sample_context', lbl:'Sample Context（貼付用）', desc:'AI Studioの「Sample Context」欄にそのまま貼り付ける文面。ワンクリックでコピーできる'},
-  {key:'tts_speakers',       lbl:'よく使う話者',              desc:'よく使う話者を手入力でメモ（「あれ？誰にしたっけ？」防止）。例: 男性=Charon（接近・出発・次へ・注意喚起）／女性=Kore（到着・解説）'},
-  {sec:'🎨 カラー設定'},
+  {key:'lang',         lbl:'UI言語',        desc:'ja / en など。未設定時は ja', type:'sel', opts:['ja','en']},
   {key:'color_bg',      lbl:'背景色',               desc:'画面全体の背景 (--bg)。例: #F4EFE4', type:'color'},
   {key:'color_paper',   lbl:'カード背景色',         desc:'カード・白い領域 (--paper)。例: #FAF7F1', type:'color'},
   {key:'color_ink',     lbl:'文字・暗背景色',       desc:'テキストやホーム画面の背景 (--ink)。例: #1C1A16', type:'color'},
@@ -736,17 +802,28 @@ const CONFIG_DEFS = [
   {key:'color_gold',    lbl:'ゴールドカラー',       desc:'プライズ・ゴール・装飾 (--gold)。例: #9A7A3A', type:'color'},
   {key:'color_muted',   lbl:'ミュート色',           desc:'サブテキスト・補助情報 (--muted)。例: #7A7060', type:'color'},
   {key:'color_border',  lbl:'ボーダー色',           desc:'罫線・区切り線 (--border)。例: #D4C9B0', type:'color'},
-  {sec:'🔤 フォント設定'},
   {key:'font_title',         lbl:'タイトルフォント',     desc:'見出し用フォント名。例: Noto Serif JP'},
   {key:'font_body',          lbl:'本文フォント',         desc:'本文用フォント名。例: Noto Sans JP'},
   {key:'font_size_base',     lbl:'本文フォントサイズ',   desc:'--font-size-base の値。例: 14px'},
   {key:'font_size_heading',  lbl:'見出しフォントサイズ', desc:'--font-size-heading の値。例: 20px'},
   {key:'font_size_explain',  lbl:'解説フォントサイズ',   desc:'--font-size-explain の値。例: 14px'},
-  {sec:'🖼 ヘッダー画像'},
+  {key:'area_name',    lbl:'エリア名（従来）',      desc:'プライズの「どこで達成したか」に使用。area_pref/city/town 未設定時のフォールバック'},
+  {key:'area_pref',    lbl:'都道府県',    desc:'例: 秋田県'},
+  {key:'area_city',    lbl:'市区町村',    desc:'例: 横手市'},
+  {key:'area_town',    lbl:'町名',        desc:'例: 増田町'},
+  {key:'area_display', lbl:'表示モード',  desc:'custom / pref / city / town / pref+city / pref+town / city+town / pref+city+town', type:'sel', opts:['custom','pref','city','town','pref+city','pref+town','city+town','pref+city+town']},
+  {key:'prefecture',   lbl:'都道府県（旧項目）', desc:'旧データ互換用。通常は area_pref を使用'},
+  {key:'city',         lbl:'市区町村（旧項目）', desc:'旧データ互換用。通常は area_city を使用'},
+  {key:'area_lat',     lbl:'エリア緯度',    desc:'天気・近くのコース判定の基準地点。例: 39.319826'},
+  {key:'area_lng',     lbl:'エリア経度',    desc:'天気・近くのコース判定の基準地点。例: 140.523891'},
+  {key:'weather_lat',  lbl:'天気取得 緯度', desc:'area_latより優先して天気取得に使う緯度'},
+  {key:'weather_lng',  lbl:'天気取得 経度', desc:'area_lngより優先して天気取得に使う経度'},
+  {key:'photo_repo', lbl:'写真リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の写真URLを {ID}.webp の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-photo'},
+  {key:'audio_repo', lbl:'音声リポジトリ', desc:'「ユーザー名/リポジトリ名」形式（URLではない）。設定すると空欄の音声URLを {ID}_役割.mp3 の命名規則で自動導出。例: kosa-e-mon/local-walk-guide-audio'},
+  {sec:'🏠 トップ画面（ホーム）'},
   {key:'header_type',      lbl:'ヘッダータイプ',            desc:'「image」で画像表示 / 「none」で非表示'},
   {key:'header_style',     lbl:'ヘッダースタイル',          desc:'A: グラデ標準 / B: 写真ゾーン分離 / C: テキストシャドウ（デフォルト: A）'},
   {key:'header_image_url', lbl:'ヘッダー画像URL（優先）',   desc:'GitHub Pages等の直接URL（こちらが優先）'},
-  {sec:'🏷 ホームバッジ設定'},
   {key:'home_badge_text',          lbl:'バッジテキスト',        desc:'ヘッダー内バッジに表示するテキスト。例: MACHI ARUKI GUIDE'},
   {key:'home_badge_font_size',     lbl:'バッジフォントサイズ',  desc:'例: 9px'},
   {key:'home_badge_color',         lbl:'バッジ文字色',          desc:'例: #B83232', type:'color'},
@@ -758,24 +835,10 @@ const CONFIG_DEFS = [
   {key:'home_badge_right',         lbl:'バッジ右位置',          desc:'例: auto（デフォルト）'},
   {key:'home_badge_top',           lbl:'バッジ上位置',          desc:'例: 40px（デフォルト）'},
   {key:'home_badge_bottom',        lbl:'バッジ下位置',          desc:'例: auto（デフォルト）'},
-  {sec:'🗺 エリア表示設定'},
-  {key:'area_pref',    lbl:'都道府県',    desc:'例: 秋田県'},
-  {key:'area_city',    lbl:'市区町村',    desc:'例: 横手市'},
-  {key:'area_town',    lbl:'町名',        desc:'例: 増田町'},
-  {key:'area_display', lbl:'表示モード',  desc:'custom / pref / city / town / pref+city / pref+town / city+town / pref+city+town', type:'sel', opts:['custom','pref','city','town','pref+city','pref+town','city+town','pref+city+town']},
-  {key:'prefecture',   lbl:'都道府県（旧項目）', desc:'旧データ互換用。通常は area_pref を使用'},
-  {key:'city',         lbl:'市区町村（旧項目）', desc:'旧データ互換用。通常は area_city を使用'},
-  {key:'area_lat',     lbl:'エリア緯度',    desc:'天気・近くのコース判定の基準地点。例: 39.319826'},
-  {key:'area_lng',     lbl:'エリア経度',    desc:'天気・近くのコース判定の基準地点。例: 140.523891'},
-  {key:'weather_lat',  lbl:'天気取得 緯度', desc:'area_latより優先して天気取得に使う緯度'},
-  {key:'weather_lng',  lbl:'天気取得 経度', desc:'area_lngより優先して天気取得に使う経度'},
-  {key:'max_nearby_courses', lbl:'近くのコース表示数', desc:'現在地に近いコースを最大何件表示するか。例: 3', type:'num'},
-  {key:'lang',         lbl:'UI言語',        desc:'ja / en など。未設定時は ja', type:'sel', opts:['ja','en']},
-  {sec:'☀ 天気・暑さ指数（WBGT）'},
   {key:'wbgt_enabled',    lbl:'WBGT表示',        desc:'TRUEで暑さ指数バー・注意カードを表示', type:'bool'},
   {key:'wbgt_point_code', lbl:'WBGT地点コード',   desc:'環境省 暑さ指数情報提供地点一覧の地点コード'},
   {key:'wbgt_proxy_url',  lbl:'WBGT中継URL',      desc:'環境省データ取得用GASプロキシURL'},
-  {sec:'🌗 ホームテーマ色'},
+  {key:'max_nearby_courses', lbl:'近くのコース表示数', desc:'現在地に近いコースを最大何件表示するか。例: 3', type:'num'},
   {key:'home_bg_light',            lbl:'ライト 背景色',          desc:'ホーム画面ライトモード背景', type:'color'},
   {key:'home_card_bg_light',       lbl:'ライト カード背景',      desc:'例: rgba(255,255,255,.75)'},
   {key:'home_card_border_light',   lbl:'ライト カード枠線',      desc:'例: rgba(28,26,22,.12)'},
@@ -794,24 +857,35 @@ const CONFIG_DEFS = [
   {key:'home_toggle_bg_dark',      lbl:'ダーク 切替ボタン背景',  desc:'例: rgba(0,0,0,.25)'},
   {key:'home_toggle_border_dark',  lbl:'ダーク 切替ボタン枠線',  desc:'例: rgba(255,255,255,.18)'},
   {key:'home_toggle_color_dark',   lbl:'ダーク 切替ボタン文字',  desc:'例: #FFFFFF', type:'color'},
-  {sec:'⚠ 注意アナウンス（省略可・デフォルト文あり）'},
+  {sec:'🚶 まちあるき画面（ナビ・注意アナウンス・特別イベント）'},
   {key:'caution_shigaichi',     lbl:'市街地コース 注意テキスト',   desc:'コース開始時に読み上げる注意事項'},
   {key:'caution_koen',          lbl:'公園コース 注意テキスト',     desc:'コース開始時に読み上げる注意事項'},
   {key:'caution_konzai',        lbl:'混在コース 注意テキスト',     desc:'コース開始時に読み上げる注意事項'},
   {key:'caution_shigaichi_url', lbl:'市街地 注意音声URL',         desc:'MP3等のURL（テキストより優先）', type:'audio'},
   {key:'caution_koen_url',      lbl:'公園 注意音声URL',           desc:'MP3等のURL（テキストより優先）', type:'audio'},
   {key:'caution_konzai_url',    lbl:'混在 注意音声URL',           desc:'MP3等のURL（テキストより優先）', type:'audio'},
-  {sec:'🎉 特別イベント設定'},
   {key:'special_enabled',         lbl:'特別イベント有効',          desc:'TRUEで特別アナウンス有効（全コース共通）', type:'bool'},
   {key:'special_start_date',      lbl:'特別イベント開始日',        desc:'YYYY-MM-DD（空白=常時有効）'},
   {key:'special_end_date',        lbl:'特別イベント終了日',        desc:'YYYY-MM-DD（空白=常時有効）'},
   {key:'audio_special_start_url', lbl:'特別スタート音声URL',       desc:'特別期間のスタート時に再生（全コース共通）', type:'audio'},
   {key:'audio_special_goal_url',  lbl:'特別ゴール音声URL',         desc:'特別期間のゴール到達時に再生（全コース共通）', type:'audio'},
-  {sec:'🏅 賞状（修了書）設定'},
+  {key:'next_lock_sec', lbl:'「次へ」ボタンロック秒数', desc:'到着時に「次へ」ボタンをロックする秒数（保険タイマー）。例: 30（0で無制限待機）'},
+  {key:'walk_speed_limit_kmh', lbl:'歩行カウント停止速度', desc:'この速度を超える移動は歩行距離に加算しません。例: 7', type:'num'},
+  {key:'walk_resume_kmh', lbl:'歩行カウント再開速度', desc:'乗り物判定後、この速度以下で歩行カウントを再開します。例: 5.5', type:'num'},
+  {key:'walk_speed_hits', lbl:'乗り物判定の連続回数', desc:'停止速度超過が何回続いたら乗り物モードにするか。例: 2', type:'num'},
+  {key:'walk_accuracy_max_m', lbl:'歩行加算GPS最大誤差', desc:'GPS精度がこのm数より悪い時は歩行距離に加算しません。例: 50', type:'num'},
+  {key:'walk_segment_max_m', lbl:'歩行加算最大区間距離', desc:'1回のGPS更新でこのm数以上動いた場合はワープ扱いで加算しません。例: 50', type:'num'},
+  {sec:'🎁 記念カード'},
+  {key:'card_label', lbl:'カードの名称', desc:'例: クラカード。空欄なら記念カード'},
+  {key:'card_message', lbl:'カード獲得メッセージ', desc:'例: クラカードをゲットしました！'},
+  {key:'card_image_url', lbl:'共通カード画像URL（任意）', desc:'通常は空欄。写真リポジトリ内の {spot_id}_spcard.webp を自動使用。全スポット共通の画像で上書きしたい場合だけ指定'},
+  {sec:'🏅 修了証画面'},
+  {key:'cert_image_url', lbl:'完歩記念画像URL', desc:'オリジナル修了証やイベント記念画像。従来の修了証と一緒に表示。空欄は非表示'},
+  {key:'cert_image_id', lbl:'完歩記念画像ID', desc:'写真リポジトリ内の {このID}_spcard.webp を表示。URL入力不要。IDとURLの両方が空欄なら非表示'},
   {key:'cert_award_title', lbl:'修了証タイトル',     desc:'賞状の大見出し。例: 修了証　（デフォルト: 修了証）'},
   {key:'cert_issuer',      lbl:'発行者名',            desc:'賞状の発行者欄。例: 増田町観光協会（area_nameがフォールバック）'},
-  {key:'cert_seal_svg_url',lbl:'印鑑SVG URL',         desc:'GitHub Pages等のSVG直接URL。入力時は印鑑テキストより優先'},
   {key:'cert_seal_text',   lbl:'印鑑テキスト',        desc:'印鑑（丸印）に表示するテキスト。例: 増田\n観光'},
+  {key:'cert_seal_svg_url',lbl:'印鑑SVG URL',         desc:'GitHub Pages等のSVG直接URL。入力時は印鑑テキストより優先'},
   {key:'cert_body_text',   lbl:'本文追加テキスト',    desc:'賞状本文に付け加えるテキスト。例: 今後もまち歩きをお楽しみください。'},
   {key:'cert_title_font_family',     lbl:'賞状タイトルフォント',   desc:'--cert-title-font-family。例: Yuji Syuku'},
   {key:'cert_title_font_size',       lbl:'賞状タイトルサイズ',     desc:'--cert-title-font-size。例: 32px'},
@@ -824,16 +898,14 @@ const CONFIG_DEFS = [
   {key:'cert_seal_text_size',    lbl:'印鑑テキストサイズ', desc:'--cert-seal-text-size。例: 12px'},
   {key:'cert_seal_text_color',   lbl:'印鑑テキスト色',     desc:'--cert-seal-text-color。例: #B83232', type:'color'},
   {key:'cert_seal_line_height',  lbl:'印鑑行間',           desc:'--cert-seal-line-height。例: 1.5'},
-  {sec:'🧭 ナビ設定'},
-  {key:'next_lock_sec', lbl:'「次へ」ボタンロック秒数', desc:'到着時に「次へ」ボタンをロックする秒数（保険タイマー）。例: 30（0で無制限待機）'},
-  {key:'walk_speed_limit_kmh', lbl:'歩行カウント停止速度', desc:'この速度を超える移動は歩行距離に加算しません。例: 7', type:'num'},
-  {key:'walk_resume_kmh', lbl:'歩行カウント再開速度', desc:'乗り物判定後、この速度以下で歩行カウントを再開します。例: 5.5', type:'num'},
-  {key:'walk_speed_hits', lbl:'乗り物判定の連続回数', desc:'停止速度超過が何回続いたら乗り物モードにするか。例: 2', type:'num'},
-  {key:'walk_accuracy_max_m', lbl:'歩行加算GPS最大誤差', desc:'GPS精度がこのm数より悪い時は歩行距離に加算しません。例: 50', type:'num'},
-  {key:'walk_segment_max_m', lbl:'歩行加算最大区間距離', desc:'1回のGPS更新でこのm数以上動いた場合はワープ扱いで加算しません。例: 50', type:'num'},
+  {sec:'🎙 制作メモ（AI Studio・画面設定ではない）'},
+  {key:'tts_scene',          lbl:'Scene（貼付用）',          desc:'AI Studioの「Scene」欄にそのまま貼り付ける文面。一括チェック画面からワンクリックでコピーできる。例: 落ち着いたドキュメンタリー番組・街歩き番組のナレーション'},
+  {key:'tts_sample_context', lbl:'Sample Context（貼付用）', desc:'AI Studioの「Sample Context」欄にそのまま貼り付ける文面。ワンクリックでコピーできる'},
+  {key:'tts_speakers',       lbl:'よく使う話者',              desc:'よく使う話者を手入力でメモ（「あれ？誰にしたっけ？」防止）。例: 男性=Charon（接近・出発・次へ・注意喚起）／女性=Kore（到着・解説）'},
 ];
 
 const COURSE_FIELDS = [
+  {key:'test_mode', lbl:'テスト用コース', desc:'TRUEは先行・テスト版だけに表示。空欄/FALSEは正式版にも表示。ID変更は不要', type:'bool'},
   {key:'course_id',               lbl:'コースID',                     desc:'一意の識別子。小文字英数字と _ のみ（例: rekishi_01）', w:140},
   {key:'course_name',             lbl:'コース名',                     desc:'画面に表示される名前', w:150},
   {key:'course_type',             lbl:'コースタイプ',                 desc:'注意アナウンスの種別', w:80, type:'sel', opts:['市街地','公園','混在']},
@@ -855,6 +927,8 @@ const COURSE_FIELDS = [
 
 const SCHEMAS = {
   spots:[
+    {key:'card_image_url', lbl:'記念カード画像URL（任意）', desc:'通常は空欄。写真リポジトリの {spot_id}_spcard.webp を自動使用。コースの巡回順で有効化する', w:220},
+    {key:'card_title', lbl:'記念カードタイトル', desc:'空欄ならスポット名。街の説明は従来どおり表示', w:180},
     {key:'spot_id',            lbl:'スポットID',              desc:'一意の識別子。小文字英数字と _ のみ（例: manpukuji）', w:140},
     {key:'spot_name',          lbl:'スポット名',              desc:'画面・音声に使われる名称', w:150},
     {key:'lat',                lbl:'緯度',                    desc:'例: 39.319826', w:95},
@@ -890,7 +964,7 @@ const SCHEMAS = {
 // ═══════════════════════════════════════════════════════
 
 const state={
-  sheetId:null, gasUrl:null, gasConnected:false, loaded:false,
+  sheetId:null, gasUrl:null, gasToken:null, gasConnected:false, loaded:false,
   config:[], courses:[], spots:[], course_spots:[], facilities:[],
   originals:{},
 };
@@ -901,18 +975,24 @@ let leafletMap=null, mapLayerGroup=null;
 let selectedRow={courses:null, spots:null, facilities:null};
 let mapEditContext=null;
 let navGuardReady=false;
-const tableViewMode={spots:'table',facilities:'table'};
+const tableViewMode={spots:'form',facilities:'form'};
 
 // ═══════════════════════════════════════════════════════
 // CSV / UTILITIES
 // ═══════════════════════════════════════════════════════
 
 function parseCSV(text){
-  const rows=[]; const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
-  if(lines.length<2) return rows;
-  const headers=splitL(lines[0]);
-  for(let i=1;i<lines.length;i++){const ln=lines[i];if(!ln.trim())continue;const vals=splitL(ln),obj={};headers.forEach((h,x)=>{obj[h.trim()]=(vals[x]||'').trim();});rows.push(obj);}
-  return rows;
+  const records=[];let record=[],cell='',quoted=false;
+  const csv=text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  for(let i=0;i<csv.length;i++){
+    const c=csv[i];
+    if(c==='"'){if(quoted&&csv[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}
+    else if(!quoted&&(c===','||c==='\n')){record.push(cell);cell='';if(c==='\n'){records.push(record);record=[];}}
+    else cell+=c;
+  }
+  if(cell||record.length){record.push(cell);records.push(record);}
+  const headers=records.shift()||[];
+  return records.filter(r=>r.some(v=>v.trim())).map(r=>Object.fromEntries(headers.map((h,i)=>[h.trim(),(r[i]??'').trim()])));
 }
 function splitL(line){const r=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(c===','&&!inQ){r.push(cur);cur='';}else cur+=c;}r.push(cur);return r;}
 function esc(v){const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`  :s;}
@@ -943,11 +1023,11 @@ async function loadData(){
   const raw=document.getElementById('sheet-url').value.trim();
   const sid=parseSheetId(raw);
   if(!sid){notify('スプレッドシートのURLまたはIDを確認してください',true);return;}
-  state.sheetId=sid;
   showLd('データを読み込んでいます…'); setStat('loading','読み込み中…');
   try{
     const sheets=['config','courses','spots','course_spots','facilities'];
     const csvs=await Promise.all(sheets.map(s=>fetchGviz(sid,s)));
+    state.sheetId=sid;
     sheets.forEach((s,i)=>{state[s]=parseCSV(csvs[i]);});
     state.config=cleanConfigRows(state.config);
     state.originals={};
@@ -955,9 +1035,14 @@ async function loadData(){
     Object.keys(changes).forEach(k=>{changes[k]={};});
     state.loaded=true;
     updateBadges(); showTab(currentTab);
+    // このシート用に保存済みの書き込みトークンがあれば反映(無ければ空のまま。地域を切り替えたときに前のシートのトークンを誤って使わないように)
+    const savedToken=document.getElementById('gas-token').value.trim();
+    document.getElementById('gas-token').value=savedToken||'';
+    state.gasToken=savedToken||null;
     setStat('ok',`読み込み完了 ✓ — コース:${state.courses.length} / スポット:${state.spots.length} / コース構成:${state.course_spots.length} / 施設:${state.facilities.length}`);
     notify('読み込み完了しました ✓');
-  }catch(e){console.error(e);setStat('error',e.message);notify(e.message,true);}
+    return true;
+  }catch(e){console.error(e);setStat('error',e.message);notify(e.message,true);return false;}
   finally{hideLd();}
 }
 
@@ -969,6 +1054,10 @@ function onGasUrlChange(){
   state.gasUrl=document.getElementById('gas-url').value.trim()||null;
   state.gasConnected=false;
   updateGasUI();
+}
+function onGasTokenChange(){
+  state.gasToken=document.getElementById('gas-token').value.trim()||null;
+  if(state.gasToken) localStorage.setItem(gasTokenStorageKey(), state.gasToken);
 }
 
 async function testGas(){
@@ -993,9 +1082,10 @@ function gasPing(url){
   });
 }
 
-async function gasWrite(sheetName,rows){
+async function gasWrite(sheetName,rows,force){
   if(!state.gasUrl) throw new Error('GAS URLが設定されていません');
-  await fetch(state.gasUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'write',sheet:sheetName,rows})});
+  if(!state.gasToken) throw new Error('書き込みトークンが設定されていません。「GAS設定方法」を確認してください');
+  await fetch(state.gasUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'write',sheet:sheetName,rows,token:state.gasToken,force:!!force})});
 }
 
 function updateGasUI(){
@@ -1023,20 +1113,42 @@ function updateGasUI(){
 async function saveCurrentSheet(){
   if(!state.loaded){notify('データを読み込んでください',true);return;}
   if(!state.gasConnected){exportCurrentSheet();notify('GAS未接続のためCSVでダウンロードします');return;}
+  if(!state.gasToken){notify('書き込みトークンが未設定です。「GAS設定方法」を確認してください',true);return;}
+
+  const sheetsToSave=currentTab==='courses'?['courses','course_spots']:[currentTab];
+  const forceMap={};
+  for(const s of sheetsToSave){
+    const rows=s==='config'?cleanConfigRows(state.config):state[s];
+    const existing=(state.originals[s]||[]).length;
+    if(existing>=5 && rows.length<existing*0.5){
+      const ok=confirm('「'+s+'」シートが '+existing+'件 → '+rows.length+'件 に大きく減ります。\n意図した操作であれば「OK」を押してください。\n心当たりがない場合は「キャンセル」して内容を確認してください。');
+      if(!ok){notify('保存を中止しました',true);return;}
+      forceMap[s]=true;
+    }
+  }
 
   showLd('スプレッドシートに保存中…'); setStat('loading','保存中…');
   try{
-    const sheetsToSave=currentTab==='courses'?['courses','course_spots']:[currentTab];
     for(const s of sheetsToSave){
       const rows=s==='config'?cleanConfigRows(state.config):state[s];
-      await gasWrite(s,rows);
+      await gasWrite(s,rows,forceMap[s]);
     }
     // Re-read after short delay
     await new Promise(r=>setTimeout(r,2200));
-    const allSheets=currentTab==='courses'?['courses','course_spots']:[currentTab];
+    const allSheets=sheetsToSave;
+    const verified={};
     for(const s of allSheets){
       const csv=await fetchGviz(state.sheetId,s);
-      state[s]=parseCSV(csv);
+      const actual=parseCSV(csv);
+      const expected=s==='config'?cleanConfigRows(state[s]):state[s];
+      const normal=v=>String(v??'').replace(/\r\n/g,'\n').trim();
+      if(actual.length!==expected.length||expected.some((row,i)=>Object.keys(row).some(k=>normal(row[k])!==normal(actual[i]?.[k])))){
+        throw new Error('「'+s+'」の保存結果をまだ確認できません。編集中の内容は保持しています。トークン・GAS設定を確認し、少し待って再度保存してください');
+      }
+      verified[s]=actual;
+    }
+    for(const s of allSheets){
+      state[s]=verified[s];
       state.originals[s]=dc(state[s]);
       changes[s]={};
       document.getElementById('dot-'+s)?.classList.remove('show');
@@ -1058,7 +1170,7 @@ function recChg(sheet,k,oldV,newV){
   if(sheet===currentTab) updateChgBadge(sheet);
 }
 function hasUnsavedChanges(){
-  return Object.values(changes).some(sheetChanges=>Object.keys(sheetChanges||{}).length>0);
+  return state.loaded && ['config','courses','course_spots','spots','facilities'].some(s=>JSON.stringify(state[s])!==JSON.stringify(state.originals[s]));
 }
 function installNavigationGuard(){
   if(navGuardReady) return;
@@ -1130,9 +1242,11 @@ function showTab(tab){
 
 function updateViewModeControls(tab){
   const controls=document.getElementById('view-mode-controls');
+  const label=document.getElementById('view-mode-label');
   const enabled=tab==='spots'||tab==='facilities';
   if(!controls) return;
   controls.style.display=enabled?'flex':'none';
+  if(label) label.style.display=enabled?'inline':'none';
   if(!enabled) return;
   document.getElementById('view-mode-table')?.classList.toggle('active',tableViewMode[tab]==='table');
   document.getElementById('view-mode-form')?.classList.toggle('active',tableViewMode[tab]==='form');
@@ -1173,18 +1287,13 @@ const TITLE_STYLE_DEFS = [
 ];
 
 function getConfigDisplayDefs(){
-  const areaStart = CONFIG_DEFS.findIndex((d,i)=>d.sec && CONFIG_DEFS[i+1]?.key === 'area_pref');
-  if(areaStart < 0) return CONFIG_DEFS;
-  let areaEnd = CONFIG_DEFS.findIndex((d,i)=>i > areaStart && d.sec);
-  if(areaEnd < 0) areaEnd = CONFIG_DEFS.length;
-  const areaBlock = CONFIG_DEFS.slice(areaStart, areaEnd);
+  // CONFIG_DEFSの並び順(セクション構成)を素通りしつつ、TITLE_STYLE_DEFSだけをapp_subtitleの直後に差し込む。
+  // セクションの構成が変わってもここは影響を受けない(area_pref直前が必ずセクション見出し、という前提には依存しない)。
   const out = [];
-  CONFIG_DEFS.forEach((def, idx)=>{
-    if(idx >= areaStart && idx < areaEnd) return;
+  CONFIG_DEFS.forEach(def=>{
     if(def.key === 'header_image_id') return;
     out.push(def);
     if(def.key === 'app_subtitle') out.push(...TITLE_STYLE_DEFS);
-    if(def.key === 'area_name') out.push(...areaBlock);
   });
   return out;
 }
@@ -1666,7 +1775,7 @@ function renderCourses(){
         const inp=document.createElement('input'); inp.type='text'; inp.className='cc-field-in'+(val!==origVal?' chg':''); inp.value=val;
         let mTimer=null;
         inp.addEventListener('input',()=>{course[col.key]=inp.value;inp.classList.toggle('chg',inp.value!==origVal);recChg('courses',chgKey,origVal,inp.value);if(mRefresh){clearTimeout(mTimer);mTimer=setTimeout(mRefresh,600);}});
-        row.appendChild(inp); row.appendChild(mkPlayBtn(()=>inp.value,col.lbl));
+        row.appendChild(inp); row.appendChild(mkPlayBtn(()=>mediaPlaybackUrl('courses',col.key,course.course_id,inp.value),col.lbl));
         f.appendChild(row);
         const mRefresh=attachMediaCheck('courses',col.key,()=>course.course_id,()=>inp.value,f);
         if(mRefresh) mediaRefreshers.push(mRefresh);
@@ -1764,7 +1873,13 @@ function renderSpotsList(courseId, container){
       const idx=state.course_spots.findIndex(c2=>c2===cs);
       if(idx>=0){state.course_spots.splice(idx,1);recChg('course_spots',`${courseId}:${cs.spot_id}:削除`,cs.spot_id,'（削除）');renderSpotsList(courseId,container);refreshCourseMapAfterEdit(courseId);}
     };
-    row.appendChild(num); row.appendChild(info); row.appendChild(dist); row.appendChild(upBtn); row.appendChild(dnBtn); row.appendChild(rmBtn);
+    const cardLabel=document.createElement('label');cardLabel.textContent='🎁 カード ';
+    const cardToggle=document.createElement('select');cardToggle.className='cfg-in';cardToggle.style.width='auto';cardToggle.setAttribute('aria-label',`カード獲得: ${spot?spot.spot_name:cs.spot_id}`);
+    [['','未設定（なし）'],['FALSE','OFF'],['TRUE','ON']].forEach(([v,label])=>{const o=document.createElement('option');o.value=v;o.textContent=label;o.selected=String(cs.card_enabled||'').toUpperCase()===v;cardToggle.appendChild(o);});
+    const original=cs.card_enabled||'';
+    cardToggle.onchange=()=>{cs.card_enabled=cardToggle.value;recChg('course_spots',`${courseId}:${cs.spot_id}:カード`,original,cs.card_enabled);};
+    cardLabel.appendChild(cardToggle);
+    row.appendChild(num); row.appendChild(info); row.appendChild(dist); row.appendChild(cardLabel); row.appendChild(upBtn); row.appendChild(dnBtn); row.appendChild(rmBtn);
     container.appendChild(row);
   });
   if(courseSpots.length===0){
@@ -1877,7 +1992,7 @@ function renderRecordForm(sn,schema,rows,origRows,body){
 // URL列が空欄のとき {ID}_{役割} 規約で導出されるURLを表示し、
 // GitHub Pages 上にファイルが実在するか HEAD リクエストで確認する。
 const MEDIA_RULES={
-  spots:{photo_url:['photo',''],audio_approach_url:['audio','approach'],audio_arrive_url:['audio','arrive'],audio_start_url:['audio','start'],audio_next_url:['audio','next'],audio_goal_url:['audio','goal']},
+  spots:{photo_url:['photo',''],card_image_url:['photo','spcard'],audio_approach_url:['audio','approach'],audio_arrive_url:['audio','arrive'],audio_start_url:['audio','start'],audio_next_url:['audio','next'],audio_goal_url:['audio','goal']},
   courses:{course_thumbnail_url:['photo',''],audio_theme_url:['audio','start'],audio_finish_url:['audio','goal'],course_audio_url:['audio','intro']},
   facilities:{photo_url:['photo',''],audio_url:['audio',null]},
 };
@@ -1889,12 +2004,19 @@ function mediaRepoBase(kind){
   return `https://${parts[0]}.github.io/${parts[1]}`;
 }
 function mediaDerivedUrl(sn,colKey,id){
+  if(colKey==='card_image_url'&&getCfg('card_image_url'))return String(getCfg('card_image_url')).trim();
   const rule=(MEDIA_RULES[sn]||{})[colKey];
   if(!rule||!id)return null;
   const base=mediaRepoBase(rule[0]);
   if(!base)return null;
-  if(rule[0]==='photo')return `${base}/${id}.webp`;
+  if(rule[0]==='photo')return `${base}/${id}${rule[1]?'_'+rule[1]:''}.webp`;
   return rule[1]?`${base}/${id}_${rule[1]}.mp3`:`${base}/${id}.mp3`;
+}
+// URL欄が空欄でも、自動命名された音声ファイルを再生できるようにする。
+// 明示URLがある場合は、従来どおり明示URLを優先する。
+function mediaPlaybackUrl(sn,colKey,id,explicit){
+  const value=String(explicit||'').trim();
+  return value||mediaDerivedUrl(sn,colKey,String(id||'').trim());
 }
 const urlExistCache=new Map();
 function checkUrlExists(url){
@@ -1941,12 +2063,12 @@ function scheduleMediaRefreshAll(){
 
 // ═══ メディア一括チェック: 全スポット/コース/施設の写真・音声の実在をまとめて確認 ═══
 const AUDIT_ROLE_LBL={
-  photo_url:'写真', audio_approach_url:'接近', audio_arrive_url:'到着',
+  photo_url:'写真', card_image_url:'記念カード', audio_approach_url:'接近', audio_arrive_url:'到着',
   audio_start_url:'出発', audio_next_url:'次へ', audio_goal_url:'ゴール',
   course_thumbnail_url:'サムネイル', audio_theme_url:'テーマ',
   audio_finish_url:'完走', course_audio_url:'説明', audio_url:'音声',
 };
-const AUDIT_OPTIONAL=new Set(['audio_theme_url','audio_finish_url','course_audio_url']);
+const AUDIT_OPTIONAL=new Set(['audio_theme_url','audio_finish_url','course_audio_url','card_image_url']);
 // 音声URL列 → 対応する原稿テキスト列(AI Studio等で音声生成する際にコピーできるように)
 const AUDIT_TXT_COL={
   audio_approach_url:'audio_approach_txt', audio_arrive_url:'audio_arrive_txt',
@@ -2103,7 +2225,7 @@ function makeRecordField(sn,row,origRow,idx,col,title,listItems,rows){
   runIdCheck();
 
   if(col.type==='audio'){
-    const audioRow=document.createElement('div');audioRow.className='record-audio-row';audioRow.appendChild(el);audioRow.appendChild(mkPlayBtn(()=>el.value,col.lbl));field.appendChild(audioRow);
+    const audioRow=document.createElement('div');audioRow.className='record-audio-row';audioRow.appendChild(el);audioRow.appendChild(mkPlayBtn(()=>mediaPlaybackUrl(sn,col.key,row[rowIdKey],el.value),col.lbl));field.appendChild(audioRow);
   }else field.appendChild(el);
   if(idMsg) field.appendChild(idMsg);
   const rowIdKey=sn==='spots'?'spot_id':'facility_id';
@@ -2164,7 +2286,7 @@ function mkRow(sn,schema,row,origRow,idx){
       if(col.w)el.style.minWidth=(col.w-85)+'px';
       el.title=isChg?`変更前: ${origVal||'（空）'}`:col.desc||'';
       el.addEventListener('input',()=>{row[col.key]=el.value;const c=el.value!==origVal;td.classList.toggle('chg',c);recChg(sn,chgKey,origVal,el.value);syncMapFromEditedRow(sn,idx);});
-      wr.appendChild(el);wr.appendChild(mkPlayBtn(()=>el.value,col.lbl));td.appendChild(wr);
+      wr.appendChild(el);wr.appendChild(mkPlayBtn(()=>mediaPlaybackUrl(sn,col.key,row[sn==='spots'?'spot_id':'facility_id'],el.value),col.lbl));td.appendChild(wr);
     }else if(col.type==='bool'){
       const el=document.createElement('select');el.className='c-in';
       bindCellMeta(el,sn,idx,col.key,origVal);
@@ -2572,7 +2694,7 @@ function exportCurrentSheet(){
 function exportSheet(sn){
   let csv;
   if(sn==='config') csv='key,value\n'+cleanConfigRows(state.config).map(r=>`${esc(r.key||'')},${esc(r.value||'')}`).join('\n');
-  else{const sc=SCHEMAS[sn]||(sn==='courses'?COURSE_FIELDS:null)||(sn==='course_spots'?[{key:'course_id'},{key:'spot_id'},{key:'order'}]:null);if(!sc)return;csv=buildCSV(sc.map(c=>c.key),state[sn]);}
+  else{const sc=SCHEMAS[sn]||(sn==='courses'?COURSE_FIELDS:null)||(sn==='course_spots'?[{key:'course_id'},{key:'spot_id'},{key:'order'},{key:'card_enabled'}]:null);if(!sc)return;csv=buildCSV([...new Set([...sc.map(c=>c.key),...state[sn].flatMap(r=>Object.keys(r))])],state[sn]);}
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=sn+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
@@ -2591,12 +2713,18 @@ function exportAll(){
 // ═══════════════════════════════════════════════════════
 
 function showGasModal(){
-  document.getElementById('gas-code-display').textContent=GAS_CODE;
+  if(!parseSheetId(document.getElementById('sheet-url').value)){notify('先にスプレッドシートのURLまたはIDを入力してください',true);return;}
+  const token=getGasToken();
+  document.getElementById('gas-code-display').textContent=buildGasCode();
+  document.getElementById('gas-token-display').textContent=token;
+  // このブラウザで生成したトークンを、書き込みトークン欄にも反映しておく
+  const inp=document.getElementById('gas-token');
+  if(inp && !inp.value){ inp.value=token; onGasTokenChange(); }
   document.getElementById('gas-modal').classList.add('show');
 }
 function closeGasModal(){document.getElementById('gas-modal').classList.remove('show');}
 async function copyGasCode(){
-  try{await navigator.clipboard.writeText(GAS_CODE);notify('GASコードをクリップボードにコピーしました ✓');}
+  try{await navigator.clipboard.writeText(buildGasCode());notify('GASコードをクリップボードにコピーしました ✓');}
   catch(e){notify('コピーに失敗しました。手動でコードを選択してコピーしてください',true);}
 }
 
@@ -2702,10 +2830,10 @@ function notify(m,err){const el=document.getElementById('notif');el.textContent=
 window.addEventListener('DOMContentLoaded',()=>{
   installNavigationGuard();
   showTab('config');
-  document.getElementById('gas-code-display').textContent=GAS_CODE;
   initResizeHandle();
   initEditorSize();
   initPreviewPan();
+  initEditorWorkspace();
 });
 document.getElementById('gas-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeGasModal();});
 document.getElementById('diff-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDiffModal();});
@@ -3043,5 +3171,6 @@ function loadGoogleFont(name){
 }
 
 </script>
+<script src="editor-ui.js"></script>
 </body>
 </html>

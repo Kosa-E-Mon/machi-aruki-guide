@@ -1,0 +1,85 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+function editor(){
+  const nodes=new Map(),storage=new Map();
+  const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',style:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},textContent:''});return nodes.get(id);};
+  const ctx={console,URL,Event,crypto:require('node:crypto').webcrypto,confirm:()=>true,
+    setTimeout:fn=>{fn();return 1;},clearTimeout(){},
+    localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
+    document:{getElementById:node,addEventListener(){},querySelectorAll:()=>[],querySelector:()=>null},
+    location:{href:'http://localhost/editor.html'},history:{},navigator:{},addEventListener(){}};
+  ctx.window=ctx;vm.createContext(ctx);
+  const html=fs.readFileSync(path.join(__dirname,'../editor.html'),'utf8');
+  for(const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))vm.runInContext(script[1],ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../editor-ui.js'),'utf8'),ctx);
+  return {ctx,run:code=>vm.runInContext(code,ctx),nodes,storage};
+}
+test('CSV preserves quoted multiline descriptions, commas and quotes',()=>{
+  const {run,ctx}=editor();
+  ctx.example=[{spot_id:'sample',description:'一行目,「説明」\n二行目 "写真"'}];
+  assert.equal(run("parseCSV(buildCSV(['spot_id','description'],example))[0].description"),ctx.example[0].description);
+});
+test('adding, deleting and restoring records correctly changes unsaved state',()=>{
+  const {run}=editor();
+  run("state.loaded=true;UI_SHEETS.forEach(s=>{state[s]=[];state.originals[s]=[];});");
+  assert.equal(run('hasUnsavedChanges()'),false);
+  run("state.spots.push({spot_id:'one'});");assert.equal(run('hasUnsavedChanges()'),true);
+  run('state.originals.spots=dc(state.spots);state.spots=[];');assert.equal(run('hasUnsavedChanges()'),true);
+  run('state.spots=dc(state.originals.spots);');assert.equal(run('hasUnsavedChanges()'),false);
+});
+test('connection accepts only the expected GAS deployment URL',()=>{
+  const {ctx}=editor();
+  assert.equal(ctx.validGasUrl(''),true);
+  assert.equal(ctx.validGasUrl('https://script.google.com/macros/s/example/exec'),true);
+  for(const url of ['javascript:alert(1)','https://example.com/macros/s/a/exec','https://script.google.com.evil.example/macros/s/a/exec','http://script.google.com/macros/s/a/exec'])assert.equal(ctx.validGasUrl(url),false);
+});
+test('restored tokens belong to their sheet and never leak to another profile',()=>{
+  const {ctx,storage}=editor();storage.set('lwg_editor_gas_token__sheetA','test-A');
+  assert.equal(ctx.uiToken('sheetA'),'test-A');assert.equal(ctx.uiToken('sheetB'),'');
+});
+test('legacy token is migrated to only one sheet',()=>{
+  const {run,storage}=editor();storage.set('lwg_editor_gas_token','legacy-test');
+  run("document.getElementById('sheet-url').value='sheet_A_123456789012345';gasTokenStorageKey();");
+  assert.equal(storage.get('lwg_editor_gas_token__sheet_A_123456789012345'),'legacy-test');
+  run("document.getElementById('sheet-url').value='sheet_B_123456789012345';gasTokenStorageKey();");
+  assert.equal(storage.has('lwg_editor_gas_token__sheet_B_123456789012345'),false);
+});
+test('manually entered token is used safely in generated GAS code',()=>{
+  const {run,ctx}=editor();ctx.manual="test'key";
+  run("document.getElementById('sheet-url').value='sheet_A_123456789012345';document.getElementById('gas-token').value=manual;");
+  const code=run('buildGasCode()');new vm.Script(code);
+  assert.ok(code.includes(JSON.stringify(ctx.manual)));
+});
+test('row addition and deletion appear in save confirmation before any write',async()=>{
+  const {run,ctx}=editor();
+  run("workspace.home=false;state.loaded=true;currentTab='spots';state.originals.spots=[{spot_id:'old'}];state.spots=[];showDiffModal=(diff)=>{window.capturedDiff=diff};");
+  await run('saveCurrentSheet()');assert.equal(Object.keys(ctx.capturedDiff).length,1);
+  assert.ok(Object.values(ctx.capturedDiff)[0].old.includes('old'));assert.equal(Object.values(ctx.capturedDiff)[0].new,'');
+});
+test('save verification failure keeps the user edits and original snapshot',async()=>{
+  const {run}=editor();
+  run("state.loaded=true;state.sheetId='test';state.gasUrl='https://script.google.com/macros/s/test/exec';state.gasToken='test-only';state.gasConnected=true;currentTab='spots';state.originals.spots=[{spot_id:'one',spot_name:'before'}];state.spots=[{spot_id:'one',spot_name:'after'}];gasWrite=async()=>{};fetchGviz=async()=> 'spot_id,spot_name\\none,before';showLd=()=>{};hideLd=()=>{};setStat=()=>{};notify=()=>{};console={error(){}};");
+  await run('_origSaveCurrentSheet()');
+  assert.equal(run('state.spots[0].spot_name'),'after');assert.equal(run('state.originals.spots[0].spot_name'),'before');assert.equal(run('hasUnsavedChanges()'),true);
+});
+test('verified save updates the original snapshot and clears unsaved state',async()=>{
+  const {run}=editor();
+  run("state.loaded=true;UI_SHEETS.forEach(s=>{state[s]=[];state.originals[s]=[];});state.sheetId='test';state.gasUrl='test';state.gasToken='test-only';state.gasConnected=true;currentTab='spots';state.originals.spots=[{spot_id:'one',spot_name:'before'}];state.spots=[{spot_id:'one',spot_name:'after'}];gasWrite=async()=>{};fetchGviz=async()=> 'spot_id,spot_name\\none,after';showLd=()=>{};hideLd=()=>{};setStat=()=>{};notify=()=>{};showTab=()=>{};");
+  await run('_origSaveCurrentSheet()');
+  assert.equal(run('state.originals.spots[0].spot_name'),'after');assert.equal(run('hasUnsavedChanges()'),false);
+});
+test('failed loading leaves the previous sheet and edits intact',async()=>{
+  const {run,nodes}=editor();
+  run("state.loaded=true;state.sheetId='previous';state.spots=[{spot_name:'unsaved'}];fetchGviz=async()=>{throw Error('offline')};showLd=()=>{};hideLd=()=>{};setStat=()=>{};notify=()=>{};console={error(){}};");
+  run("document.getElementById('sheet-url').value='new_sheet_id_123456789012345';");
+  assert.equal(await run('loadData()'),false);assert.equal(run('state.sheetId'),'previous');assert.equal(run('state.spots[0].spot_name'),'unsaved');
+});
+test('audio playback derives the automatic filename when the URL cell is blank',()=>{
+  const {run}=editor();
+  run("state.config=[{key:'audio_repo',value:'kosa-e-mon/machi-aruki-audio'}];");
+  assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','')"),'https://kosa-e-mon.github.io/machi-aruki-audio/spot-01_approach.mp3');
+  assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','https://example.com/custom.mp3')"),'https://example.com/custom.mp3');
+});

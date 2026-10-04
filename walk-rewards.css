@@ -1,0 +1,7 @@
+.reward-panel{margin:20px 0;padding:16px;border:1px solid var(--gold,#9A7A3A);border-radius:12px;background:var(--paper,#FAF7F1);color:var(--ink,#1C1A16)}
+.reward-panel img{display:block;width:100%;max-height:480px;object-fit:contain;border-radius:8px;margin:12px 0}
+.reward-panel h3{margin:8px 0;font-size:18px}.reward-panel p{line-height:1.7;white-space:pre-wrap}
+.reward-actions{display:flex;flex-wrap:wrap;gap:8px}.reward-actions button,.reward-actions a,.reward-open{padding:10px 14px;border:1px solid var(--gold,#9A7A3A);border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit;text-decoration:none}
+.reward-note{font-size:12px;color:var(--muted,#7A7060)}.reward-collection{position:fixed;inset:0;z-index:3000;overflow:auto;background:var(--bg,#F4EFE4);color:var(--ink,#1C1A16);padding:20px;box-sizing:border-box}
+.reward-collection[hidden]{display:none}.reward-collection-content{max-width:640px;margin:auto}
+.reward-channel{padding:8px 16px;text-align:center;background:#684b17;color:white;font-size:13px}

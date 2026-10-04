@@ -212,6 +212,7 @@ body {
 .btn-prizes-home:active { border-color: var(--gold); color: var(--gold); }
 
 .credit { text-align: center; padding: 16px 0 4px; font-size: 10px; color: rgba(250,247,241,.18); letter-spacing: .06em; line-height: 1.8; }
+.privacy-note { text-align: center; padding: 4px 20px 16px; font-size: 11px; color: var(--home-subtext, rgba(250,247,241,.45)); letter-spacing: .02em; line-height: 1.6; }
 
 /* ホーム画面内の見えにくい文字をテーマ色に寄せる */
 #screen-home .home-section-label,
@@ -755,6 +756,9 @@ body {
 .weather-dot.wbgt-warn { background: var(--orange); box-shadow: 0 0 0 3px rgba(200,112,32,.12); }
 .weather-dot.wbgt-severe, .weather-dot.wbgt-danger { background: var(--primary); box-shadow: 0 0 0 3px rgba(184,50,50,.14); }
 </style>
+<link rel="stylesheet" href="walk-rewards.css">
+<script src="release-channel.js"></script>
+<script src="walk-rewards.js"></script>
 </head>
 <body>
 
@@ -1700,7 +1704,7 @@ async function initApp() {
     localizeStaticDom();
 
     // データ
-    allCourses = parseCSV(coursesCSV).map(c => ({
+    allCourses = parseCSV(coursesCSV).filter(c => WalkRewards.visibleCourse(c, window.WALK_RELEASE_CHANNEL)).map(c => ({
       ...c,
       display_order: parseInt(c.display_order) || 99,
       recommended: c.recommended === 'TRUE',
@@ -1937,7 +1941,7 @@ function buildCourseSpots(course) {
     .sort((a,b) => a.order - b.order)
     .map(cs => {
       const spot = allSpots.find(s => s.spot_id === cs.spot_id);
-      return spot ? { ...spot, order: cs.order } : null;
+      return spot ? { ...spot, order: cs.order, card_enabled: cs.card_enabled } : null;
     })
     .filter(Boolean);
 }
@@ -2054,6 +2058,12 @@ function renderHome() {
   credit.className = 'credit';
   credit.innerHTML = '企画・開発　Masato KOSAKA<br>（増田町観光協会 理事／増田町観光ガイドの会 理事）<br>観光デジタルCKK部';
   body.appendChild(credit);
+
+  // プライバシー注記（固定）
+  const privacyNote = document.createElement('div');
+  privacyNote.className = 'privacy-note';
+  privacyNote.textContent = t('位置情報は近接判定のみに使用し、外部へ送信しません。匿名の利用状況を統計情報として取得しています。');
+  body.appendChild(privacyNote);
 }
 
 function sectionLabel(text) {
@@ -2115,6 +2125,9 @@ function makeCourseCard(course, prizes, distM) {
 
   card.innerHTML = `${tag}<div class="course-card-row">${thumb}<div class="course-card-main"><div class="course-card-type">${escHtml(course.course_type)}</div><div class="course-card-name">${escHtml(course.course_name)}</div>${startLine}<div class="course-card-meta"><span>🕐 ${tf('約{n}分', {n: course.duration_min})}</span><span>📍 ${tf('約{n}m', {n: course.distance_m})}</span></div>${desc}${period}</div></div>`;
   card.onclick = () => showCourseIntro(course);
+  if (WalkRewards.isTrue(course.test_mode)) {
+    const badge = document.createElement('div'); badge.className = 'course-card-period'; badge.textContent = '🧪 テスト用コース'; card.appendChild(badge);
+  }
   return card;
 }
 
@@ -2161,6 +2174,7 @@ function isSpecialActive() {
 let introCourse = null;
 
 function showCourseIntro(course) {
+  if (!WalkRewards.visibleCourse(course, window.WALK_RELEASE_CHANNEL)) return;
   unlockAudio(); // タップ起点で音声をアンロック（説明音声の自動再生用）
   introCourse = course;
   trackEvent('course_intro_view', { course_id: course.course_id, course_name: course.course_name });
@@ -2250,6 +2264,7 @@ function backToHomeFromIntro() {
 // コース開始
 // ══════════════════════════════════════
 function selectCourse(course) {
+  if (!WalkRewards.visibleCourse(course, window.WALK_RELEASE_CHANNEL)) return;
   unlockAudio();
   currentCourse = course;
   // GA4: コース選択イベント
@@ -3982,6 +3997,7 @@ async function syncCloud(options = {}) {
     }
 
     // マージ結果をLocalStorageに反映
+    lsSet('lwg_cards_v1', WalkRewards.mergeCards(finalData.lwg_cards, lsGet('lwg_cards_v1', {})));
     lsSet('lwg_prizes', finalData.lwg_prizes);
     lsSet('lwg_areas',  finalData.lwg_areas);
     saveLifetimeWalk(finalData.lwg_lifetime_walk_m || 0);
@@ -4068,5 +4084,6 @@ window.addEventListener('load', () => {
   });
 });
 </script>
+<script src="walk-rewards-ui.js"></script>
 </body>
 </html>
