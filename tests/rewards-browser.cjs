@@ -15,7 +15,7 @@ try{
  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="400" height="240" fill="#f4efe4"/><text x="25" y="130" font-size="30">SP CARD</text></svg>';
  const csv={
  config:'key,value\napp_title,検証用のまち\nphoto_repo,owner/photos\ncard_label,クラカード\nnext_lock_sec,1\ncert_image_id,completion',
- courses:'course_id,course_name,test_mode\nnormal,通常コース,FALSE\ntesting,試験コース,TRUE',
+ courses:'course_id,course_name,test_mode,recommended\nnormal,通常コース,FALSE,TRUE\ntesting,試験コース,TRUE,TRUE',
  spots:'spot_id,spot_name,lat,lng,description,card_title\ns1,一番目,39,140,街の説明を残す,一番目のカード\ns2,二番目,39.001,140.001,次の説明,',
  course_spots:'course_id,spot_id,order,card_enabled\nnormal,s1,1,TRUE\nnormal,s2,2,\ntesting,s1,1,TRUE',
  facilities:'facility_id,facility_name,lat,lng'
@@ -33,6 +33,28 @@ try{
  await page.goto(address+'/index.html');await page.waitForSelector('#screen-home.active');
  const channel=await page.evaluate(()=>window.WALK_RELEASE_CHANNEL);
  assert.equal(await page.evaluate(()=>allCourses.some(c=>c.course_id==='testing')),channel==='preview');
+ // Exercise both recommendations and GPS lists even if an unfiltered caller supplies test data.
+ await page.evaluate(()=>{
+   allCourses.push({course_id:'hidden-test',course_name:'非公開テスト',test_mode:'TRUE',recommended:true,display_order:1});
+   renderHome();
+ });
+ assert.equal((await page.locator('#home-body').textContent()).includes('非公開テスト'),channel==='preview');
+ await page.evaluate(()=>renderNearbySection(document.getElementById('nearby-section'),allCourses,{}, {lat:39,lng:140}));
+ assert.equal((await page.locator('#nearby-section').textContent()).includes('試験コース'),channel==='preview');
+ await page.evaluate(()=>{
+   window.savedTestCourses=allCourses;
+   allCourses=[{course_id:'testing',course_name:'試験コース',test_mode:'TRUE',recommended:true}];
+   renderHome();
+ });
+ assert.equal(await page.locator('#home-body .courses-empty').count(),channel==='production'?1:0);
+ assert.equal(await page.locator('#home-body .course-card').count(),channel==='production'?0:1);
+ assert.equal(await page.locator('#home-body .btn-all-courses').count(),channel==='production'?0:1);
+ await page.evaluate(()=>renderNearbySection(document.getElementById('nearby-section'),allCourses,{}, {lat:39,lng:140}));
+ assert.equal(await page.locator('#nearby-section .courses-empty').count(),channel==='production'?1:0);
+ if(channel==='production')assert.equal(await page.locator('.courses-empty').textContent(),'コースはまだ設定されていません。');
+ await page.evaluate(()=>{allCourses=[];renderHome();});
+ assert.equal(await page.locator('.courses-empty').count(),1);
+ await page.evaluate(()=>{allCourses=window.savedTestCourses.filter(c=>c.course_id!=='hidden-test');renderHome();});
  await page.evaluate(()=>{currentCourse=allCourses.find(c=>c.course_id==='normal');courseSpots=buildCourseSpots(currentCourse);currentIdx=0;showExplain(courseSpots[0]);});
  await page.waitForFunction(()=>document.getElementById('spot-reward')?.textContent.includes('ゲット'));
  assert.equal(await page.locator('#explain-text').textContent(),'街の説明を残す');

@@ -1979,7 +1979,7 @@ function renderHome() {
   updateLikeBar();
 
   // アクティブコース（おすすめ優先 → display_order）
-  const activeCourses = allCourses.filter(c => isActive(c))
+  const activeCourses = allCourses.filter(c => isActive(c) && WalkRewards.visibleCourse(c, window.WALK_RELEASE_CHANNEL))
     .sort((a,b) => { if (a.recommended && !b.recommended) return -1; if (!a.recommended && b.recommended) return 1; return a.display_order - b.display_order; });
 
   // ── 近くから始められるコース（GPS取得後に距離付きへ差し替え）──
@@ -2076,6 +2076,15 @@ function sectionLabel(text) {
 // 「近くから始められるコース」枠。GPS取得済みならスタート地点が近い順、未取得ならおすすめ順
 function renderNearbySection(container, activeCourses, prizes, pos) {
   container.innerHTML = '';
+  activeCourses = activeCourses.filter(c => WalkRewards.visibleCourse(c, window.WALK_RELEASE_CHANNEL));
+  if (activeCourses.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'courses-empty';
+    empty.setAttribute('role', 'status');
+    empty.textContent = t('コースはまだ設定されていません。');
+    container.appendChild(empty);
+    return;
+  }
   const maxN = parseInt(cfg.max_nearby_courses) || 3;
   let list, label;
   if (pos) {
