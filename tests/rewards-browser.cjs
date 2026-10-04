@@ -47,7 +47,7 @@ try{
    renderHome();
  });
  assert.equal(await page.locator('#home-body .courses-empty').count(),channel==='production'?1:0);
- assert.equal(await page.locator('#home-body .course-card').count(),channel==='production'?0:1);
+ assert.equal(await page.locator('#home-body .course-card').count(),channel==='production'?0:2);
  assert.equal(await page.locator('#home-body .btn-all-courses').count(),channel==='production'?0:1);
  await page.evaluate(()=>renderNearbySection(document.getElementById('nearby-section'),allCourses,{}, {lat:39,lng:140}));
  assert.equal(await page.locator('#nearby-section .courses-empty').count(),channel==='production'?1:0);
