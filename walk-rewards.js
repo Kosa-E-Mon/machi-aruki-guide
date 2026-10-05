@@ -1,7 +1,8 @@
 'use strict';
 (function(root){
   const isTrue=value=>value===true||String(value||'').trim().toUpperCase()==='TRUE';
-  function visibleCourse(course,channel){return channel==='preview'||!isTrue(course.test_mode);}
+  const isPublished=course=>isTrue(course.is_published);
+  function visibleCourse(course,channel){return channel==='preview'||isPublished(course);}
   function safeImage(value){
     try{const u=new URL(String(value||'').trim());return ['http:','https:'].includes(u.protocol)?u.href:'';}catch{return '';}
   }
@@ -10,7 +11,7 @@
     const image=safeImage(spot.card_image_url||config.card_image_url||derivedCardImage(config,spot.spot_id));
     if(!image)return null;
     return {id:JSON.stringify([sheetId,course.course_id,spot.spot_id]),sheet_id:sheetId,
-      course_id:course.course_id,spot_id:spot.spot_id,test_mode:isTrue(course.test_mode),
+      course_id:course.course_id,spot_id:spot.spot_id,is_published:isPublished(course),test_mode:!isPublished(course),
       label:String(config.card_label||'記念カード'),title:String(spot.card_title||spot.spot_name||'記念カード'),
       message:String(config.card_message||((config.card_label||'記念カード')+'をゲットしました！')),
       image_url:image,course_name:course.course_name||'',area_name:config.area_name||config.app_title||''};
@@ -30,7 +31,7 @@
     }
     return out;
   }
-  const api={isTrue,visibleCourse,safeImage,cardSpec,mergeCards,derivedCardImage};
+  const api={isTrue,isPublished,visibleCourse,safeImage,cardSpec,mergeCards,derivedCardImage};
   root.WalkRewards=api;
   if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:window);

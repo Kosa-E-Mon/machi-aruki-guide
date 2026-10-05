@@ -42,7 +42,7 @@
     collection.hidden=false;collection.replaceChildren();
     const body=element('div',null,'reward-collection-content'),close=element('button','閉じる','reward-open');close.onclick=closeCollection;
     body.append(close,element('h2','獲得カード'),element('p','この端末に保存されています。ブラウザーのデータを消すと失われます。御朱印帳の「データを保存」でバックアップできます。','reward-note'));
-    const saved=Object.values(cards()).filter(c=>c.sheet_id===currentSheetId&&(channel==='preview'||!R.isTrue(c.test_mode)));
+    const saved=Object.values(cards()).filter(c=>c.sheet_id===currentSheetId&&(channel==='preview'||allCourses.some(course=>course.course_id===c.course_id&&R.isPublished(course))));
     saved.sort((a,b)=>String(b.acquired_at).localeCompare(String(a.acquired_at)));
     if(!saved.length)body.append(element('p','まだ獲得したカードはありません。'));
     saved.forEach(c=>{const panel=imagePanel({...c,message:c.area_name+' ／ '+c.course_name+'\n獲得日：'+new Date(c.acquired_at).toLocaleDateString()},null);body.append(panel);});

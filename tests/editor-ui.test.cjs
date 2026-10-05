@@ -77,6 +77,21 @@ test('failed loading leaves the previous sheet and edits intact',async()=>{
   run("document.getElementById('sheet-url').value='new_sheet_id_123456789012345';");
   assert.equal(await run('loadData()'),false);assert.equal(run('state.sheetId'),'previous');assert.equal(run('state.spots[0].spot_name'),'unsaved');
 });
+test('release confirmation can cancel without writing',async()=>{
+  const {run,ctx}=editor();
+  run("state.loaded=true;state.gasConnected=true;state.gasToken='test-only';currentTab='courses';state.courses=[{course_id:'one',course_name:'公開候補',is_published:'TRUE'}];state.originals.courses=[{course_id:'one',is_published:'FALSE'}];state.course_spots=[];state.originals.course_spots=[];window.writes=0;gasWrite=async()=>{window.writes++};confirm=msg=>{window.releasePrompt=msg;return false};");
+  await run('_origSaveCurrentSheet()');
+  assert.equal(ctx.writes,0);assert.ok(ctx.releasePrompt.includes('正式公開（リリース）'));
+});
+test('release success is announced only after the sheet matches',async()=>{
+  for(const matches of [true,false]){
+    const {run,ctx}=editor();ctx.matches=matches;
+    run("state.loaded=true;state.gasConnected=true;state.gasToken='test-only';currentTab='courses';state.courses=[{course_id:'one',is_published:'TRUE'}];state.originals.courses=[{course_id:'one',is_published:'FALSE'}];state.course_spots=[];state.originals.course_spots=[];gasWrite=async()=>{};fetchGviz=async(sid,s)=>s==='courses'?'course_id,is_published\\none,'+(matches?'TRUE':'FALSE'):'course_id,spot_id,order';showLd=()=>{};hideLd=()=>{};setStat=()=>{};showTab=()=>{};notify=msg=>{window.resultMessage=msg};console={error(){}};");
+    await run('_origSaveCurrentSheet()');
+    assert.equal(ctx.resultMessage.startsWith('正式公開しました！'),matches);
+    assert.equal(run('state.originals.courses[0].is_published'),matches?'TRUE':'FALSE');
+  }
+});
 test('audio playback derives the automatic filename when the URL cell is blank',()=>{
   const {run}=editor();
   run("state.config=[{key:'audio_repo',value:'kosa-e-mon/machi-aruki-audio'}];");

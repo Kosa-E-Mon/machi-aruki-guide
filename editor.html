@@ -905,7 +905,7 @@ const CONFIG_DEFS = [
 ];
 
 const COURSE_FIELDS = [
-  {key:'test_mode', lbl:'テスト用コース', desc:'TRUEは先行・テスト版だけに表示。空欄/FALSEは正式版にも表示。ID変更は不要', type:'bool'},
+  {key:'is_published', lbl:'正式公開（リリース）', desc:'初期状態はOFF：テスト版だけに表示。準備ができたらONにして保存すると正式版にも公開されます。空欄も未公開です', type:'bool'},
   {key:'course_id',               lbl:'コースID',                     desc:'一意の識別子。小文字英数字と _ のみ（例: rekishi_01）', w:140},
   {key:'course_name',             lbl:'コース名',                     desc:'画面に表示される名前', w:150},
   {key:'course_type',             lbl:'コースタイプ',                 desc:'注意アナウンスの種別', w:80, type:'sel', opts:['市街地','公園','混在']},
@@ -1127,6 +1127,8 @@ async function saveCurrentSheet(){
     }
   }
 
+  const launches=currentTab==='courses'?state.courses.filter(c=>String(c.is_published).trim().toUpperCase()==='TRUE'&&!((state.originals.courses||[]).some(old=>old.course_id===c.course_id&&String(old.is_published).trim().toUpperCase()==='TRUE'))):[];
+  if(launches.length&&!confirm('次のコースを正式公開（リリース）しますか？\n'+launches.map(c=>c.course_name||c.course_id).join('\n')+'\n\n保存が確認できた後、正式版のまちあるきアプリに表示されます。'))return;
   showLd('スプレッドシートに保存中…'); setStat('loading','保存中…');
   try{
     for(const s of sheetsToSave){
@@ -1154,7 +1156,7 @@ async function saveCurrentSheet(){
       document.getElementById('dot-'+s)?.classList.remove('show');
     }
     updateBadges(); showTab(currentTab);
-    setStat('ok','保存完了 ✓');notify('スプレッドシートへの保存が完了しました ✓');
+    setStat('ok','保存完了 ✓');notify(launches.length?'正式公開しました！ '+launches.map(c=>c.course_name||c.course_id).join('、'):'スプレッドシートへの保存が完了しました ✓');
   }catch(e){console.error(e);setStat('error','保存失敗: '+e.message);notify('保存に失敗しました: '+e.message,true);}
   finally{hideLd();}
 }
@@ -1896,7 +1898,7 @@ function refreshCourseMapAfterEdit(courseId){
 }
 
 function addCourse(){
-  const newCourse={course_id:'course_'+(Date.now()),course_name:'新しいコース',course_type:'市街地',display_order:'99',recommended:'FALSE',duration_min:'30',distance_m:'1000',course_description:'',course_thumbnail_url:'',course_audio_url:'',course_notes:'',start_date:'',end_date:'',audio_theme_url:'',theme_text:'',audio_finish_url:'',finish_text:''};
+  const newCourse={is_published:'FALSE',course_id:'course_'+(Date.now()),course_name:'新しいコース',course_type:'市街地',display_order:'99',recommended:'FALSE',duration_min:'30',distance_m:'1000',course_description:'',course_thumbnail_url:'',course_audio_url:'',course_notes:'',start_date:'',end_date:'',audio_theme_url:'',theme_text:'',audio_finish_url:'',finish_text:''};
   state.courses.push(newCourse);
   renderCourses();
   // Scroll to bottom

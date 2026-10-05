@@ -2,10 +2,11 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const R=require('../walk-rewards.js');
-test('test courses are hidden in production, including checkbox values; blank stays public',()=>{
-  for(const value of [true,'TRUE',' true '])assert.equal(R.visibleCourse({test_mode:value},'production'),false);
-  for(const value of [false,'FALSE','',undefined])assert.equal(R.visibleCourse({test_mode:value},'production'),true);
-  assert.equal(R.visibleCourse({test_mode:'TRUE'},'preview'),true);
+test('only explicitly released courses appear in production; blank and legacy flags stay private',()=>{
+  for(const value of [true,'TRUE',' true '])assert.equal(R.visibleCourse({is_published:value},'production'),true);
+  for(const value of [false,'FALSE','',undefined])assert.equal(R.visibleCourse({is_published:value},'production'),false);
+  assert.equal(R.visibleCourse({is_published:'FALSE'},'preview'),true);
+  assert.equal(R.visibleCourse({test_mode:'FALSE'},'production'),false);
 });
 test('spot ID selects its own SP card without changing the description',()=>{
   const spot={spot_id:'manpukuji',spot_name:'萬福寺',description:'街の説明',card_enabled:'TRUE'};

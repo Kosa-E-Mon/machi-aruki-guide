@@ -2134,7 +2134,7 @@ function makeCourseCard(course, prizes, distM) {
 
   card.innerHTML = `${tag}<div class="course-card-row">${thumb}<div class="course-card-main"><div class="course-card-type">${escHtml(course.course_type)}</div><div class="course-card-name">${escHtml(course.course_name)}</div>${startLine}<div class="course-card-meta"><span>🕐 ${tf('約{n}分', {n: course.duration_min})}</span><span>📍 ${tf('約{n}m', {n: course.distance_m})}</span></div>${desc}${period}</div></div>`;
   card.onclick = () => showCourseIntro(course);
-  if (WalkRewards.isTrue(course.test_mode)) {
+  if (!WalkRewards.isPublished(course)) {
     const badge = document.createElement('div'); badge.className = 'course-card-period'; badge.textContent = '🧪 テスト用コース'; card.appendChild(badge);
   }
   return card;

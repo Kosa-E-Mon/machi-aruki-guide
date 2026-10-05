@@ -2,9 +2,9 @@
 
 ## コースの公開先
 
-coursesのtest_modeをTRUEにすると、local-walk-guide（先行・テスト版）だけに表示します。FALSEまたは空欄ならmachi-aruki-guide（正式版）にも表示します。公開期間の条件も引き続き適用します。ID変更は不要です。
+coursesのis_publishedをTRUEにして保存すると正式公開（リリース）です。FALSE・空欄・列なしは未公開で、local-walk-guide（先行・テスト版）だけに表示します。machi-aruki-guide（正式版）はTRUEのコースだけ表示します。公開期間の条件も引き続き適用します。ID変更は不要です。旧test_modeは公開判定に使いません。
 
-エディターの「コース → 基本情報 → テスト用コース」で切り替えられます。
+エディターの「コース → 基本情報 → 正式公開（リリース）」で切り替えられます。新規コースはOFFから始まります。ONにしただけではまだ公開されず、保存時の公開確認と保存成功でリリースになります。
 
 ## カードを出す場所
 
@@ -35,7 +35,7 @@ Configのcert_image_idへ画像IDを入れると、写真リポジトリの「�
 
 | シート | 追加項目 |
 |---|---|
-| courses | test_mode |
+| courses | is_published |
 | course_spots | card_enabled |
 | spots | card_image_url, card_title |
 | configのキー | card_label, card_message, card_image_url, cert_image_id, cert_image_url |

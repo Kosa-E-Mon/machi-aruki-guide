@@ -15,7 +15,7 @@ try{
  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="400" height="240" fill="#f4efe4"/><text x="25" y="130" font-size="30">SP CARD</text></svg>';
  const csv={
  config:'key,value\napp_title,検証用のまち\nphoto_repo,owner/photos\ncard_label,クラカード\nnext_lock_sec,1\ncert_image_id,completion',
- courses:'course_id,course_name,test_mode,recommended\nnormal,通常コース,FALSE,TRUE\ntesting,試験コース,TRUE,TRUE',
+ courses:'course_id,course_name,is_published,recommended\nnormal,通常コース,TRUE,TRUE\ntesting,試験コース,FALSE,TRUE',
  spots:'spot_id,spot_name,lat,lng,description,card_title\ns1,一番目,39,140,街の説明を残す,一番目のカード\ns2,二番目,39.001,140.001,次の説明,',
  course_spots:'course_id,spot_id,order,card_enabled\nnormal,s1,1,TRUE\nnormal,s2,2,\ntesting,s1,1,TRUE',
  facilities:'facility_id,facility_name,lat,lng'
@@ -35,7 +35,7 @@ try{
  assert.equal(await page.evaluate(()=>allCourses.some(c=>c.course_id==='testing')),channel==='preview');
  // Exercise both recommendations and GPS lists even if an unfiltered caller supplies test data.
  await page.evaluate(()=>{
-   allCourses.push({course_id:'hidden-test',course_name:'非公開テスト',test_mode:'TRUE',recommended:true,display_order:1});
+   allCourses.push({course_id:'hidden-test',course_name:'非公開テスト',is_published:'FALSE',recommended:true,display_order:1});
    renderHome();
  });
  assert.equal((await page.locator('#home-body').textContent()).includes('非公開テスト'),channel==='preview');
@@ -43,7 +43,7 @@ try{
  assert.equal((await page.locator('#nearby-section').textContent()).includes('試験コース'),channel==='preview');
  await page.evaluate(()=>{
    window.savedTestCourses=allCourses;
-   allCourses=[{course_id:'testing',course_name:'試験コース',test_mode:'TRUE',recommended:true}];
+   allCourses=[{course_id:'testing',course_name:'試験コース',is_published:'FALSE',recommended:true}];
    renderHome();
  });
  assert.equal(await page.locator('#home-body .courses-empty').count(),channel==='production'?1:0);
@@ -76,7 +76,9 @@ try{
  await page.goto(address+'/editor.html');
  await page.getByRole('button',{name:'サンプルで試す',exact:true}).click();
  await page.evaluate(()=>showTab('courses'));
- assert.ok((await page.locator('body').textContent()).includes('テスト用コース'));
+ await page.evaluate(()=>addCourse());
+ assert.equal(await page.evaluate(()=>state.courses.at(-1).is_published),'FALSE');
+ assert.ok((await page.locator('body').textContent()).includes('正式公開（リリース）'));
  await page.evaluate(()=>{state.course_spots[0].card_enabled='TRUE';exportSheet('course_spots');});
  const restored=await page.evaluate(()=>state.course_spots[0].card_enabled);assert.equal(restored,'TRUE');
  assert.deepEqual(errors,[]);
