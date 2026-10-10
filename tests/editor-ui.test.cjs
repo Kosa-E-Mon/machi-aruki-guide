@@ -132,3 +132,24 @@ test('persistent toolbar reports unsaved state for the current sheet and across 
   run('workspace.demo=true;updateWorkspaceSaveStatus();');
   assert.equal(nodes.get('workspace-save-status').textContent,'サンプル・保存しません');
 });
+test('app preview uses draft presentation data, excludes credentials and preserves editor state',()=>{
+  const {run}=editor();
+  run("state.config=[{key:'app_title',value:'draft'},{key:'gas_url',value:'secret-url'},{key:'gas_token',value:'secret-token'},{key:'google_client_id',value:'oauth-id'},{key:'photo_repo',value:'owner/photos'}];state.spots=[{spot_id:'a',description:'unsaved'}];state.courses=[];state.course_spots=[];window.before=JSON.stringify(state);");
+  assert.equal(run('appPreviewData().config.length'),1);
+  assert.equal(run('appPreviewData().config[0].value'),'draft');
+  assert.equal(run('appPreviewData().spots[0].photo_url'),'https://owner.github.io/photos/a.webp');
+  run("appPreviewData().spots[0].description='changed';");
+  assert.equal(run('JSON.stringify(state)===before'),true);
+});
+test('app preview replaces both known boot sequences and fails closed for an unknown app',()=>{
+  const {run,ctx}=editor();
+  ctx.previewUrl={origin:'https://example.com',href:'https://example.com/index.html'};
+  for(const variant of ['', 'armBackNavigationGuard();']){
+    ctx.html=`<html><head><script src="https://example.com/app-library.js"></script><script src="https://accounts.google.com/gsi/client"></script><script>window.dataLayer=[];gtag('config','id');</script></head><body><script>initGoogleAuth();${variant}initApp();</script></body></html>`;
+    const output=run("appPreviewDocument(html,previewUrl,'test-nonce')");
+    assert.ok(output.includes('initEditorAppPreview();'));assert.ok(output.includes("connect-src 'none'"));assert.ok(output.includes("Object.defineProperty(window,key,{value:memory()})"));
+    assert.ok(output.includes('https://example.com/app-library.js'));
+    assert.equal(output.includes('initGoogleAuth();'),false);assert.equal(output.includes('armBackNavigationGuard();'),false);assert.equal(output.includes('accounts.google.com'),false);assert.equal(output.includes('window.dataLayer'),false);
+  }
+  assert.throws(()=>run("appPreviewDocument('<html></html>',previewUrl,'test')"),/通常起動は行いません/);
+});

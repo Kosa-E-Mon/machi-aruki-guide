@@ -34,7 +34,8 @@ function initEditorWorkspace(){
   const save=command('💾 保存',()=>saveCurrentSheet(),'表示中のシートの変更内容を確認して保存します','btn primary');save.id='workspace-save';
   const add=command('＋ 追加',()=>{if(currentTab==='courses')addCourse();else if(SCHEMAS[currentTab]){workspace.search[currentTab]='';addRow(currentTab);enhanceEditor();}else notify('スポット・コース・施設で追加できます');},'現在の一覧に新しい項目を追加します');add.id='workspace-add';
   const reset=command('↶ 戻す',()=>resetChanges(),'表示中のシートを読み込み時の状態へ戻します');reset.id='workspace-reset';panels.edit.append(save,add,reset);
-  panels.view.append(uiButton('▤ 地図・プレビュー',()=>{document.body.classList.toggle('panel-hidden');setTimeout(()=>leafletMap?.invalidateSize(),0);},'右側の地図・プレビューを表示／非表示にします'),uiButton('ⓘ 項目の説明',()=>document.body.classList.toggle('show-help'),'説明文と項目キーの常時表示を切り替えます'),sizes);
+  panels.view.append(uiButton('▤ 地図',()=>{document.body.classList.toggle('panel-hidden');setTimeout(()=>leafletMap?.invalidateSize(),0);},'地図を表示／非表示にします。設定の外観プレビューは、その見出しから開閉します'),uiButton('ⓘ 項目の説明',()=>document.body.classList.toggle('show-help'),'説明文と項目キーの常時表示を切り替えます'),sizes);
+  panels.view.firstChild.id='workspace-map-toggle';
   panels.view.append(uiEl('view-mode-label'),uiEl('view-mode-controls'));
   const oldBar=document.querySelector('.ed-bar');
   [...oldBar.querySelectorAll(':scope > button')].forEach(b=>{
@@ -96,10 +97,12 @@ function setWorkspaceCommands(){
   document.querySelectorAll('[data-requires-data]').forEach(b=>b.disabled=!state.loaded||workspace.home);
   if(uiEl('workspace-save'))uiEl('workspace-save').disabled=!state.loaded||workspace.home||workspace.demo;
   const add=uiEl('workspace-add'),reset=uiEl('workspace-reset');
-  if(add){add.hidden=workspace.home||!['spots','facilities','courses'].includes(currentTab);add.disabled=!state.loaded;}
+  if(add){add.hidden=workspace.home||!['spots','facilities','courses'].includes(currentTab)||!!workspace.inventoryMode?.[currentTab];add.disabled=!state.loaded;}
   if(reset)reset.hidden=workspace.home;
+  if(uiEl('workspace-map-toggle'))uiEl('workspace-map-toggle').disabled=workspace.home||currentTab==='config'||!state.loaded;
   if(uiEl('ed-title'))uiEl('ed-title').hidden=workspace.home;
   updateWorkspaceSaveStatus();
+  updateInventoryCommands();
 }
 function updateWorkspaceSaveStatus(){
   const status=uiEl('workspace-save-status');if(!status)return;
@@ -255,7 +258,7 @@ function enhanceConfig(){
   select.value=workspace.configSection;
   const search=uiNode('input','workspace-input');search.type='search';search.placeholder='設定名・キーワードで検索';search.setAttribute('aria-label',search.placeholder);search.value=workspace.configSearch;
   function filter(){workspace.configSection=select.value;workspace.configSearch=search.value;const q=search.value.trim().toLowerCase();rows.forEach(r=>r.hidden=q?!r.dataset.search.includes(q):select.value!=='all'&&r.dataset.section!==select.value);}
-  select.onchange=()=>{search.value='';filter();};search.oninput=filter;filters.append(select,search);grid.before(filters);filter();
+  select.onchange=()=>{search.value='';filter();};search.oninput=filter;filters.append(select,search);grid.before(filters);filter();installAppPreview();
 }
 function enhanceCourses(){
   document.querySelectorAll('.cc-body').forEach((body,ci)=>{
@@ -284,11 +287,11 @@ function matrixAudio(sn,row,role,applicable=true){
   const fallback=tts?'TTS代替あり':'TTS原稿なし';
   return {kind:url?'pending':'empty',label:explicit?'URL登録・未確認':url?'自動候補・未確認':'音声未登録',url,detail:(url||'音声ファイルの指定なし')+' / '+fallback,tts};
 }
-function renderCourseMatrix(host,course){
-  host.replaceChildren();if(!course)return;
-  host.append(uiNode('h3','','コースの内容一覧'),uiNode('p','matrix-note','現在の編集内容（未保存を含む）を表示。音声は任意です。URL登録や自動候補だけではファイルの存在を保証しません。TTSはブラウザーの音声合成による代替で、解説は到着音声の再生結果によって省略される場合があります。'));
+function renderCourseMatrix(host,course,allSpots=false){
+  host.replaceChildren();if(!course&&!allSpots)return;
+  host.append(uiNode('h3','',allSpots?'全スポットの内容一覧':'コースの内容一覧'),uiNode('p','matrix-note','現在の編集内容（未保存を含む）を表示。音声は任意です。URL登録や自動候補だけではファイルの存在を保証しません。TTSはブラウザーの音声合成による代替で、解説は到着音声の再生結果によって省略される場合があります。'));
   const controls=uiNode('div','matrix-controls');
-  controls.append(uiButton('音声ファイルを確認',check,null),uiButton('↗ メディアアップローダー',()=>window.open('media-uploader.html','_blank','noopener')));host.append(controls);
+  controls.append(uiButton('写真・音声ファイルを確認',check,null),uiButton('↗ メディアアップローダー',()=>window.open('media-uploader.html','_blank','noopener')));host.append(controls);
   const cells=[];
   function audioCell(sn,row,role,applicable){
     const info=matrixAudio(sn,row,role,applicable),td=uiNode('td');
@@ -305,21 +308,23 @@ function renderCourseMatrix(host,course){
         status.textContent=ok===true?'✓ ファイルあり':ok===false?'応答エラー':'? 確認できず';
         status.title=info.detail+(ok===false?' / HTTP応答エラー。権限・URL・未アップロード等を確認してください':'');
       }
-    }));button.disabled=false;button.textContent='音声ファイルを確認';
+    }));button.disabled=false;button.textContent='写真・音声ファイルを確認';
   }
   host.append(uiNode('p','matrix-note','表が画面に収まらない場合は、横へスクロールして出発・ゴール音声まで確認できます。'));
   const scroll=uiNode('div','matrix-scroll');scroll.tabIndex=0;scroll.setAttribute('aria-label','スポットの説明と音声一覧（横スクロール）');
   const table=uiNode('table','matrix-table'),head=uiNode('thead'),tr=uiNode('tr');
-  ['順番・スポット','説明文','接近 approach','到着 arrive','解説 explain（任意）','次へ next','出発 start','ゴール goal'].forEach(label=>{const th=uiNode('th','',label);th.scope='col';tr.append(th);});head.append(tr);table.append(head);
-  const tbody=uiNode('tbody'),rows=courseMatrixRows(course);
+  ['順番・スポット','説明文','写真','接近 approach','到着 arrive','解説 explain（任意）','次へ next','出発 start','ゴール goal'].forEach(label=>{const th=uiNode('th','',label);th.scope='col';tr.append(th);});head.append(tr);table.append(head);
+  const tbody=uiNode('tbody'),rows=allSpots?state.spots.map((spot,index)=>({link:{spot_id:spot.spot_id},index,count:state.spots.length,spot})):courseMatrixRows(course);
   rows.forEach(({link,index,count,spot})=>{
     const tr=uiNode('tr'),name=uiNode('th','',`${link.order||index+1}. ${spot?.spot_name||link.spot_id||'IDなし'}`);name.scope='row';tr.append(name);
-    if(!spot){const td=uiNode('td','matrix-missing','参照先スポットなし：スポットIDを確認してください');td.colSpan=7;tr.append(td);}
+    if(!spot){const td=uiNode('td','matrix-missing','参照先スポットなし：スポットIDを確認してください');td.colSpan=8;tr.append(td);}
     else{const description=String(spot.description||'').trim(),td=uiNode('td');td.append(uiNode('span','matrix-status '+(description?'ok':'empty'),description?'✓ 登録あり':'未登録'));td.title=description||'説明文が空欄です';tr.append(td);
-      for(const role of ['approach','arrive','explain','next','start','goal'])tr.append(audioCell('spots',spot,role,role==='start'?index===0:role==='next'?index>0&&index<count-1:role==='goal'?index===count-1&&index>0:true));
+      const photo=uiNode('td'),explicit=String(spot.photo_url||'').trim(),url=mediaPlaybackUrl('spots','photo_url',spot.spot_id,explicit),status=uiNode('span','matrix-status '+(url?'pending':'empty'),explicit?'URL登録・未確認':url?'自動候補・未確認':'写真未登録');photo.append(status);status.title=url||'写真の指定なし';if(url)cells.push({info:{url,detail:url},status});tr.append(photo);
+      for(const role of ['approach','arrive','explain','next','start','goal'])tr.append(audioCell('spots',spot,role,allSpots|| (role==='start'?index===0:role==='next'?index>0&&index<count-1:role==='goal'?index===count-1&&index>0:true)));
     }tbody.append(tr);
   });table.append(tbody);scroll.append(table);host.append(scroll);
-  if(!rows.length)host.append(uiNode('p','matrix-note','このコースにはスポットが登録されていません。巡回順タブから追加できます。'));
+  if(!rows.length)host.append(uiNode('p','matrix-note',allSpots?'スポットが登録されていません。編集画面で追加できます。':'このコースにはスポットが登録されていません。巡回順タブから追加できます。'));
+  if(allSpots){host.append(uiNode('p','matrix-note','start・next・goal はコース内の位置で使い分けます。全スポット一覧では登録状況のみを示し、必須とは扱いません。'));return;}
   host.append(uiNode('h4','','コースの音声（任意）'));
   const courseTable=uiNode('table','matrix-table'),ct=uiNode('tr');
   for(const [role,label] of [['theme','テーマ theme'],['finish','完走 finish']]){ct.append(uiNode('th','',label),audioCell('courses',course,role,true));}courseTable.append(ct);host.append(courseTable);
@@ -329,6 +334,7 @@ function enhanceEditor(){
   if(currentTab==='config')enhanceConfig();
   if(currentTab==='spots'||currentTab==='facilities')enhanceRecordForm();
   if(currentTab==='courses')enhanceCourses();
+  if(['courses','spots'].includes(currentTab)&&workspace.inventoryMode?.[currentTab])renderInventory();
   enhanceSwitches(uiEl('ed-body'));
   uiEl('ed-body').querySelectorAll('.chg-panel').forEach(panel=>{
     if(panel.parentElement.tagName==='DETAILS')return;
@@ -344,6 +350,7 @@ showTab=function(key){
   closeWorkspaceMenus();
   if(workspace.ready&&!state.loaded){openConnection();return;}
   workspace.home=false;document.body.classList.remove('home-view');
+  document.body.classList.toggle('config-preview-active',key==='config');
   workspaceShowTab(key);
   document.querySelectorAll('.workspace-tab').forEach(b=>{b.classList.toggle('active',b.dataset.sheet===key);b.setAttribute('aria-current',b.dataset.sheet===key?'page':'false');});
   enhanceEditor();setTimeout(()=>leafletMap?.invalidateSize(),0);
@@ -408,3 +415,81 @@ function openWorkspaceDemo(){
   workspace.demo=true;workspace.connected=null;selectedRow={courses:null,spots:null,facilities:null};mapEditContext=null;
   uiEl('gas-url').value='';uiEl('gas-token').value='';uiEl('connection-dialog').close();document.querySelector('.workspace-region').textContent='サンプル · 本番には保存されません';updateBadges();updateGasUI();showWorkspaceHome();setStat('ok','サンプルモード — 実際のスプレッドシートへの保存は無効です');
 }
+
+function updateInventoryCommands(){
+  if(!workspace.ready)return;
+  let button=uiEl('workspace-inventory');
+  if(!button){button=uiButton('▦ 内容一覧',()=>{workspace.inventoryMode??={};workspace.inventoryMode[currentTab]=!workspace.inventoryMode[currentTab];showTab(currentTab);});button.id='workspace-inventory';uiEl('ribbon-edit').insertBefore(button,uiEl('workspace-add'));}
+  button.hidden=workspace.home||!['courses','spots'].includes(currentTab);button.disabled=!state.loaded;
+  button.textContent=workspace.inventoryMode?.[currentTab]?'✎ 編集へ':'▦ 内容一覧';
+  button.setAttribute('aria-pressed',String(!!workspace.inventoryMode?.[currentTab]));
+}
+function renderInventory(){
+  const host=uiNode('section','inventory-view'),matrix=uiNode('section','course-matrix');
+  if(currentTab==='courses'){
+    const label=uiNode('label','','コースを選ぶ '),select=uiNode('select','workspace-input');select.setAttribute('aria-label','内容一覧のコース');
+    state.courses.forEach(c=>select.add(new Option(c.course_name||c.course_id,c.course_id)));
+    if(state.courses.some(c=>c.course_id===workspace.inventoryCourse))select.value=workspace.inventoryCourse;
+    select.onchange=()=>{workspace.inventoryCourse=select.value;renderCourseMatrix(matrix,state.courses.find(c=>c.course_id===select.value));};
+    label.append(select);host.append(label);select.onchange();
+    if(!state.courses.length)matrix.append(uiNode('p','','コースがありません。編集画面で追加できます。'));
+  }else renderCourseMatrix(matrix,null,true);
+  host.append(matrix);uiEl('ed-body').replaceChildren(host);
+}
+
+const appPreview={screen:'home',theme:'dark',courseId:'',spotId:'',html:null,frame:null,ready:false};
+function installAppPreview(){
+  if(uiEl('app-preview'))return;
+  const section=uiNode('details','config-app-preview');section.id='app-preview';section.open=true;
+  section.append(uiNode('summary','','📱 本体の外観プレビュー（保存前の設定）'));
+  const controls=uiNode('div','app-preview-controls');
+  for(const [key,label,options] of [['screen','プレビュー画面',[['home','ホーム'],['intro','コース紹介'],['spot','スポット説明'],['certificate','修了証']]],['theme','プレビューの配色',[['dark','ダーク'],['light','ライト']]]]){
+    const select=uiNode('select','workspace-input');select.setAttribute('aria-label',label);options.forEach(([value,text])=>select.add(new Option(text,value)));select.value=appPreview[key];select.onchange=()=>{appPreview[key]=select.value;updateAppPreview();};controls.append(select);
+  }
+  for(const [key,label,rows,id,name] of [['courseId','プレビューのコース',state.courses,'course_id','course_name'],['spotId','プレビューのスポット',state.spots,'spot_id','spot_name']]){
+    const select=uiNode('select','workspace-input');select.setAttribute('aria-label',label);rows.forEach(r=>select.add(new Option(r[name]||r[id],r[id])));if(rows.some(r=>r[id]===appPreview[key]))select.value=appPreview[key];else appPreview[key]=select.value;select.onchange=()=>{appPreview[key]=select.value;updateAppPreview();};controls.append(select);
+  }
+  section.append(controls,uiNode('p','matrix-note','この版の本体に、未保存の設定を反映します。表示専用です。'));
+  const limits=uiNode('details','app-preview-limits');limits.append(uiNode('summary','','プレビューの範囲'),uiNode('p','matrix-note','GPS・音声再生・ログイン・進捗保存・同期は停止。修了証の日付と距離は見本です。選択コース内のスポットを表示します。写真・フォントは外部配信のため通信状況で変わります。動作に関する設定は外観には反映されません。'));section.append(limits);
+  const status=uiNode('p','matrix-note','本体を読み込み中…');status.id='app-preview-status';status.setAttribute('role','status');section.append(status);
+  const frame=uiNode('iframe','app-preview-frame');frame.title='保存前の設定を反映した本体の外観';frame.setAttribute('sandbox','allow-scripts');frame.setAttribute('referrerpolicy','no-referrer');section.append(frame);uiEl('ed-body').prepend(section);
+  appPreview.frame=frame;appPreview.ready=false;
+  loadAppPreview(frame).catch(error=>{if(appPreview.frame===frame)status.textContent='本体プレビューを読み込めません：'+error.message;});
+}
+async function loadAppPreview(frame){
+  const url=new URL('index.html',location.href);
+  if(!appPreview.html){const response=await fetch(url);if(!response.ok)throw Error('HTTP '+response.status);appPreview.html=await response.text();}
+  const nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
+  if(appPreview.frame===frame)frame.srcdoc=appPreviewDocument(appPreview.html,url,nonce);
+}
+function appPreviewDocument(source,url,nonce){
+  let html=source;
+  const boot=/initGoogleAuth\(\);\s*(?:armBackNavigationGuard\(\);\s*)?initApp\(\);/;
+  if(!boot.test(html))throw Error('本体の起動方法を確認できません。通常起動は行いません。');
+  html=html.replace(boot,'initEditorAppPreview();');
+  html=html.replace(/<script\b[^>]*src=["'][^"']*(?:googletagmanager|accounts\.google\.com)[^"']*["'][^>]*>[\s\S]*?<\/script>/gi,'');
+  html=html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi,(block,code)=>/window\.dataLayer/.test(code)?'':block);
+  html=html.replace(/<script\b/g,'<script nonce="'+nonce+'"');
+  const isolation=`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline' ${url.origin} https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src https: data: ${url.origin}; font-src https://fonts.gstatic.com; connect-src 'none'; media-src 'none'; frame-src 'none'; form-action 'none'"><base href="${url.href}"><script nonce="${nonce}">(()=>{const memory=()=>{const data=new Map();return{getItem:k=>data.has(String(k))?data.get(String(k)):null,setItem:(k,v)=>data.set(String(k),String(v)),removeItem:k=>data.delete(String(k)),clear:()=>data.clear(),key:i=>[...data.keys()][i]||null,get length(){return data.size}}};for(const key of ['localStorage','sessionStorage'])Object.defineProperty(window,key,{value:memory()});window.fetch=()=>Promise.reject(Error('プレビューでは通信処理を停止しています'));XMLHttpRequest.prototype.send=function(){throw Error('プレビューでは通信処理を停止しています')};navigator.sendBeacon=()=>false;window.open=()=>null;window.gtag=()=>{};})();<\/script>`;
+  html=html.replace(/<head[^>]*>/i,match=>match+isolation).replace('</body>',`<script nonce="${nonce}" src="editor-preview-runtime.js"><\/script></body>`);
+  return html;
+}
+function appPreviewData(){
+  // Send presentation data only; never send GAS/OAuth/token/connection information.
+  const config=state.config.filter(r=>/^(app_|area_|home_|prefecture$|city$|color_|font_|header_|cert_|lang$)/.test(r.key)).map(r=>({key:r.key,value:r.value}));
+  const courses=dc(state.courses).map(c=>({...c,course_thumbnail_url:mediaPlaybackUrl('courses','course_thumbnail_url',c.course_id,c.course_thumbnail_url)||''}));
+  const spots=dc(state.spots).map(s=>({...s,photo_url:mediaPlaybackUrl('spots','photo_url',s.spot_id,s.photo_url)||''}));
+  return {config,courses,spots,course_spots:dc(state.course_spots),facilities:[],screen:appPreview.screen,theme:appPreview.theme,courseId:appPreview.courseId,spotId:appPreview.spotId};
+}
+function updateAppPreview(){
+  if(currentTab!=='config'||!appPreview.ready||!appPreview.frame?.isConnected)return;
+  uiEl('app-preview-status').textContent='保存前の設定を反映中…';appPreview.frame.contentWindow.postMessage({type:'walk-editor-preview-data',data:appPreviewData()},'*');
+}
+window.addEventListener('message',event=>{
+  if(!appPreview.frame?.isConnected||event.source!==appPreview.frame.contentWindow)return;
+  if(event.data?.type==='walk-editor-preview-ready'){appPreview.ready=true;updateAppPreview();}
+  if(event.data?.type==='walk-editor-preview-rendered')uiEl('app-preview-status').textContent='保存前の設定を反映しました（外観のみ）'+(event.data.note?' '+event.data.note:'');
+  if(event.data?.type==='walk-editor-preview-error')uiEl('app-preview-status').textContent='この画面を表示できません：'+event.data.message;
+});
+showRpConfig=function(){document.body.classList.add('config-preview-active');};
+updateConfigPreview=function(){updateAppPreview();};
