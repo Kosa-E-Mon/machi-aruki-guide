@@ -98,3 +98,37 @@ test('audio playback derives the automatic filename when the URL cell is blank',
   assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','')"),'https://kosa-e-mon.github.io/machi-aruki-audio/spot-01_approach.mp3');
   assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','https://example.com/custom.mp3')"),'https://example.com/custom.mp3');
 });
+test('matrix uses current route order, preserves missing references and does not mutate data',()=>{
+  const {run}=editor();
+  run("state.courses=[{course_id:'c'}];state.spots=[{spot_id:'a',description:'未保存説明'}];state.course_spots=[{course_id:'c',spot_id:'missing',order:'2'},{course_id:'other',spot_id:'a',order:'0'},{course_id:'c',spot_id:'a',order:'1'}];window.before=JSON.stringify(state);");
+  assert.equal(run("courseMatrixRows(state.courses[0])[0].spot.description"),'未保存説明');
+  assert.equal(run("courseMatrixRows(state.courses[0])[1].spot"),null);
+  assert.equal(run('JSON.stringify(state)===before'),true);
+});
+test('matrix distinguishes explicit URL, automatic candidate, optional explain and TTS',()=>{
+  const {run}=editor();
+  run("state.config=[{key:'audio_repo',value:'owner/audio'}];");
+  assert.equal(run("matrixAudio('spots',{spot_id:'s'},'arrive').label"),'自動候補・未確認');
+  assert.equal(run("matrixAudio('spots',{spot_id:'s',audio_arrive_url:'https://example.com/a.mp3'},'arrive').url"),'https://example.com/a.mp3');
+  assert.equal(run("matrixAudio('spots',{spot_id:'s'},'explain').url"),null);
+  assert.equal(run("matrixAudio('spots',{spot_id:'s',description:'解説'},'explain').tts"),true);
+  assert.equal(run("matrixAudio('spots',{spot_id:'s'},'start',false).kind"),'na');
+  assert.equal(run("matrixAudio('courses',{course_id:'c'},'theme').url"),'https://owner.github.io/audio/c_start.mp3');
+  assert.equal(run("matrixAudio('courses',{course_id:'c'},'finish').tts"),true);
+  run('state.config=[];');
+  assert.equal(run("matrixAudio('spots',{spot_id:'s'},'arrive').label"),'音声未登録');
+  assert.equal(run("matrixAudio('spots',{spot_id:'s'},'arrive').tts"),true);
+});
+test('persistent toolbar reports unsaved state for the current sheet and across the home view',()=>{
+  const {run,nodes}=editor();
+  run("state.loaded=true;workspace.demo=false;workspace.home=false;currentTab='courses';UI_SHEETS.forEach(s=>{state[s]=[];state.originals[s]=[]});state.course_spots=[{course_id:'c',spot_id:'s',order:'1'}];updateWorkspaceSaveStatus();");
+  assert.equal(nodes.get('workspace-save-status').textContent,'● 未保存の変更あり');
+  run("currentTab='spots';updateWorkspaceSaveStatus();");
+  assert.equal(nodes.get('workspace-save-status').textContent,'変更なし');
+  run('workspace.home=true;updateWorkspaceSaveStatus();');
+  assert.equal(nodes.get('workspace-save-status').textContent,'● 未保存の変更あり');
+  run('state.originals.course_spots=dc(state.course_spots);updateWorkspaceSaveStatus();');
+  assert.equal(nodes.get('workspace-save-status').textContent,'変更なし');
+  run('workspace.demo=true;updateWorkspaceSaveStatus();');
+  assert.equal(nodes.get('workspace-save-status').textContent,'サンプル・保存しません');
+});

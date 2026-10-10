@@ -14,9 +14,10 @@ function initEditorWorkspace(){
   gas.oninput=null;token.oninput=null;token.type='password';token.autocomplete='off';
   const status=uiEl('gas-status-lbl');
   const qr=document.querySelector('.hdr-qr'),sizes=document.querySelector('.hdr-size');
-  const logo=uiNode('div','logo','🗺 まちあるきエディター');
+  const logo=uiNode('div','logo','🗺 エディター');logo.title='まちあるきエディター';logo.setAttribute('aria-label','まちあるきエディター');
   header.replaceChildren(logo,uiNode('span','workspace-region','未接続'),uiNode('div','spacer'));
-  header.append(uiButton('⚙ 接続設定',openConnection,'編集する地域や接続情報を変更します'));
+  const utilities=uiNode('div','workspace-utilities');
+  const connection=uiButton('⚙ 接続',openConnection,'編集する地域や接続情報を変更します');connection.setAttribute('aria-label','接続設定');utilities.append(connection);
   const nav=uiNode('nav','workspace-tabs');nav.setAttribute('aria-label','編集するデータ');
   nav.append(uiButton('⌂ ホーム',showWorkspaceHome,'編集する内容を選びます','workspace-tab active'));
   for(const [key,label] of [['spots','📍 スポット'],['courses','🗺 コース'],['facilities','🏛 施設'],['config','⚙ アプリ設定']]){
@@ -25,16 +26,16 @@ function initEditorWorkspace(){
     const old=uiEl('nav-'+key);old.removeAttribute('id');b.id='nav-'+key;
     b.append(uiEl('badge-'+key),uiEl('dot-'+key));nav.append(b);
   }
-  const ribbons=uiNode('div','ribbon-tabs');ribbons.setAttribute('aria-label','操作の分類');
   const panels={};
-  for(const [key,label] of [['edit','編集'],['view','表示'],['data','データ・メディア'],['help','ヘルプ']]){
-    const b=uiButton(label,()=>selectRibbon(key),null,'ribbon-tab');b.dataset.ribbon=key;ribbons.append(b);
-    const panel=uiNode('div','ribbon-tools');panel.id='ribbon-'+key;panel.hidden=key!=='edit';panels[key]=panel;
+  for(const key of ['edit','view','data','help']){
+    const panel=uiNode('div',key==='edit'?'workspace-inline-actions':'workspace-menu-panel');panel.id='ribbon-'+key;panels[key]=panel;
   }
   const command=(text,fn,help,cls)=>{const b=uiButton(text,fn,help,cls);b.dataset.requiresData='true';return b;};
   const save=command('💾 保存',()=>saveCurrentSheet(),'表示中のシートの変更内容を確認して保存します','btn primary');save.id='workspace-save';
-  panels.edit.append(save,command('＋ 新規追加',()=>{if(currentTab==='courses')addCourse();else if(SCHEMAS[currentTab]){workspace.search[currentTab]='';addRow(currentTab);enhanceEditor();}else notify('スポット・コース・施設で追加できます');},'現在の一覧に新しい項目を追加します'),command('↶ 変更を戻す',()=>resetChanges(),'表示中のシートを読み込み時の状態へ戻します'));
+  const add=command('＋ 追加',()=>{if(currentTab==='courses')addCourse();else if(SCHEMAS[currentTab]){workspace.search[currentTab]='';addRow(currentTab);enhanceEditor();}else notify('スポット・コース・施設で追加できます');},'現在の一覧に新しい項目を追加します');add.id='workspace-add';
+  const reset=command('↶ 戻す',()=>resetChanges(),'表示中のシートを読み込み時の状態へ戻します');reset.id='workspace-reset';panels.edit.append(save,add,reset);
   panels.view.append(uiButton('▤ 地図・プレビュー',()=>{document.body.classList.toggle('panel-hidden');setTimeout(()=>leafletMap?.invalidateSize(),0);},'右側の地図・プレビューを表示／非表示にします'),uiButton('ⓘ 項目の説明',()=>document.body.classList.toggle('show-help'),'説明文と項目キーの常時表示を切り替えます'),sizes);
+  panels.view.append(uiEl('view-mode-label'),uiEl('view-mode-controls'));
   const oldBar=document.querySelector('.ed-bar');
   [...oldBar.querySelectorAll(':scope > button')].forEach(b=>{
     if(b.id==='save-btn'){b.hidden=true;return;}
@@ -42,7 +43,15 @@ function initEditorWorkspace(){
   });
   panels.data.append(command('⬇ 全CSV保存',exportAll,'すべてのシートをCSVファイルとして保存します'),qr,uiButton('▦ QR表示',showQrModal,'アプリを開くQRコードを表示します'));
   panels.help.append(uiButton('？ 使い方',showWorkspaceHelp,'接続から保存までの手順を確認します'),uiButton('⚙ GAS設定方法',()=>{openConnection();showGasModal();},'接続先のGAS設定手順を確認します'));
-  header.after(nav,ribbons,...Object.values(panels));
+  const toolbar=uiNode('div','workspace-toolbar');toolbar.setAttribute('aria-label','編集操作');
+  const menus=uiNode('div','workspace-toolbar-menus');
+  menus.append(workspaceMenu('表示',panels.view,'view'),workspaceMenu('データ',panels.data,'data','データ・メディア'));
+  utilities.append(workspaceMenu('？',panels.help,'help','ヘルプ'));
+  const statusText=uiNode('span','workspace-save-status');statusText.id='workspace-save-status';statusText.setAttribute('role','status');statusText.setAttribute('aria-live','polite');
+  const context=uiNode('div','workspace-toolbar-context');context.append(uiEl('ed-title'),statusText,uiEl('chg-badge'));
+  toolbar.append(panels.edit,menus,context);header.querySelector('.spacer').remove();header.append(nav,utilities);header.after(toolbar);
+  document.addEventListener('click',e=>document.querySelectorAll('.workspace-menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false;}));
+  document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const menu=[...document.querySelectorAll('.workspace-menu[open]')].find(m=>m.contains(document.activeElement));closeWorkspaceMenus();if(menu){menu.querySelector('summary').focus();e.preventDefault();}});
   uiEl('save-btn').hidden=true;
   const dialog=uiNode('dialog','connection-dialog');dialog.id='connection-dialog';
   dialog.innerHTML='<div class="home-eyebrow">MACHI ARUKI GUIDE</div><h1>編集する地域に接続</h1><p>接続情報はここでまとめて設定します。GASとキーは直接保存する場合に入力してください。</p><label for="connection-recent">保存済みの接続先</label><select id="connection-recent" class="workspace-input"><option value="">新しい接続先</option></select><label for="connection-name">接続名・地域名</label><input id="connection-name" class="workspace-input" placeholder="例：増田まちあるき"><div id="connection-fields"></div><div class="connection-status" id="connection-status" role="status"></div><details><summary>接続の準備・トークンについて</summary><p>スプレッドシートの読み取り設定と、書き込み用GASのデプロイが必要です。キーは地域ごとに管理されます。接続テストではURLの応答を確認し、キーの有効性は実際の保存時に確認します。</p><div id="connection-setup"></div></details><div class="connection-actions" id="connection-actions"></div>';
@@ -73,18 +82,39 @@ function initEditorWorkspace(){
 }
 
 function selectRibbon(key){
-  document.querySelectorAll('.ribbon-tab').forEach(b=>{const active=b.dataset.ribbon===key;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
-  document.querySelectorAll('.ribbon-tools').forEach(p=>p.hidden=p.id!=='ribbon-'+key);
+  closeWorkspaceMenus();const menu=uiEl('workspace-menu-'+key);if(menu)menu.open=true;
+}
+function closeWorkspaceMenus(){document.querySelectorAll('.workspace-menu[open]').forEach(menu=>menu.open=false);}
+function workspaceMenu(label,panel,key,accessibleLabel){
+  const menu=uiNode('details','workspace-menu');menu.id='workspace-menu-'+key;
+  const summary=uiNode('summary','',label);if(accessibleLabel)summary.setAttribute('aria-label',accessibleLabel);menu.append(summary,panel);
+  menu.addEventListener('toggle',()=>{if(menu.open)document.querySelectorAll('.workspace-menu[open]').forEach(other=>{if(other!==menu)other.open=false;});});
+  panel.addEventListener('click',e=>{if(e.target.closest('button')&&!e.target.closest('.hdr-size')){menu.open=false;summary.focus();}});
+  return menu;
 }
 function setWorkspaceCommands(){
   document.querySelectorAll('[data-requires-data]').forEach(b=>b.disabled=!state.loaded||workspace.home);
   if(uiEl('workspace-save'))uiEl('workspace-save').disabled=!state.loaded||workspace.home||workspace.demo;
+  const add=uiEl('workspace-add'),reset=uiEl('workspace-reset');
+  if(add){add.hidden=workspace.home||!['spots','facilities','courses'].includes(currentTab);add.disabled=!state.loaded;}
+  if(reset)reset.hidden=workspace.home;
+  if(uiEl('ed-title'))uiEl('ed-title').hidden=workspace.home;
+  updateWorkspaceSaveStatus();
+}
+function updateWorkspaceSaveStatus(){
+  const status=uiEl('workspace-save-status');if(!status)return;
+  const keys=workspace.home?UI_SHEETS:currentTab==='courses'?['courses','course_spots']:[currentTab];
+  const dirty=state.loaded&&keys.some(s=>JSON.stringify(state[s])!==JSON.stringify(state.originals[s]));
+  status.textContent=!state.loaded?'未接続':dirty?'● 未保存の変更あり':workspace.demo?'サンプル・保存しません':'変更なし';
+  status.classList.toggle('dirty',!!dirty);
+  const save=uiEl('workspace-save');if(save){save.classList.toggle('has-unsaved',!!dirty);save.title=status.textContent;save.setAttribute?.('aria-label','保存：'+status.textContent);}
 }
 function showWorkspaceHome(){
+  closeWorkspaceMenus();
   workspace.home=true;document.body.classList.add('home-view');
   document.querySelectorAll('.workspace-tab').forEach(b=>{b.classList.toggle('active',!b.dataset.sheet);b.setAttribute('aria-current',!b.dataset.sheet?'page':'false');});
   const home=uiNode('section','workspace-home');
-  home.append(uiNode('div','home-eyebrow',workspace.demo?'SAMPLE WORKSPACE':'YOUR WORKSPACE'),uiNode('h1','',state.loaded?(getCfg('app_title')||'まちあるきガイド'):'まちの魅力を、ひとつずつ。'),uiNode('p','',state.loaded?'編集したい内容を選んでください。変更内容を確認してから、シートごとに保存できます。':'接続先を設定すると、スポットやコースを編集できます。'));
+  home.append(uiNode('h1','',state.loaded?(getCfg('app_title')||'まちあるきガイド'):'まちの魅力を、ひとつずつ。'),uiNode('p','',state.loaded?'編集する内容を選んでください。変更はシートごとに保存できます。':'接続先を設定すると、スポットやコースを編集できます。'));
   const grid=uiNode('div','home-grid');
   for(const [key,icon,label,desc] of [['spots','📍','スポット','場所・説明・写真・音声を編集'],['courses','🗺','コース','巡回するスポットと順番を編集'],['facilities','🏛','施設','案内所や休憩場所などを編集'],['config','⚙','アプリ設定','名称・デザイン・修了証を設定']]){
     const b=uiButton('',()=>state.loaded?showTab(key):openConnection(),null,'home-card');
@@ -228,16 +258,71 @@ function enhanceConfig(){
   select.onchange=()=>{search.value='';filter();};search.oninput=filter;filters.append(select,search);grid.before(filters);filter();
 }
 function enhanceCourses(){
-  document.querySelectorAll('.cc-body').forEach(body=>{
+  document.querySelectorAll('.cc-body').forEach((body,ci)=>{
     if(body.dataset.enhanced)return;body.dataset.enhanced='true';
     const fields=[...body.querySelectorAll('.cc-field')],grid=body.querySelector('.cc-fields'),route=body.querySelector('.cc-spots-area');
     const tabs=uiNode('div','field-tabs');tabs.setAttribute('aria-label','コースの編集項目');
     const group=key=>key.endsWith('_date')?'公開期間':key.includes('audio')||key.includes('thumbnail')||['theme_text','finish_text'].includes(key)?'写真・音声':'基本情報';
     fields.forEach((field,i)=>{const def=COURSE_FIELDS[i];field.dataset.group=group(def.key);field.querySelector('.cc-field-lbl').append(helpButton(def.lbl,def.desc));field.querySelector('input,select')?.setAttribute('aria-label',def.lbl);});
-    const choose=name=>{tabs.querySelectorAll('button').forEach(b=>{const active=b.textContent===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});grid.hidden=name==='巡回順';route.hidden=name!=='巡回順';fields.forEach(f=>f.hidden=f.dataset.group!==name);};
-    ['基本情報','巡回順','写真・音声','公開期間'].forEach(name=>tabs.append(uiButton(name,()=>choose(name))));
+    const matrix=uiNode('section','course-matrix');body.append(matrix);
+    const choose=name=>{tabs.querySelectorAll('button').forEach(b=>{const active=b.textContent===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});grid.hidden=['巡回順','内容一覧'].includes(name);route.hidden=name!=='巡回順';matrix.hidden=name!=='内容一覧';if(name==='内容一覧')renderCourseMatrix(matrix,state.courses[ci]);fields.forEach(f=>f.hidden=f.dataset.group!==name);};
+    ['基本情報','巡回順','内容一覧','写真・音声','公開期間'].forEach(name=>tabs.append(uiButton(name,()=>choose(name))));
     body.prepend(tabs);choose('基本情報');
   });
+}
+
+// Read-only projection of the current editor data, including unsaved route edits.
+function courseMatrixRows(course){
+  const route=state.course_spots.filter(r=>r.course_id===course.course_id).slice().sort((a,b)=>(parseInt(a.order)||0)-(parseInt(b.order)||0));
+  return route.map((link,index)=>({link,index,count:route.length,spot:state.spots.find(s=>s.spot_id===link.spot_id)||null}));
+}
+function matrixAudio(sn,row,role,applicable=true){
+  if(!applicable)return {kind:'na',label:'— 対象外',detail:'この巡回位置では使用しません'};
+  const key='audio_'+role+'_url',id=row[sn==='courses'?'course_id':'spot_id'];
+  const explicit=String(row[key]||'').trim(),url=mediaPlaybackUrl(sn,key,id,explicit);
+  const tts=role==='explain'?!!String(row.description||'').trim():role==='theme'?!!String(row.theme_text||'').trim():true;
+  const fallback=tts?'TTS代替あり':'TTS原稿なし';
+  return {kind:url?'pending':'empty',label:explicit?'URL登録・未確認':url?'自動候補・未確認':'音声未登録',url,detail:(url||'音声ファイルの指定なし')+' / '+fallback,tts};
+}
+function renderCourseMatrix(host,course){
+  host.replaceChildren();if(!course)return;
+  host.append(uiNode('h3','','コースの内容一覧'),uiNode('p','matrix-note','現在の編集内容（未保存を含む）を表示。音声は任意です。URL登録や自動候補だけではファイルの存在を保証しません。TTSはブラウザーの音声合成による代替で、解説は到着音声の再生結果によって省略される場合があります。'));
+  const controls=uiNode('div','matrix-controls');
+  controls.append(uiButton('音声ファイルを確認',check,null),uiButton('↗ メディアアップローダー',()=>window.open('media-uploader.html','_blank','noopener')));host.append(controls);
+  const cells=[];
+  function audioCell(sn,row,role,applicable){
+    const info=matrixAudio(sn,row,role,applicable),td=uiNode('td');
+    const status=uiNode('span','matrix-status '+info.kind,info.label);status.title=info.detail;td.append(status);
+    if(info.kind!=='na'){td.append(uiNode('small','',info.tts?'TTS代替あり':'TTS原稿なし'));if(info.url)td.append(mkPlayBtn(()=>info.url,role));}
+    if(info.url)cells.push({info,status});return td;
+  }
+  async function check(){
+    const button=controls.firstChild;button.disabled=true;button.textContent='確認中…';
+    // Bound concurrent requests and do not mutate editor data or the save snapshot.
+    let cursor=0;await Promise.all(Array.from({length:Math.min(4,cells.length)},async()=>{
+      while(cursor<cells.length){const {info,status}=cells[cursor++];const ok=await checkUrlExists(info.url);if(!host.contains(status))continue;
+        status.className='matrix-status '+(ok===true?'ok':ok===false?'warn':'pending');
+        status.textContent=ok===true?'✓ ファイルあり':ok===false?'応答エラー':'? 確認できず';
+        status.title=info.detail+(ok===false?' / HTTP応答エラー。権限・URL・未アップロード等を確認してください':'');
+      }
+    }));button.disabled=false;button.textContent='音声ファイルを確認';
+  }
+  host.append(uiNode('p','matrix-note','表が画面に収まらない場合は、横へスクロールして出発・ゴール音声まで確認できます。'));
+  const scroll=uiNode('div','matrix-scroll');scroll.tabIndex=0;scroll.setAttribute('aria-label','スポットの説明と音声一覧（横スクロール）');
+  const table=uiNode('table','matrix-table'),head=uiNode('thead'),tr=uiNode('tr');
+  ['順番・スポット','説明文','接近 approach','到着 arrive','解説 explain（任意）','次へ next','出発 start','ゴール goal'].forEach(label=>{const th=uiNode('th','',label);th.scope='col';tr.append(th);});head.append(tr);table.append(head);
+  const tbody=uiNode('tbody'),rows=courseMatrixRows(course);
+  rows.forEach(({link,index,count,spot})=>{
+    const tr=uiNode('tr'),name=uiNode('th','',`${link.order||index+1}. ${spot?.spot_name||link.spot_id||'IDなし'}`);name.scope='row';tr.append(name);
+    if(!spot){const td=uiNode('td','matrix-missing','参照先スポットなし：スポットIDを確認してください');td.colSpan=7;tr.append(td);}
+    else{const description=String(spot.description||'').trim(),td=uiNode('td');td.append(uiNode('span','matrix-status '+(description?'ok':'empty'),description?'✓ 登録あり':'未登録'));td.title=description||'説明文が空欄です';tr.append(td);
+      for(const role of ['approach','arrive','explain','next','start','goal'])tr.append(audioCell('spots',spot,role,role==='start'?index===0:role==='next'?index>0&&index<count-1:role==='goal'?index===count-1&&index>0:true));
+    }tbody.append(tr);
+  });table.append(tbody);scroll.append(table);host.append(scroll);
+  if(!rows.length)host.append(uiNode('p','matrix-note','このコースにはスポットが登録されていません。巡回順タブから追加できます。'));
+  host.append(uiNode('h4','','コースの音声（任意）'));
+  const courseTable=uiNode('table','matrix-table'),ct=uiNode('tr');
+  for(const [role,label] of [['theme','テーマ theme'],['finish','完走 finish']]){ct.append(uiNode('th','',label),audioCell('courses',course,role,true));}courseTable.append(ct);host.append(courseTable);
 }
 function enhanceEditor(){
   if(!workspace.ready||workspace.home)return;
@@ -251,11 +336,12 @@ function enhanceEditor(){
   });
   uiEl('ed-body').querySelectorAll('table.dt th').forEach(th=>{const desc=th.querySelector('.thd');if(desc)th.title=desc.textContent;});
   syncWorkspaceChanges();setWorkspaceCommands();
-  const add=document.querySelector('#ribbon-edit button:nth-child(2)');if(add)add.disabled=!['spots','facilities','courses'].includes(currentTab);
+  const add=uiEl('workspace-add');if(add)add.disabled=!state.loaded||!['spots','facilities','courses'].includes(currentTab);
 }
 
 const workspaceShowTab=showTab;
 showTab=function(key){
+  closeWorkspaceMenus();
   if(workspace.ready&&!state.loaded){openConnection();return;}
   workspace.home=false;document.body.classList.remove('home-view');
   workspaceShowTab(key);
@@ -282,6 +368,7 @@ function syncWorkspaceChanges(){
   const dirty=keys.some(s=>JSON.stringify(state[s])!==JSON.stringify(state.originals[s]));
   const badge=uiEl('chg-badge');badge.classList.toggle('show',dirty);badge.textContent=dirty?'未保存の変更あり':'';
   updateBadges();
+  updateWorkspaceSaveStatus();
 }
 const workspaceRecChg=recChg;
 recChg=function(...args){workspaceRecChg(...args);if(workspace.ready)syncWorkspaceChanges();};
