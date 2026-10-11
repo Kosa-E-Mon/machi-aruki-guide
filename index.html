@@ -765,7 +765,7 @@ body {
 
 <!-- ① ローディング -->
 <div id="screen-loading" class="screen active">
-  <div class="loading-logo" id="loading-logo">まち歩き</div>
+  <div class="loading-logo" id="loading-logo">まちあるき</div>
   <div class="loading-sub">local-walk-guide</div>
   <div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>
   <div class="loading-msg" id="loading-msg">データを読み込んでいます…</div>
@@ -1844,7 +1844,7 @@ function applyConfig() {
 
   const title = cfg.app_title || 'まち歩き';
   document.title = title;
-  document.getElementById('loading-logo').textContent = title;
+  document.getElementById('loading-logo').textContent = 'まちあるき';
   document.getElementById('home-title').textContent = title;
   document.getElementById('home-subtitle').textContent = cfg.app_subtitle || t('コースを選んでください');
 
