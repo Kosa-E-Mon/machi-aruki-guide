@@ -759,6 +759,7 @@ body {
 <link rel="stylesheet" href="walk-rewards.css">
 <script src="release-channel.js"></script>
 <script src="walk-rewards.js"></script>
+<link rel="stylesheet" href="certificate-guard.css">
 </head>
 <body>
 
@@ -3301,7 +3302,7 @@ function showGoal() {
     sealEl.classList.remove('has-image');
     sealImg.removeAttribute('src');
   };
-  if (sealSvgUrl) sealImg.src = sealSvgUrl;
+  if (sealSvgUrl) { if (window.CertificateGuard) CertificateGuard.prepareSeal(sealImg,sealSvgUrl); else sealImg.src=sealSvgUrl; }
 
   // スポット一覧
   const cs = document.getElementById('cert-spots'); cs.innerHTML='';
@@ -4094,5 +4095,7 @@ window.addEventListener('load', () => {
 });
 </script>
 <script src="walk-rewards-ui.js"></script>
+<script src="certificate-state.js"></script>
+<script src="certificate-guard.js"></script>
 </body>
 </html>

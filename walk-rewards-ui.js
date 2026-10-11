@@ -19,18 +19,18 @@
       status.textContent='保存操作を開始しました。保存できたことを確認してから次へ進んでください。';return true;
     }catch{status.textContent='自動保存できませんでした。「画像を開く」から長押しなどで保存してください。';return false;}
   }
-  function imagePanel(spec,onLoad){
+  function imagePanel(spec,onLoad,retain=false){
     const panel=element('section',null,'reward-panel');
     panel.append(element('h3',spec.title));
     const status=element('p','画像を読み込んでいます…');status.setAttribute('role','status');panel.append(status);
-    const image=element('img');image.alt=spec.title;image.loading=onLoad?'eager':'lazy';
+    const image=element('img');image.alt=spec.title;image.loading=onLoad||retain?'eager':'lazy';
     image.onload=()=>{status.textContent=spec.message||'';if(onLoad)onLoad(status);};
     image.onerror=()=>{status.textContent='画像を読み込めません。通信と画像URLを確認して再試行してください。';};
     const actions=element('div',null,'reward-actions');
-    const retry=element('button','再読み込み');retry.type='button';retry.onclick=()=>{status.textContent='画像を読み込んでいます…';image.src=spec.image_url;};
-    const download=element('button','画像を保存');download.type='button';download.onclick=()=>saveImage(spec.image_url,spec.spot_id||spec.course_id,status);
+    const retry=element('button','再読み込み');retry.type='button';retry.onclick=()=>{status.textContent='画像を読み込んでいます…';if(retain&&window.CertificateGuard)CertificateGuard.prepareReward(image,status,spec);else image.src=spec.image_url;};
+    const download=element('button','画像を保存');download.type='button';download.onclick=()=>retain&&window.CertificateGuard?CertificateGuard.saveReward(panel,spec):saveImage(spec.image_url,spec.spot_id||spec.course_id,status);
     const open=element('a','画像を開く');open.href=spec.image_url;open.target='_blank';open.rel='noopener noreferrer';
-    actions.append(download,open,retry);panel.append(image,actions);image.src=spec.image_url;
+    actions.append(download,open,retry);panel.append(image,actions);if(retain&&window.CertificateGuard)CertificateGuard.prepareReward(image,status,spec);else image.src=spec.image_url;
     return panel;
   }
   let collection=null;
@@ -88,7 +88,7 @@
   showGoal=function(){
     originalGoal();document.getElementById('goal-reward')?.remove();
     const image=R.safeImage(currentCourse?.cert_image_url||cfg.cert_image_url||R.derivedCardImage(cfg,cfg.cert_image_id));if(!image)return;
-    const panel=imagePanel({title:'完歩記念画像',image_url:image,course_id:currentCourse.course_id,message:'完歩おめでとうございます。記念に保存できます。'},null);
+    const panel=imagePanel({title:'完歩記念画像',image_url:image,course_id:currentCourse.course_id,message:'完歩おめでとうございます。記念に保存できます。'},null,true);
     panel.id='goal-reward';document.querySelector('.cert-sho-buttons').before(panel);
   };
   const originalHome=renderHome;

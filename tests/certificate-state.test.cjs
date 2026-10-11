@@ -1,0 +1,4 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');const {State}=require('../certificate-state.js');
+test('download request does not mean saved confirmation',()=>{const s=new State();assert.equal(s.confirm(),false);assert.ok(s.begin());s.requestedSave();assert.equal(s.confirmed,false);assert.ok(s.needsGuard());assert.ok(s.confirm());assert.equal(s.needsGuard(),false);});
+test('double save is blocked and failure retains the leave guard',()=>{const s=new State();assert.ok(s.begin());assert.equal(s.begin(),false);s.fail('cancelled');assert.equal(s.requested,false);assert.ok(s.needsGuard());assert.ok(s.begin());});
+test('explicit skip is distinct from saved and a new certificate is guarded',()=>{const s=new State();s.dismissed=true;assert.equal(s.confirmed,false);assert.equal(s.needsGuard(),false);assert.equal(new State().needsGuard(),true);});
