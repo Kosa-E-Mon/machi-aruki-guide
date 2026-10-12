@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>まちあるきガイド — エディター</title>
+<title>まちあるきガイド — 編集ツール「エディター」</title>
 <link rel="stylesheet" href="editor-ui.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -431,7 +431,7 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
 
 <!-- HEADER -->
 <header class="hdr">
-  <div class="logo"><div class="logo-ic">🗺</div>まち歩きエディタ <span style="font-size:10px;color:var(--dim);font-weight:400;">v4</span></div>
+  <div class="logo"><div class="logo-ic">🗺</div>まちあるきエディター <span style="font-size:10px;color:var(--dim);font-weight:400;">v4</span></div>
   <div class="hdr-sep"></div>
   <div class="hdr-field">
     <div class="hdr-lbl">スプレッドシートURL または ID</div>
@@ -595,7 +595,7 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
         <div class="step-title"><span class="step-n">3</span>「デプロイ」→「新しいデプロイ」→「種類: ウェブアプリ」→「アクセスできるユーザー: 全員」→「デプロイ」</div>
       </div>
       <div class="modal-step">
-        <div class="step-title"><span class="step-n">4</span>表示された「ウェブアプリのURL」をコピーして、エディタのGAS URLフィールドに貼り付け → 「接続テスト」</div>
+        <div class="step-title"><span class="step-n">4</span>表示された「ウェブアプリのURL」をコピーして、エディターのGAS URLフィールドに貼り付け → 「接続テスト」</div>
       </div>
       <div class="modal-note">
         🔑 <strong>書き込みトークン:</strong> 上記コード内の <code id="gas-token-display" style="font-family:var(--mono);"></code> は、このスプレッドシート専用に自動生成した値で、「書き込みトークン」欄に自動で入力済みです(同じパソコンで別のスプレッドシートを設定しても、シートごとに別のトークンが作られます)。<strong>別のパソコン・スマホでこのシートに接続する場合は、GAS URLとあわせてこのトークンも控えて、その端末の「書き込みトークン」欄に貼り付けてください。</strong>他人にURLだけ知られても書き込みできなくなる、簡易的な鍵の役割です。
@@ -663,11 +663,11 @@ table.dt{font-size:calc(var(--editor-font-size) - 2px);}
 // ═══════════════════════════════════════════════════════
 
 const GAS_CODE_TEMPLATE = `/**
- * まち歩きエディタ v4 — Google Apps Script
+ * まちあるきエディター v4 — Google Apps Script
  * スプレッドシートの「拡張機能」→「Apps Script」に貼り付けてください。
  * デプロイ設定: ウェブアプリ / アクセス: 全員
- * ※ WRITE_TOKEN はこのエディタが自動生成した値です。手動で書き換えないでください
- *   （エディタ側の「書き込みトークン」欄と値が一致している必要があります）。
+ * ※ WRITE_TOKEN はこのエディターが自動生成した値です。手動で書き換えないでください
+ *   （エディター側の「書き込みトークン」欄と値が一致している必要があります）。
  */
 
 const WRITE_TOKEN = '__TOKEN__';
@@ -714,7 +714,7 @@ function writeSheet(sheetName, rows, force) {
   const existingCount = Math.max(0, lastRow - 1);
   const newCount = rows ? rows.length : 0;
 
-  // 件数が大きく減る場合は誤操作の可能性が高いため中断（エディタ側の確認後はforce:trueで再送される）
+  // 件数が大きく減る場合は誤操作の可能性が高いため中断（エディター側の確認後はforce:trueで再送される）
   if (!force && existingCount >= 5 && newCount < existingCount * 0.5) {
     throw new Error('件数が' + existingCount + '件から' + newCount + '件に大きく減ります。誤操作の可能性があるため保存を中断しました');
   }
@@ -1182,7 +1182,7 @@ function installNavigationGuard(){
   window.addEventListener('popstate',()=>{
     const msg=hasUnsavedChanges()
       ? '保存していない変更があります。このページを離れますか？'
-      : 'エディタから離れますか？';
+      : 'エディターから離れますか？';
     if(confirm(msg)){
       history.back();
     }else{

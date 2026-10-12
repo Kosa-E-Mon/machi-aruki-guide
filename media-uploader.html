@@ -88,7 +88,7 @@ function formatBytes(n){if(n<1024)return n+' B';if(n<1048576)return (n/1024).toF
 function showTab(kind){activeTab=kind;['image','audio'].forEach(k=>{$('tab-'+k).classList.toggle('active',k===kind);$('panel-'+k).classList.toggle('active',k===kind)})}
 function saveSettings(){const data={};['owner','branch','image-repo','image-folder','image-pages','audio-repo','audio-folder','audio-pages'].forEach(id=>data[id]=$(id).value.trim());localStorage.setItem(SETTINGS_KEY,JSON.stringify(data));sessionStorage.setItem('media_uploader_token',$('token').value);setStatus('設定を保存しました','ok')}
 function loadSettings(){try{const data=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');Object.entries(data).forEach(([id,v])=>{if($(id))$(id).value=v})}catch(e){}
-// エディタから開いた場合はURLパラメータの設定(configのphoto_repo/audio_repo由来)を優先
+// エディターから開いた場合はURLパラメータの設定(configのphoto_repo/audio_repo由来)を優先
 const q=new URLSearchParams(location.search);
 if(q.get('owner'))$('owner').value=q.get('owner');
 if(q.get('image_repo'))$('image-repo').value=q.get('image_repo');
