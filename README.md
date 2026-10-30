@@ -1,22 +1,28 @@
-# 🏮 local-walk-guide
+# 🏮 まちあるきガイド
 
-**GPS連動型まち歩きガイドアプリ**  
-スマートフォンのGPSを使い、スポットに近づくと自動で音声ガイドが流れる、まち歩き体験アプリです。  
-Googleスプレッドシートでコンテンツを管理し、GitHub Pagesで無料公開できます。
+まちあるきガイドは、地域の人が自分たちでスポットを選び、案内文や音声を用意し、コースを作って更新していくためのツールです。
+
+まちをよく知る人の知恵や声を、まちあるきの体験に。地域の人が自分たちでコースを作り、日々の発見を加えながら育てていけます。
+
+来訪者はスマートフォンのブラウザでコースを開き、GPSに連動した音声案内などを使って、自分のペースで土地の物語に触れられます。地域の担当者はGoogleスプレッドシートで内容を管理します。少数のスポットから試し、原稿、写真、音声、現地確認を分担して、公開後も無理のない範囲で更新を続けます。
 
 > **リポジトリ構成について**  
-> 本リポジトリ（local-walk-guide）は**先行開発版**です。テストを重ねて安定を確認した内容は、正式版リポジトリ **[machi-aruki-guide](https://github.com/Kosa-E-Mon/machi-aruki-guide)**（ブランド名：**MACHI-ARUKI-GUIDE**）に反映しています。  
-> 他地域・他団体での導入には正式版のURL（`https://kosa-e-mon.github.io/machi-aruki-guide/`）のご利用を推奨します。
+> 本リポジトリ（machi-aruki-guide）は、まちあるきガイドの**正式版**です。先行開発版は **[local-walk-guide](https://github.com/Kosa-E-Mon/local-walk-guide)** で公開しています。  
+> 他地域・他団体での導入には、正式版の公開URL（`https://kosa-e-mon.github.io/machi-aruki-guide/`）をご利用ください。
+
+使い方は [GUIDE.md](GUIDE.md)、考え方と構成は [総合概要](local-walk-guide_overview.md)、紹介用の現行説明は [NotebookLM用説明資料](NOTEBOOKLM_DESCRIPTION.md) を参照してください。導入前に [コミュニティ・サポート](#コミュニティサポート)、[クレジット表記](#クレジット表記について重要)、[ライセンス](#ライセンス) も確認してください。ソフトウェアの利用とコミュニティ参加では条件が異なります。
+
+> **この文書の確認範囲**  
+> 機能・設定・運用方法は現行公開資料に記載された説明です。今回の文言改訂では、実機動作、通信や保存、認証・権限の実装は検証していません。導入時は使用する端末と現地で動作を確認してください。
 
 ---
 
 > **English Summary**  
-> A GPS-triggered walking guide app for local tourism, developed in Masuda Town, Yokote City, Akita, Japan.  
-> Audio guides play automatically when visitors approach registered spots.  
-> Content is managed via Google Spreadsheets and deployed on GitHub Pages at zero cost.  
-> This repository is the development (preview) edition; the stable brand edition is [machi-aruki-guide](https://github.com/Kosa-E-Mon/machi-aruki-guide) (MACHI-ARUKI-GUIDE).  
-> Free to fork and adapt with attribution required. Community support available for tourism organizations — visit Masuda first.  
-> See [License](#ライセンス) and [Community](#コミュニティサポート) sections for details.
+> This repository, machi-aruki-guide, is the stable edition. The preview edition is [local-walk-guide](https://github.com/Kosa-E-Mon/local-walk-guide).  
+> Machi-Aruki Guide is a tool for local people to choose places, prepare stories and audio, build walking routes, and keep them up to date. Visitors use a smartphone browser to explore at their own pace, while organizers consider residents’ everyday lives and check each location in person.  
+> The current documentation describes GPS-triggered audio and content management through Google Spreadsheets. Free service tiers are assumed; fieldwork, content production, and maintenance still take people’s time. Continued free service is not guaranteed.  
+> Fork-based use has no individual support. Attribution and the full license terms apply. Community participation has separate eligibility requirements, including an in-person Masuda experience, affiliation, and a stated purpose. See [License](#ライセンス) and [Community](#コミュニティサポート).  
+> This is a documentation revision, not a new runtime or security verification.
 
 ---
 
@@ -73,12 +79,12 @@ Googleスプレッドシートでコンテンツを管理し、GitHub Pagesで�
 
 ### 運営者向け
 
-- ⚙️ **スプレッドシートで完結** ── HTMLの知識不要でコンテンツ編集・追加が可能
+- ⚙️ **日常の内容をスプレッドシートで更新** ── スポットやコースの情報を、コードを書き換えずに編集・追加する運用。初期設定と公開前の確認はクイックスタートを参照
 - 🖥️ **編集ツール「エディター」・現地調査ツール「サーベイヤー」・変換ツールを同梱** ── データ編集から現地調査、音声・画像の登録まで運営者自身で完結（[運営ツール](#運営ツール)参照）
 - 🍂 **期間限定コース** ── コースごとに公開期間を設定でき、季節・イベント対応が可能
-- 🌏 **多言語UI基盤** ── configの `lang` でUI言語を宣言する仕組みを実装済み（英語辞書は整備中）
+- 🌏 **多言語UI基盤** ── 現行資料では、configの `lang` でUI言語を宣言する仕組みを案内（英語辞書は整備中）。言語ごとの案内文・音声の用意と、ボタンなどのUI翻訳は別に確認
 - 📊 **Google Analytics 4対応** ── 来訪者の動線・スポット到着データを計測可能
-- 🆓 **無料で公開可能** ── GitHub Pages + Googleスプレッドシートのみで運用できる
+- 🆓 **無料枠を使う運用** ── GitHub PagesやGoogleスプレッドシートなどの無料枠を使う想定。現地調査、原稿・音声の制作、公開後の点検には、人の時間と作業が必要。無料での継続利用やサービスの提供を保証するものではありません
 
 ---
 
@@ -87,8 +93,10 @@ Googleスプレッドシートでコンテンツを管理し、GitHub Pagesで�
 **増田まち歩きガイド（秋田県横手市増田町）**  
 https://kosa-e-mon.github.io/local-walk-guide/
 
+このデモは先行開発版の公開URLです。他地域・他団体での導入には、クイックスタートに記載した正式版URLを使います。
+
 > 重要伝統的建造物群保存地区「増田の内蔵」を巡るモデルコースです。  
-> まずはこのデモを実際に現地で体験してみてください。
+> 現地で体験すると、案内する位置や音声の長さを自地域で考える際の参考になります。コミュニティ参加に必要な現地体験については、[参加条件](#コミュニティサポート)を確認してください。
 
 ---
 
@@ -96,8 +104,7 @@ https://kosa-e-mon.github.io/local-walk-guide/
 
 ### 🚀 最速スタート（フォーク不要）
 
-**各地域・各団体は、GitHubのフォークやデプロイ作業は不要です。**  
-スプレッドシートを準備するだけで、すぐに自分たちのまち歩きアプリが使えます。
+公開済みのアプリに自地域のスプレッドシートIDを指定する方法では、GitHubのフォークやデプロイ作業は不要です。テンプレートをコピーして内容と共有設定を整え、まずは2〜3か所のスポットでコースを試します。公開前には、現地で到着判定・音声・地図を確認してください。
 
 ### ① スプレッドシートをコピーする
 
@@ -118,7 +125,7 @@ https://kosa-e-mon.github.io/local-walk-guide/
 https://docs.google.com/spreadsheets/d/【ここがシートID】/edit
 ```
 
-### ④ アプリのURLにシートIDを付けて完成
+### ④ アプリのURLにシートIDを付ける
 
 安定版（推奨）：
 
@@ -132,7 +139,9 @@ https://kosa-e-mon.github.io/machi-aruki-guide/?sid=【あなたのシートID�
 https://kosa-e-mon.github.io/local-walk-guide/?sid=【あなたのシートID】
 ```
 
-このURLをQRコード化して観光パンフレットに掲載するだけで運用開始できます。
+### ⑤ 現地で確認してから公開する
+
+スマートフォンを持ってコースを歩き、到着判定・音声・地図を確かめます。住民の生活動線や私有地に踏み込まない位置へ案内できることも確認してください。確認後にこのURLをQRコード化し、観光パンフレットなどに掲載します。調査の方法は [GUIDE.mdの現地調査編](GUIDE.md#第2章-現地調査編) を参照してください。
 
 ---
 
@@ -378,6 +387,8 @@ Google Analytics・Google OAuth を独自設定したい場合など、高度な
 ---
 
 ## コミュニティ・サポート
+
+利用方法とコミュニティ参加の条件は異なります。フォークによる自由利用には個別サポートはありません。コミュニティ参加には、増田まち歩きの現地体験、所属、活用目的などの条件があります。以下の現行条件を確認してください。学校での活用を説明している箇所も、コミュニティの参加資格や支援対象を自動的に広げるものではありません。
 
 ### 基本的な考え方
 
