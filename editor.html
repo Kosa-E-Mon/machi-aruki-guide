@@ -2084,7 +2084,7 @@ function attachMediaCheck(sn,colKey,getId,getVal,container){
     const urls=sn==='spots'&&(colKey==='photo_url'||/^audio_/.test(colKey))?editorSpotCandidates(id,colKey,explicit):[explicit||mediaDerivedUrl(sn,colKey,id)].filter(Boolean);
     st.className='media-check show wait';st.textContent='素材を確認中…';
     let unknown=false;
-    for(const url of urls){const ok=await checkUrlExists(url);if(my!==seq)return;if(ok===true){st.className='media-check show ok';st.textContent='✓ '+url+'（専用→共通の順で使用）';return;}if(ok===null)unknown=true;}
+    for(const url of urls){const ok=await checkUrlExists(url);if(my!==seq)return;if(ok===true){st.className='media-check show ok';st.textContent='✓ '+url+'（再生候補を確認済み）';return;}if(ok===null)unknown=true;}
     if(my!==seq)return;
     st.className='media-check show '+(unknown?'wait':'ok');
     st.textContent=unknown?'？ 通信・権限等で確認不能（実再生で代替を試行）':colKey==='photo_url'?'写真なしでも表示可能':'素材なし：原稿を端末で読み上げ（端末依存）';

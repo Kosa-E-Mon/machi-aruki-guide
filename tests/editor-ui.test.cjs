@@ -210,3 +210,5 @@ test('GAS template refuses stale clients before backup or clearing new media col
   vm.runInContext("writeSheet('spots',rows,false)",ctx);assert.equal(cleared,1);assert.equal(backups,1);
   assert.deepEqual(JSON.parse(JSON.stringify(written)),[['Kaneboshi','source','text','https://media.test/custom.mp3','keep']]);
 });
+
+test('original media ID is editable beside direction-specific audio fields',()=>{const {run}=editor();assert.equal(run("recordGroup('shared_media_id')"),'音声');});

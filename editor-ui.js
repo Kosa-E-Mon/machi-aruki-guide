@@ -212,7 +212,7 @@ function showWorkspaceHelp(){
 function recordGroup(key){
   if(key.startsWith('card_'))return '記念カード';
   if(['lat','lng','approach_dist','arrive_dist','trigger_dist'].includes(key))return '場所・距離';
-  if(key.includes('audio'))return '音声';
+  if(key==='shared_media_id'||key.includes('audio'))return '音声';
   if(key==='photo_url')return '写真';
   if(key.endsWith('_date'))return '公開期間';
   return '基本情報';
