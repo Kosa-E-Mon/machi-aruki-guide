@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<script src="spot-media.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1C1A16">
@@ -312,6 +313,7 @@ body {
 
 /* 音声ログ */
 .voice-log { margin: 7px 20px 0; background: rgba(58,122,74,.07); border: 1px solid rgba(58,122,74,.18); border-radius: 8px; padding: 8px 13px; font-size: 12px; color: var(--green); min-height: 32px; display: flex; align-items: center; gap: 8px; letter-spacing: .04em; line-height: 1.5; }
+.voice-notice { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100vw - 32px); z-index:10000; padding:10px 14px; border-radius:8px; background:#263c32; color:white; font-size:13px; line-height:1.6; pointer-events:none; }
 
 /* マップ */
 .map-container { margin: 8px 20px 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); height: 320px; position: relative; }
@@ -1650,14 +1652,7 @@ function setIfExists(obj, key, url) {
 }
 
 function applyUrlConventions() {
-  allSpots.forEach(function(s) {
-    s.photo_url          = s.photo_url          || derivePhotoUrl(s.spot_id);
-    s.audio_approach_url = s.audio_approach_url || deriveAudioUrl(s.spot_id, 'approach');
-    s.audio_arrive_url   = s.audio_arrive_url   || deriveAudioUrl(s.spot_id, 'arrive');
-    s.audio_start_url    = s.audio_start_url    || deriveAudioUrl(s.spot_id, 'start');
-    s.audio_next_url     = s.audio_next_url     || deriveAudioUrl(s.spot_id, 'next');
-    s.audio_goal_url     = s.audio_goal_url     || deriveAudioUrl(s.spot_id, 'goal');
-  });
+  // Spot URLs remain raw; resolve candidates per playback, never persist derived URLs.
   // コースの音声(テーマ/完走/説明)は「ファイルが実在する場合のみ」導出URLを採用する。
   // audio_theme_url の有無が「テーマを流すか caution(注意喚起)を流すか」の分岐に、
   // course_audio_url の有無が説明ボタン表示に使われるため、404のURLを無条件に
@@ -2324,19 +2319,17 @@ function startWalk(playStartAnnounce) {
 
   gpsLocked = true; // スタートアナウンス中はGPS到着判定をロック
   updateArrivedButton(); // 即座にボタンを無効化（音声開始前から制限）
+  const startEpoch=voiceEpoch;
   setTimeout(() => {
+    if(startEpoch!==voiceEpoch)return;
     const startSpot = courseSpots[0];
     const specialActive = isSpecialActive();
     // cautionはstartTextから除去（テーマナレーションまたはcaution音声で流すため重複しない）
-    const startText = `最初の目的地は${startSpot.spot_name}です。`;
+    const startText = SpotMedia.text(startSpot,'start',`最初の目的地は${startSpot.spot_name}です。`);
 
     // ③ 第1スポットへ出発
     function playStart() {
-      if (startSpot.audio_start_url) {
-        playVoice(startSpot.audio_start_url, startText, () => { gpsLocked = false; }, true);
-      } else {
-        speakTTS(startText, () => { gpsLocked = false; });
-      }
+      playVoice(spotUrls(startSpot,'audio_start_url'),startText,()=>{gpsLocked=false;},true);
     }
 
     // ② テーマナレーション（なければ汎用caution）→ playStart へ
@@ -2350,13 +2343,13 @@ function startWalk(playStartAnnounce) {
 
       if (themeUrl) {
         // テーマあり → cautionは一切流さない（MP3失敗時のTTSフォールバックもtheme_textのみ）
-        playVoice(themeUrl, themeText || '', () => setTimeout(onDone, 300), true);
+        playVoice(themeUrl, themeText || '', () => onDone(), true);
       } else if (themeText) {
-        speakTTS(themeText, () => setTimeout(onDone, 300));
+        speakTTS(themeText, () => onDone());
       } else if (cautionUrl) {
-        playVoice(cautionUrl, caution, () => setTimeout(onDone, 300), true);
+        playVoice(cautionUrl, caution, () => onDone(), true);
       } else if (caution) {
-        speakTTS(caution, () => setTimeout(onDone, 300));
+        speakTTS(caution, () => onDone());
       } else {
         onDone();
       }
@@ -2365,7 +2358,7 @@ function startWalk(playStartAnnounce) {
     // ① イベント（special_start）→ ② テーマ/caution → ③ 第1スポット
     if (specialActive && cfg.audio_special_start_url) {
       playVoice(cfg.audio_special_start_url, '特別アナウンスです。', () => {
-        setTimeout(() => playThemeOrCaution(playStart), 300);
+        playThemeOrCaution(playStart);
       }, true);
     } else {
       playThemeOrCaution(playStart);
@@ -2629,6 +2622,10 @@ function unlockAudio() {
 
 // 再生中の音声（MP3・TTS）を完全停止する
 function stopVoice() {
+  clearVoiceNotice();
+  voiceEpoch++;
+  spotPlayer.stop();
+  unlockNextButton();
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   voicePlaying = false;
@@ -2656,90 +2653,43 @@ function unlockNextButton() {
   if (btn.dataset.origText) { btn.textContent = btn.dataset.origText; }
 }
 
+let voiceEpoch = 0;
+let voiceNoticeTimer=null;
+function clearVoiceNotice(){
+  clearTimeout(voiceNoticeTimer);voiceNoticeTimer=null;
+  const node=document.getElementById('voice-notice');if(node){node.hidden=true;node.textContent='';}
+}
+function showVoiceNotice(reason){
+  if(!['tts-unsupported','tts','tts-timeout'].includes(reason))return;
+  clearVoiceNotice();
+  const node=document.getElementById('voice-notice');
+  node.textContent=reason==='tts-unsupported'?'この端末では読み上げを利用できません。文章でご確認ください。':'読み上げできませんでした。文章でご確認ください。';
+  node.hidden=false;voiceNoticeTimer=setTimeout(clearVoiceNotice,6000);
+}
+const spotPlayer = SpotMedia.createPlayer({Audio, speech:window.speechSynthesis, Utterance:window.SpeechSynthesisUtterance,
+  probe:SpotMedia.probe, convert:driveUrl, state:playing=>{voicePlaying=playing;updateArrivedButton();},
+  log:(text,url)=>{lastVoiceText=text||'';lastVoiceUrl=url;setVoiceLog('🔊',text||url||'');},
+  issue:(reason,url)=>{console.info('[voice]',reason,url||'');showVoiceNotice(reason);}});
+function spotUrls(spot,key){return SpotMedia.candidates(spot,key,allSpots,cfg);}
 function playVoice(url, fallback, onEnd, force) {
-  // 再生中はスキップ（forceフラグで上書き可）
-  if (voicePlaying && !force) return;
-  // TTS・MP3 どちらに進むかに関わらず、先に既存の再生を停止する
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
-  const resolved = driveUrl(url);
-  if (resolved) {
-    try {
-      voicePlaying = true;
-      updateArrivedButton();
-      const audio = new Audio(resolved);
-      audio.addEventListener('error', () => {
-        voicePlaying = false; lastVoiceUrl = null;
-        updateArrivedButton();
-        speakTTS(fallback, onEnd);
-      });
-      audio.addEventListener('ended', () => {
-        voicePlaying = false;
-        updateArrivedButton();
-        if (onEnd) onEnd();
-      });
-      audio.play().then(() => {
-        currentAudio = audio;
-        setVoiceLog('🔊', fallback || url);
-        lastVoiceText = fallback;
-        lastVoiceUrl = resolved;
-      }).catch(() => {
-        voicePlaying = false;
-        lastVoiceUrl = null;
-        updateArrivedButton();
-        speakTTS(fallback, onEnd);
-      });
-      return;
-    } catch(e) { voicePlaying = false; updateArrivedButton(); }
-  }
-  lastVoiceUrl = null;
-  speakTTS(fallback, onEnd);
+  if(voicePlaying&&!force)return;
+  if(fallback||(Array.isArray(url)?url.length:url))clearVoiceNotice();
+  voiceEpoch++;
+  lastVoiceText=fallback||'';lastVoiceUrl=null;
+  if(fallback)setVoiceLog('🔊',fallback);
+  spotPlayer.play(Array.isArray(url)?url:url?[url]:[],fallback,onEnd);
 }
-
-function speakTTS(text, onEnd) {
-  if (!text || !('speechSynthesis' in window)) { voicePlaying = false; updateArrivedButton(); if (onEnd) onEnd(); return; }
-  speechSynthesis.cancel();
-  lastVoiceText = text;
-  voicePlaying = true;
-  updateArrivedButton();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang='ja-JP'; u.rate=0.88; u.pitch=1.0; u.volume=1.0;
-  const v = speechSynthesis.getVoices().find(v => v.lang.startsWith('ja'));
-  if (v) u.voice = v;
-  u.onend = () => { voicePlaying = false; updateArrivedButton(); if (onEnd) onEnd(); };
-  u.onerror = () => { voicePlaying = false; updateArrivedButton(); };
-  if (onEnd) u.onend = () => { voicePlaying = false; updateArrivedButton(); onEnd(); };
-  setVoiceLog('🔊', text);
-  speechSynthesis.speak(u);
-}
-
-// mp3があればmp3を、なければTTSで再生（ロック強制解除して再生）
-function replayVoice() {
-  voicePlaying = false;
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
-
-  if (explainCurrentSpot) {
-    const spot = explainCurrentSpot;
-    const explainText = spot.description ? spot.description.slice(0, 120) : '';
-    const arriveText  = `${spot.spot_name}に到着しました。`;
-    // 優先順位: audio_explain_url → audio_arrive_url → TTS（解説 or 到着テキスト）
-    const replayUrl  = spot.audio_explain_url || spot.audio_arrive_url || null;
-    const replayText = explainText || arriveText;
-    playVoice(replayUrl, replayText, null, true);
-  } else if (lastVoiceUrl) {
-    voicePlaying = true;
-    const audio = new Audio(lastVoiceUrl);
-    audio.addEventListener('error', () => { voicePlaying = false; speakTTS(lastVoiceText); });
-    audio.addEventListener('ended', () => { voicePlaying = false; });
-    audio.play().then(() => { currentAudio = audio; }).catch(() => { voicePlaying = false; speakTTS(lastVoiceText); });
-  } else {
-    speakTTS(lastVoiceText);
-  }
+function speakTTS(text,onEnd){playVoice([],text,onEnd,true);}
+function replayVoice(){
+  stopVoice();gpsLocked=false;
+  if(explainCurrentSpot){
+    const s=explainCurrentSpot,explain=SpotMedia.text(s,'explain',s.description?s.description.slice(0,120):'');
+    playVoice([...spotUrls(s,'audio_explain_url'),...spotUrls(s,'audio_arrive_url')],explain||SpotMedia.text(s,'arrive',s.spot_name+'に到着しました。'),null,true);
+  }else playVoice(lastVoiceUrl,lastVoiceText,null,true);
 }
 function setVoiceLog(icon, text) {
   document.getElementById('voice-wave').textContent = icon;
-  document.getElementById('voice-log-text').textContent = text.length > 28 ? text.slice(0,28)+'…' : text;
+  document.getElementById('voice-log-text').textContent = text;
 }
 
 // ══════════════════════════════════════
@@ -2860,7 +2810,7 @@ function onGPSUpdate(pos) {
   if (!arrivedDetected && !gpsLocked && dist <= spot.arrive_dist) { arrivedDetected = true; autoArrive(); return; }
   if (!approachNotified && !gpsLocked && dist <= spot.approach_dist && dist > spot.arrive_dist) {
     approachNotified = true;
-    playVoice(spot.audio_approach_url, `まもなく${spot.spot_name}です。あと少しです。`);
+    playVoice(spotUrls(spot,'audio_approach_url'), SpotMedia.text(spot,'approach',`まもなく${spot.spot_name}です。あと少しです。`));
   }
 }
 
@@ -3152,59 +3102,16 @@ function startArriveWithLock(spot) {
 // 到着音声 → 解説音声 の順に再生（MP3優先、なければTTS）
 // onComplete: 音声シーケンス全完了時に呼ぶコールバック（「次へ」ボタン解除に使用）
 function playArriveSequence(spot, onComplete) {
-  const arriveText = `${spot.spot_name}に到着しました。`;
-  const explainText = spot.description ? spot.description.slice(0, 120) : '';
-
-  // suppressTTS=true のとき、解説はMP3のみ（TTSフォールバックなし）
-  function playExplain(suppressTTS) {
-    const fallback = suppressTTS ? null : explainText;
-    if (spot.audio_explain_url || (!suppressTTS && explainText)) {
-      playVoice(spot.audio_explain_url, fallback, () => {
-        if (onComplete) onComplete(); // 解説音声完了 → 「次へ」解除
-      }, true);
-    } else {
-      if (onComplete) onComplete(); // 再生なし → 即解除
-    }
-  }
-
-  // 到着音声：audio_arrive_url があればMP3を直接制御し再生結果でTTS抑制フラグを切り替える
-  const resolved = driveUrl(spot.audio_arrive_url);
-  if (resolved) {
-    // MP3再生を試みる
-    voicePlaying = true;
-    updateArrivedButton();
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    if ('speechSynthesis' in window) speechSynthesis.cancel();
-    const audio = new Audio(resolved);
-    audio.addEventListener('error', () => {
-      // MP3失敗 → TTSで到着告知 → 解説もTTS許可
-      voicePlaying = false; lastVoiceUrl = null; updateArrivedButton();
-      speakTTS(arriveText, () => setTimeout(() => playExplain(false), 400));
-    });
-    audio.addEventListener('ended', () => {
-      // MP3成功再生完了 → 解説のTTSを抑制
-      voicePlaying = false; updateArrivedButton();
-      setTimeout(() => playExplain(true), 400);
-    });
-    audio.play().then(() => {
-      currentAudio = audio;
-      setVoiceLog('🔊', arriveText || spot.audio_arrive_url);
-      lastVoiceText = arriveText;
-      lastVoiceUrl = resolved;
-    }).catch(() => {
-      // 再生拒否（ユーザー操作前など）→ TTSで到着告知 → 解説もTTS許可
-      voicePlaying = false; lastVoiceUrl = null; updateArrivedButton();
-      speakTTS(arriveText, () => setTimeout(() => playExplain(false), 400));
-    });
-  } else if (arriveText) {
-    // arrive URLなし → TTSで到着告知 → 解説もTTS許可
-    speakTTS(arriveText, () => setTimeout(() => playExplain(false), 400));
-  } else {
-    playExplain(false);
-  }
+  const arriveText=SpotMedia.text(spot,'arrive',spot.spot_name+'に到着しました。');
+  const explainText=SpotMedia.text(spot,'explain',spot.description?spot.description.slice(0,120):'');
+  playVoice(spotUrls(spot,'audio_arrive_url'),arriveText,result=>{
+    playVoice(spotUrls(spot,'audio_explain_url'),result.audio?'':explainText,onComplete,true);
+  },true);
 }
 
+let cancelSpotPhoto=()=>{};
 function showExplain(spot) {
+  cancelSpotPhoto();
   const isLast = currentIdx === courseSpots.length-1;
   document.getElementById('explain-num-bg').textContent = spot.order;
   document.getElementById('explain-badge').textContent = `SPOT ${spot.order} ／ ${currentCourse.course_name}`;
@@ -3215,12 +3122,12 @@ function showExplain(spot) {
   const pa = document.getElementById('photo-area');
   const ph = document.getElementById('photo-placeholder');
   const ei = pa.querySelector('img'); if (ei) ei.remove();
-  if (spot.photo_url) {
-    const img=document.createElement('img');
-    img.src=drivePhotoUrl(spot.photo_url);
-    img.alt=spot.spot_name; img.draggable=false; img.oncontextmenu=()=>false;
-    ph.style.display='none'; pa.insertBefore(img,pa.firstChild);
-  } else { ph.style.display='flex'; }
+  const urls=spotUrls(spot,'photo_url');
+  if(urls.length){
+    const img=document.createElement('img');img.alt=spot.spot_name;img.draggable=false;img.oncontextmenu=()=>false;
+    ph.style.display='none';pa.insertBefore(img,pa.firstChild);
+    cancelSpotPhoto=SpotMedia.bindImage(img,urls,{convert:drivePhotoUrl,onEmpty:()=>{img.remove();ph.style.display='flex';}});
+  }else ph.style.display='flex';
 
   // キーワード
   const kw = document.getElementById('explain-keywords'); kw.innerHTML='';
@@ -3236,6 +3143,7 @@ function showExplain(spot) {
 // ナビゲーション
 // ══════════════════════════════════════
 function nextSpot() {
+  stopVoice();
   const isLast = currentIdx === courseSpots.length-1;
 
   if (isLast) {
@@ -3257,16 +3165,17 @@ function nextSpot() {
   const next = courseSpots[currentIdx];
   const prevSpot = courseSpots[currentIdx-1];
   const isNextLast = currentIdx === courseSpots.length-1;
-  const nextText = isNextLast
+  const nextText = SpotMedia.text(next,isNextLast?'goal':'next',isNextLast
     ? `ゴールの${next.spot_name}へ向かいましょう。`
-    : `次は${next.spot_name}です。`;
+    : `次は${next.spot_name}です。`);
 
   if (next.audio_next_url) {
     console.log(`[audio_next] spot="${next.spot_name}" url="${next.audio_next_url}" fallback="${nextText}"`);
   }
-  const guideUrl = isNextLast ? next.audio_goal_url : next.audio_next_url;
+  const guideUrl = spotUrls(next,isNextLast?'audio_goal_url':'audio_next_url');
 
-  setTimeout(() => playVoice(guideUrl, nextText, () => { gpsLocked = false; }), 500);
+  const epoch=voiceEpoch;
+  setTimeout(() => {if(epoch===voiceEpoch)playVoice(guideUrl,nextText,()=>{gpsLocked=false;},true);},500);
 }
 
 // ══════════════════════════════════════
@@ -3337,7 +3246,7 @@ function showGoal() {
   
   if (specialActive && cfg.audio_special_goal_url) {
     playVoice(finishUrl, finishText, () => {
-      setTimeout(() => playVoice(cfg.audio_special_goal_url, ''), 500);
+      const epoch=voiceEpoch;setTimeout(()=>{if(epoch===voiceEpoch)playVoice(cfg.audio_special_goal_url,'');},500);
     });
   } else {
     playVoice(finishUrl, finishText);
@@ -4085,15 +3994,14 @@ window.addEventListener('load', () => {
   // Page Visibility API: バックグラウンドから復帰時に音声状態をリセット
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-      if ('speechSynthesis' in window) speechSynthesis.cancel();
-      voicePlaying = false;
+      stopVoice();
       gpsLocked = false;
       updateArrivedButton();
     }
   });
 });
 </script>
+<div id="voice-notice" class="voice-notice" role="status" aria-live="polite" hidden></div>
 <script src="walk-rewards-ui.js"></script>
 <script src="certificate-state.js"></script>
 <script src="certificate-guard.js"></script>

@@ -282,10 +282,18 @@ function courseMatrixRows(course){
 function matrixAudio(sn,row,role,applicable=true){
   if(!applicable)return {kind:'na',label:'— 対象外',detail:'この巡回位置では使用しません'};
   const key='audio_'+role+'_url',id=row[sn==='courses'?'course_id':'spot_id'];
-  const explicit=String(row[key]||'').trim(),url=mediaPlaybackUrl(sn,key,id,explicit);
-  const tts=role==='explain'?!!String(row.description||'').trim():role==='theme'?!!String(row.theme_text||'').trim():true;
+  const explicit=String(row[key]||'').trim(),media=mediaPlaybackUrl(sn,key,id,explicit);
+  const urls=Array.isArray(media)?media:[media].filter(Boolean),url=urls[0]||null;
+  const tts=role==='explain'?!!SpotMedia.text(row,'explain',String(row.description||'').trim()):role==='theme'?!!String(row.theme_text||'').trim():true;
   const fallback=tts?'TTS代替あり':'TTS原稿なし';
-  return {kind:url?'pending':'empty',label:explicit?'URL登録・未確認':url?'自動候補・未確認':'音声未登録',url,detail:(url||'音声ファイルの指定なし')+' / '+fallback,tts};
+  return {kind:url?'pending':'empty',label:explicit?'URL登録・未確認':url?'自動候補・未確認':'音声未登録',urls,url,detail:(url||'音声ファイルの指定なし')+' / '+fallback,tts};
+}
+// Check in the same dedicated-to-shared order used for playback. An unknown
+// response must not hide a later usable candidate or be reported as missing.
+async function checkMatrixCandidates(urls){
+  let unknown=false;
+  for(const url of urls){const ok=await checkUrlExists(url);if(ok===true)return {ok:true,url};if(ok!==false)unknown=true;}
+  return {ok:unknown?null:false,url:null};
 }
 function renderCourseMatrix(host,course,allSpots=false){
   host.replaceChildren();if(!course&&!allSpots)return;
@@ -296,17 +304,17 @@ function renderCourseMatrix(host,course,allSpots=false){
   function audioCell(sn,row,role,applicable){
     const info=matrixAudio(sn,row,role,applicable),td=uiNode('td');
     const status=uiNode('span','matrix-status '+info.kind,info.label);status.title=info.detail;td.append(status);
-    if(info.kind!=='na'){td.append(uiNode('small','',info.tts?'TTS代替あり':'TTS原稿なし'));if(info.url)td.append(mkPlayBtn(()=>info.url,role));}
+    if(info.kind!=='na'){td.append(uiNode('small','',info.tts?'TTS代替あり':'TTS原稿なし'));if(info.url)td.append(mkPlayBtn(()=>info.urls,role));}
     if(info.url)cells.push({info,status});return td;
   }
   async function check(){
     const button=controls.firstChild;button.disabled=true;button.textContent='確認中…';
     // Bound concurrent requests and do not mutate editor data or the save snapshot.
     let cursor=0;await Promise.all(Array.from({length:Math.min(4,cells.length)},async()=>{
-      while(cursor<cells.length){const {info,status}=cells[cursor++];const ok=await checkUrlExists(info.url);if(!host.contains(status))continue;
+      while(cursor<cells.length){const {info,status}=cells[cursor++];const {ok,url}=await checkMatrixCandidates(info.urls);if(!host.contains(status))continue;
         status.className='matrix-status '+(ok===true?'ok':ok===false?'warn':'pending');
         status.textContent=ok===true?'✓ ファイルあり':ok===false?'応答エラー':'? 確認できず';
-        status.title=info.detail+(ok===false?' / HTTP応答エラー。権限・URL・未アップロード等を確認してください':'');
+        status.title=info.detail+(url?' / 使用可能: '+url:'')+(ok===false?' / HTTP応答エラー。権限・URL・未アップロード等を確認してください':'');
       }
     }));button.disabled=false;button.textContent='写真・音声ファイルを確認';
   }
@@ -319,7 +327,7 @@ function renderCourseMatrix(host,course,allSpots=false){
     const tr=uiNode('tr'),name=uiNode('th','',`${link.order||index+1}. ${spot?.spot_name||link.spot_id||'IDなし'}`);name.scope='row';tr.append(name);
     if(!spot){const td=uiNode('td','matrix-missing','参照先スポットなし：スポットIDを確認してください');td.colSpan=8;tr.append(td);}
     else{const description=String(spot.description||'').trim(),td=uiNode('td');td.append(uiNode('span','matrix-status '+(description?'ok':'empty'),description?'✓ 登録あり':'未登録'));td.title=description||'説明文が空欄です';tr.append(td);
-      const photo=uiNode('td'),explicit=String(spot.photo_url||'').trim(),url=mediaPlaybackUrl('spots','photo_url',spot.spot_id,explicit),status=uiNode('span','matrix-status '+(url?'pending':'empty'),explicit?'URL登録・未確認':url?'自動候補・未確認':'写真未登録');photo.append(status);status.title=url||'写真の指定なし';if(url)cells.push({info:{url,detail:url},status});tr.append(photo);
+      const photo=uiNode('td'),explicit=String(spot.photo_url||'').trim(),urls=editorSpotCandidates(spot.spot_id,'photo_url',explicit),url=urls[0]||null,status=uiNode('span','matrix-status '+(url?'pending':'empty'),explicit?'URL登録・未確認':url?'自動候補・未確認':'写真未登録');photo.append(status);status.title=url||'写真の指定なし';if(url)cells.push({info:{urls,url,detail:url},status});tr.append(photo);
       for(const role of ['approach','arrive','explain','next','start','goal'])tr.append(audioCell('spots',spot,role,allSpots|| (role==='start'?index===0:role==='next'?index>0&&index<count-1:role==='goal'?index===count-1&&index>0:true)));
     }tbody.append(tr);
   });table.append(tbody);scroll.append(table);host.append(scroll);
@@ -476,9 +484,9 @@ function appPreviewDocument(source,url,nonce){
 }
 function appPreviewData(){
   // Send presentation data only; never send GAS/OAuth/token/connection information.
-  const config=state.config.filter(r=>/^(app_|area_|home_|prefecture$|city$|color_|font_|header_|cert_|lang$)/.test(r.key)).map(r=>({key:r.key,value:r.value}));
+  const config=state.config.filter(r=>/^(app_|area_|home_|prefecture$|city$|color_|font_|header_|cert_|lang$|photo_repo$|audio_repo$)/.test(r.key)).map(r=>({key:r.key,value:r.value}));
   const courses=dc(state.courses).map(c=>({...c,course_thumbnail_url:mediaPlaybackUrl('courses','course_thumbnail_url',c.course_id,c.course_thumbnail_url)||''}));
-  const spots=dc(state.spots).map(s=>({...s,photo_url:mediaPlaybackUrl('spots','photo_url',s.spot_id,s.photo_url)||''}));
+  const spots=dc(state.spots);
   return {config,courses,spots,course_spots:dc(state.course_spots),facilities:[],screen:appPreview.screen,theme:appPreview.theme,courseId:appPreview.courseId,spotId:appPreview.spotId};
 }
 function updateAppPreview(){

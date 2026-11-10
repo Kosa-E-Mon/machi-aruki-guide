@@ -6,7 +6,7 @@ const vm=require('node:vm');
 function editor(){
   const nodes=new Map(),storage=new Map();
   const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',style:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},textContent:''});return nodes.get(id);};
-  const ctx={console,URL,Event,crypto:require('node:crypto').webcrypto,confirm:()=>true,
+  const ctx={SpotMedia:require('../spot-media.js'),Audio:function(){},console,URL,Event,crypto:require('node:crypto').webcrypto,confirm:()=>true,
     setTimeout:fn=>{fn();return 1;},clearTimeout(){},
     localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
     document:{getElementById:node,addEventListener(){},querySelectorAll:()=>[],querySelector:()=>null},
@@ -53,6 +53,28 @@ test('manually entered token is used safely in generated GAS code',()=>{
   const code=run('buildGasCode()');new vm.Script(code);
   assert.ok(code.includes(JSON.stringify(ctx.manual)));
 });
+test('GAS template rejects missing new spot columns before clearing data',()=>{
+  const {run}=editor(),code=run('buildGasCode()');let cleared=0,written=null,headers=['spot_id'];
+  const sheet={getLastColumn:()=>headers.length,getLastRow:()=>2,getRange:(row)=>row===1?{getValues:()=>[headers]}:{clearContent(){cleared++;},setValues(v){written=v;}}};
+  const ctx=vm.createContext({SpreadsheetApp:{getActiveSpreadsheet:()=>({getSheetByName:()=>sheet}),flush(){}}});
+  vm.runInContext(code,ctx);vm.runInContext('backupSheet=()=>{};',ctx);
+  ctx.rows=[{spot_id:'Kaneboshi',shared_media_id:'root',audio_arrive_txt:'到着'}];
+  assert.throws(()=>vm.runInContext("writeSheet('spots',rows,false)",ctx),/shared_media_id/);assert.equal(cleared,0);assert.equal(written,null);
+  headers=['spot_id','shared_media_id','audio_arrive_txt'];vm.runInContext("writeSheet('spots',rows,false)",ctx);
+  assert.equal(cleared,1);assert.deepEqual(JSON.parse(JSON.stringify(written)),[['Kaneboshi','root','到着']]);
+  cleared=0;ctx.rows[0].audio_explain_url='https://custom.test/explain.mp3';
+  assert.throws(()=>vm.runInContext("writeSheet('spots',rows,false)",ctx),/audio_explain_url/);assert.equal(cleared,0);
+  headers.push('audio_explain_url');vm.runInContext("writeSheet('spots',rows,false)",ctx);assert.equal(written[0][3],'https://custom.test/explain.mp3');
+});
+test('GAS contract rejects Survey-shaped tokenless payload before write',()=>{
+  const {run}=editor();run("getGasToken=()=> 'fixture-only';");
+  const ctx=vm.createContext({writes:0});vm.runInContext(run('buildGasCode()'),ctx);
+  vm.runInContext('out=value=>value;writeSheet=()=>{writes++;};',ctx);
+  ctx.request={postData:{contents:JSON.stringify({action:'write',sheet:'spots',rows:[]})}};
+  assert.equal(vm.runInContext('doPost(request).ok',ctx),false);assert.equal(ctx.writes,0);
+  ctx.request.postData.contents=JSON.stringify({action:'write',sheet:'spots',rows:[],token:'fixture-only'});
+  assert.equal(vm.runInContext('doPost(request).ok',ctx),true);assert.equal(ctx.writes,1);
+});
 test('row addition and deletion appear in save confirmation before any write',async()=>{
   const {run,ctx}=editor();
   run("workspace.home=false;state.loaded=true;currentTab='spots';state.originals.spots=[{spot_id:'old'}];state.spots=[];showDiffModal=(diff)=>{window.capturedDiff=diff};");
@@ -95,8 +117,8 @@ test('release success is announced only after the sheet matches',async()=>{
 test('audio playback derives the automatic filename when the URL cell is blank',()=>{
   const {run}=editor();
   run("state.config=[{key:'audio_repo',value:'kosa-e-mon/machi-aruki-audio'}];");
-  assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','')"),'https://kosa-e-mon.github.io/machi-aruki-audio/spot-01_approach.mp3');
-  assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','https://example.com/custom.mp3')"),'https://example.com/custom.mp3');
+  assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','')[0]"),'https://kosa-e-mon.github.io/machi-aruki-audio/spot-01_approach.mp3');
+  assert.equal(run("mediaPlaybackUrl('spots','audio_approach_url','spot-01','https://example.com/custom.mp3')[0]"),'https://example.com/custom.mp3');
 });
 test('matrix uses current route order, preserves missing references and does not mutate data',()=>{
   const {run}=editor();
@@ -135,9 +157,9 @@ test('persistent toolbar reports unsaved state for the current sheet and across 
 test('app preview uses draft presentation data, excludes credentials and preserves editor state',()=>{
   const {run}=editor();
   run("state.config=[{key:'app_title',value:'draft'},{key:'gas_url',value:'secret-url'},{key:'gas_token',value:'secret-token'},{key:'google_client_id',value:'oauth-id'},{key:'photo_repo',value:'owner/photos'}];state.spots=[{spot_id:'a',description:'unsaved'}];state.courses=[];state.course_spots=[];window.before=JSON.stringify(state);");
-  assert.equal(run('appPreviewData().config.length'),1);
+  assert.equal(run('appPreviewData().config.length'),2);
   assert.equal(run('appPreviewData().config[0].value'),'draft');
-  assert.equal(run('appPreviewData().spots[0].photo_url'),'https://owner.github.io/photos/a.webp');
+  assert.equal(run('appPreviewData().spots[0].photo_url'),undefined);
   run("appPreviewData().spots[0].description='changed';");
   assert.equal(run('JSON.stringify(state)===before'),true);
 });
@@ -152,4 +174,39 @@ test('app preview replaces both known boot sequences and fails closed for an unk
     assert.equal(output.includes('initGoogleAuth();'),false);assert.equal(output.includes('armBackNavigationGuard();'),false);assert.equal(output.includes('accounts.google.com'),false);assert.equal(output.includes('window.dataLayer'),false);
   }
   assert.throws(()=>run("appPreviewDocument('<html></html>',previewUrl,'test')"),/通常起動は行いません/);
+});
+
+
+test('matrix preserves ordered shared candidates and explicit-only explain with invalid repo',async()=>{
+  const {run}=editor();
+  run("state.config=[{key:'audio_repo',value:'owner/audio'}];state.spots=[{spot_id:'root',audio_arrive_url:'https://custom.test/root.mp3',audio_explain_url:'https://custom.test/explain.mp3'},{spot_id:'copy',shared_media_id:'root',audio_arrive_url:'https://custom.test/copy.mp3',audio_explain_txt:'Custom explanation'}];");
+  assert.deepEqual(Array.from(run("matrixAudio('spots',state.spots[1],'arrive').urls")),['https://custom.test/copy.mp3','https://owner.github.io/audio/copy_arrive.mp3','https://custom.test/root.mp3','https://owner.github.io/audio/root_arrive.mp3']);
+  assert.equal(run("matrixAudio('spots',state.spots[1],'explain').tts"),true);
+  run("state.config=[{key:'audio_repo',value:'invalid repo'}];window.checked=[];checkUrlExists=async url=>{checked.push(url);return true;};");
+  const info=run("matrixAudio('spots',state.spots[1],'explain')");
+  assert.equal(info.url,'https://custom.test/explain.mp3');assert.equal(info.urls.length,1);
+  assert.equal((await run("checkMatrixCandidates(matrixAudio('spots',state.spots[1],'explain').urls)")).ok,true);
+  assert.equal(run('checked[0]'),'https://custom.test/explain.mp3');
+});
+
+test('matrix candidate checks continue after missing or unknown and stop at success',async()=>{
+  const {run}=editor();
+  run("window.checked=[];checkUrlExists=async url=>{checked.push(url);return url==='unknown'?null:url==='good';};");
+  assert.equal((await run("checkMatrixCandidates(['missing','unknown','good','unused'])")).url,'good');
+  assert.deepEqual(Array.from(run('checked')),['missing','unknown','good']);
+  assert.equal((await run("checkMatrixCandidates(['missing','unknown'])")).ok,null);
+  assert.equal((await run("checkMatrixCandidates(['missing'])")).ok,false);
+  assert.equal((await run("checkMatrixCandidates([])")).ok,false);
+});
+
+test('GAS template refuses stale clients before backup or clearing new media columns',()=>{
+  const {run}=editor(),code=run('buildGasCode()');let cleared=0,backups=0,written=null;
+  const headers=['spot_id','shared_media_id','audio_explain_txt','audio_explain_url','unknown'];
+  const sheet={getLastColumn:()=>headers.length,getLastRow:()=>2,getRange:(row)=>row===1?{getValues:()=>[headers]}:{clearContent(){cleared++;},setValues(v){written=v;}}};
+  const ctx=vm.createContext({SpreadsheetApp:{getActiveSpreadsheet:()=>({getSheetByName:()=>sheet}),flush(){}},backup:()=>{backups++;}});
+  vm.runInContext(code,ctx);vm.runInContext('backupSheet=backup;',ctx);
+  ctx.rows=[{spot_id:'Kaneboshi',unknown:'keep'}];assert.throws(()=>vm.runInContext("writeSheet('spots',rows,false)",ctx),/shared_media_id/);assert.equal(cleared,0);assert.equal(backups,0);
+  Object.assign(ctx.rows[0],{shared_media_id:'source',audio_explain_txt:'text',audio_explain_url:'https://media.test/custom.mp3'});
+  vm.runInContext("writeSheet('spots',rows,false)",ctx);assert.equal(cleared,1);assert.equal(backups,1);
+  assert.deepEqual(JSON.parse(JSON.stringify(written)),[['Kaneboshi','source','text','https://media.test/custom.mp3','keep']]);
 });

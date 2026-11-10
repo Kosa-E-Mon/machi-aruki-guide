@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<script src="spot-media.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#FFFFFF">
@@ -799,9 +800,9 @@ function checkId(p,type){
   const inp=document.getElementById(p+'-id'), msg=document.getElementById(p+'-id-msg');
   const val=inp.value.trim();
   if(!val){inp.className='field-in mono';msg.className='id-msg';return;}
-  if(!/^[a-z][a-z0-9_]*$/.test(val)){
+  if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(val)){
     inp.className='field-in mono err'; msg.className='id-msg dup';
-    msg.textContent='⚠ 小文字英数字と _ のみ、先頭は英字'; return;
+    msg.textContent='⚠ 英数字と _ - のみ、先頭は英字'; return;
   }
   const arr=type==='spot'?S.spots:S.facilities;
   const key=type==='spot'?'spot_id':'facility_id';
@@ -857,12 +858,13 @@ async function submitSpot(){
   const name=document.getElementById('s-name').value.trim();
   const editing=S.edit&&S.edit.type==='spot';
   if(!id||!name){toast('名前とIDを入力してください','err');return;}
-  if(!/^[a-z][a-z0-9_]*$/.test(id)){toast('IDの形式が不正です（小文字英数字と _ のみ、先頭は英字）','err');return;}
+  if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id)){toast('IDの形式が不正です（英数字と _ - のみ、先頭は英字）','err');return;}
   if(S.spots.some(r=>r.spot_id===id&&(!editing||r.spot_id!==S.edit.id))){toast('このIDはすでに登録済みです','err');return;}
   if(!MK['s']){toast('位置情報を取得してください','err');return;}
   const pos=MK['s'].getLatLng();
   const fn=document.getElementById('s-fname').value.trim();
-  const row={
+  const original=editing?S.spots.find(r=>r.spot_id===S.edit.id):null;
+  const row=SpotMedia.mergeSurvey(original,{
     spot_id:id, spot_name:name,
     lat:pos.lat.toFixed(6), lng:pos.lng.toFixed(6),
     approach_dist:document.getElementById('s-ap').value||'30',
@@ -873,7 +875,9 @@ async function submitSpot(){
     // photo_urlは書き込まない: 空欄なら {spot_id}.webp が自動導出される。
     // 撮影した写真は端末に保存→webp変換→アップロードの流れ(仮の.jpg名を書くと導出を上書きして壊す)
     photo_url:'',
-  };
+  });
+  // Survey edits position/name/radii only; retain all Editor text, URLs and references.
+  if(original)for(const key of Object.keys(original))if(!['spot_id','spot_name','lat','lng','approach_dist','arrive_dist'].includes(key))row[key]=original[key];
   if(editing){
     const idx=S.spots.findIndex(r=>r.spot_id===S.edit.id);
     if(idx>=0) S.spots[idx]=row;
@@ -894,7 +898,7 @@ async function submitFac(){
   const name=document.getElementById('f-name').value.trim();
   const editing=S.edit&&S.edit.type==='facility';
   if(!id||!name){toast('名前とIDを入力してください','err');return;}
-  if(!/^[a-z][a-z0-9_]*$/.test(id)){toast('IDの形式が不正です（小文字英数字と _ のみ、先頭は英字）','err');return;}
+  if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id)){toast('IDの形式が不正です（英数字と _ - のみ、先頭は英字）','err');return;}
   if(S.facilities.some(r=>r.facility_id===id&&(!editing||r.facility_id!==S.edit.id))){toast('このIDはすでに登録済みです','err');return;}
   if(!MK['f']){toast('位置情報を取得してください','err');return;}
   const pos=MK['f'].getLatLng();

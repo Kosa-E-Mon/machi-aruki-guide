@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<script src="spot-media.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>まちあるきガイド — 編集ツール「エディター」</title>
@@ -258,11 +259,11 @@ select.c-in{-webkit-appearance:none;cursor:pointer;}
 
 .cc-spots-area{padding:10px 14px;background:var(--raised);border-top:1px solid var(--border);}
 .cc-spots-title{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.spot-row{display:flex;align-items:center;gap:7px;padding:6px 9px;background:var(--surface);border:1px solid var(--border);border-radius:5px;margin-bottom:4px;transition:border-color .12s;}
+.spot-row{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:6px 9px;background:var(--surface);border:1px solid var(--border);border-radius:5px;margin-bottom:4px;transition:border-color .12s;}
 .spot-row:hover{border-color:var(--border2);}
 .spot-num{width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;}
 .spot-num.goal{background:var(--gold);}
-.spot-info{flex:1;}
+.spot-info{flex:1 1 160px;min-width:0;overflow-wrap:anywhere;}
 .spot-name{font-size:12px;font-weight:500;}
 .spot-sub{font-size:9px;color:var(--dim);font-family:var(--mono);}
 .spot-dist{font-size:9px;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:1px 6px;border-radius:9px;white-space:nowrap;}
@@ -710,6 +711,15 @@ function writeSheet(sheetName, rows, force) {
   const headers = sheet.getRange(1, 1, 1, lastCol)
     .getValues()[0].map(h => String(h).trim());
 
+  // Do not silently discard the newly supported columns. Add headers manually before deployment.
+  if (sheetName === 'spots') {
+    const needed = ['shared_media_id', 'audio_start_txt', 'audio_approach_txt', 'audio_arrive_txt', 'audio_explain_txt', 'audio_next_txt', 'audio_goal_txt', 'audio_explain_url'];
+    const missing = needed.filter(key => !headers.includes(key) && (rows || []).some(row => String(row[key] || '').trim()));
+    if (missing.length) throw new Error('spots に必要な列を追加してください: ' + missing.join(', '));
+    const protectedKeys = ['shared_media_id', 'audio_explain_txt', 'audio_explain_url'];
+    const stale = protectedKeys.filter(key => headers.includes(key) && (rows || []).some(row => !Object.prototype.hasOwnProperty.call(row, key)));
+    if (stale.length) throw new Error('古いデータです。画面を再読込みしてから保存してください: ' + stale.join(', '));
+  }
   const lastRow = sheet.getLastRow();
   const existingCount = Math.max(0, lastRow - 1);
   const newCount = rows ? rows.length : 0;
@@ -906,7 +916,7 @@ const CONFIG_DEFS = [
 
 const COURSE_FIELDS = [
   {key:'is_published', lbl:'正式公開（リリース）', desc:'初期状態はOFF：テスト版だけに表示。準備ができたらONにして保存すると正式版にも公開されます。空欄も未公開です', type:'bool'},
-  {key:'course_id',               lbl:'コースID',                     desc:'一意の識別子。小文字英数字と _ のみ（例: rekishi_01）', w:140},
+  {key:'course_id',               lbl:'コースID',                     desc:'一意の識別子。英数字と _ - のみ（例: rekishi_01）', w:140},
   {key:'course_name',             lbl:'コース名',                     desc:'画面に表示される名前', w:150},
   {key:'course_type',             lbl:'コースタイプ',                 desc:'注意アナウンスの種別', w:80, type:'sel', opts:['市街地','公園','混在']},
   {key:'display_order',           lbl:'表示順',                       desc:'数値が小さいほど上', w:45, type:'num'},
@@ -929,7 +939,9 @@ const SCHEMAS = {
   spots:[
     {key:'card_image_url', lbl:'記念カード画像URL（任意）', desc:'通常は空欄。写真リポジトリの {spot_id}_spcard.webp を自動使用。コースの巡回順で有効化する', w:220},
     {key:'card_title', lbl:'記念カードタイトル', desc:'空欄ならスポット名。街の説明は従来どおり表示', w:180},
-    {key:'spot_id',            lbl:'スポットID',              desc:'一意の識別子。小文字英数字と _ のみ（例: manpukuji）', w:140},
+    {key:'spot_id',            lbl:'スポットID',              desc:'一意の識別子。英数字と _ - のみ（例: manpukuji）', w:140},
+    {key:'shared_media_id', lbl:'オリジナル（共通素材）ID', desc:'複製元のスポットID。専用の写真・到着・解説音声がなければ、この元スポットの素材を使用。出発・接近・次へ・ゴールは方向別に編集します', w:180},
+    ...SpotMedia.roles.map(role=>({key:'audio_'+role+'_txt',lbl:({start:'出発',approach:'接近',arrive:'到着',explain:'解説',next:'次へ',goal:'ゴール'})[role]+'原稿',desc:'音声がない場合の読み上げ。コピー後は個別に編集できます',w:250})),
     {key:'spot_name',          lbl:'スポット名',              desc:'画面・音声に使われる名称', w:150},
     {key:'lat',                lbl:'緯度',                    desc:'例: 39.319826', w:95},
     {key:'lng',                lbl:'経度',                    desc:'例: 140.523891', w:95},
@@ -946,7 +958,7 @@ const SCHEMAS = {
     {key:'photo_url',          lbl:'写真URL',                 desc:'空欄なら {spot_id}.webp を自動使用。上書きする場合のみ入力', w:210},
   ],
   facilities:[
-    {key:'facility_id',   lbl:'施設ID',              desc:'一意の識別子。小文字英数字と _ のみ（例: annaiban_01）', w:140},
+    {key:'facility_id',   lbl:'施設ID',              desc:'一意の識別子。英数字と _ - のみ（例: annaiban_01）', w:140},
     {key:'facility_name', lbl:'施設名',              desc:'トースト通知に表示される名称', w:150},
     {key:'lat',           lbl:'緯度',                desc:'施設の緯度', w:95},
     {key:'lng',           lbl:'経度',                desc:'施設の経度', w:95},
@@ -998,6 +1010,15 @@ function splitL(line){const r=[];let cur='',inQ=false;for(let i=0;i<line.length;
 function esc(v){const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`  :s;}
 function buildCSV(hdrs,rows){return[hdrs.map(esc).join(','),...rows.map(r=>hdrs.map(h=>esc(r[h]??'')).join(','))].join('\n');}
 function dc(o){return JSON.parse(JSON.stringify(o));}
+function assertSpotMediaSaveReady(rows,csv,originals){
+  const headers=splitL(csv.replace(/^\uFEFF/,'').split(/\r?\n/)[0]).map(h=>h.trim());
+  const required=['shared_media_id','audio_start_txt','audio_approach_txt','audio_arrive_txt','audio_explain_txt','audio_next_txt','audio_goal_txt','audio_explain_url'];
+  const missing=required.filter(k=>rows.some(r=>String(r[k]||'').trim())&&!headers.includes(k));
+  if(missing.length)throw Error('保存先シートに列がありません: '+missing.join(', ')+'。列の追加前には保存できません。編集中の内容は保持しています');
+  const live=parseCSV(csv),normal=v=>String(v??'').replace(/\r\n/g,'\n').trim();
+  if(live.length!==originals.length||live.some((row,i)=>[...new Set([...Object.keys(row),...Object.keys(originals[i]||{})])].some(k=>normal(row[k])!==normal(originals[i]?.[k]))))throw Error('シートが別の操作で更新されています。CSVで編集中の内容を退避し、再読み込み後に変更を取り込んでください');
+  return true;
+}
 function cleanConfigRows(rows){return (rows||[]).filter(r=>r.key !== 'header_image_id');}
 
 function parseSheetId(input){
@@ -1127,6 +1148,17 @@ async function saveCurrentSheet(){
     }
   }
 
+  // Refuse before any write when new shared-media fields cannot be stored or routes reference an unsaved copy.
+  try{
+    if(sheetsToSave.includes('spots')&&state.spots.some(r=>String(r.shared_media_id||'').trim())){
+      const liveCSV=await fetchGviz(state.sheetId,'spots');
+      assertSpotMediaSaveReady(state.spots,liveCSV,state.originals.spots||[]);
+    }
+    if(sheetsToSave.includes('course_spots')){
+      const newIds=state.course_spots.filter(cs=>!state.originals.spots?.some(s=>s.spot_id===cs.spot_id));
+      if(newIds.length){const live=parseCSV(await fetchGviz(state.sheetId,'spots'));if(newIds.some(cs=>!live.some(s=>s.spot_id===cs.spot_id)))throw Error('新しい方向別スポットを先に「スポット」で保存してから、コースを保存してください');}
+    }
+  }catch(e){notify(e.message,true);return;}
   const launches=currentTab==='courses'?state.courses.filter(c=>String(c.is_published).trim().toUpperCase()==='TRUE'&&!((state.originals.courses||[]).some(old=>old.course_id===c.course_id&&String(old.is_published).trim().toUpperCase()==='TRUE'))):[];
   if(launches.length&&!confirm('次のコースを正式公開（リリース）しますか？\n'+launches.map(c=>c.course_name||c.course_id).join('\n')+'\n\n保存が確認できた後、正式版のまちあるきアプリに表示されます。'))return;
   showLd('スプレッドシートに保存中…'); setStat('loading','保存中…');
@@ -1881,7 +1913,9 @@ function renderSpotsList(courseId, container){
     const original=cs.card_enabled||'';
     cardToggle.onchange=()=>{cs.card_enabled=cardToggle.value;recChg('course_spots',`${courseId}:${cs.spot_id}:カード`,original,cs.card_enabled);};
     cardLabel.appendChild(cardToggle);
-    row.appendChild(num); row.appendChild(info); row.appendChild(dist); row.appendChild(cardLabel); row.appendChild(upBtn); row.appendChild(dnBtn); row.appendChild(rmBtn);
+    const audioEdit=document.createElement('button');audioEdit.className='btn btn-o btn-xs';audioEdit.textContent='音声を編集';audioEdit.title='このスポットの専用音声と原稿を編集';audioEdit.disabled=!spot;audioEdit.onclick=()=>openSpotAudio(cs.spot_id);
+    const directionCopy=document.createElement('button');directionCopy.className='btn btn-o btn-xs';directionCopy.textContent='別方向用に複製';directionCopy.disabled=!spot;directionCopy.onclick=()=>{const idx=state.spots.findIndex(s=>s.spot_id===cs.spot_id);const created=duplicateSpot(idx);if(created)openSpotAudio(created.spot_id);};
+    row.appendChild(num); row.appendChild(info); row.appendChild(dist); row.appendChild(cardLabel);row.appendChild(audioEdit);row.appendChild(directionCopy); row.appendChild(upBtn); row.appendChild(dnBtn); row.appendChild(rmBtn);
     container.appendChild(row);
   });
   if(courseSpots.length===0){
@@ -1980,6 +2014,9 @@ function renderRecordForm(sn,schema,rows,origRows,body){
     const mapBtn=document.createElement('button');mapBtn.className='btn btn-blue btn-sm';mapBtn.textContent='地図で確認';mapBtn.onclick=()=>sn==='spots'?showSpotMap(row):showFacilityMap(row);
     const delBtn=document.createElement('button');delBtn.className='btn btn-o btn-sm';delBtn.textContent='削除';
     delBtn.onclick=()=>{if(!confirm(`${idx+1}行目を削除しますか？`))return;rows.splice(idx,1);selectedRow[sn]=Math.min(idx,rows.length-1);renderTable(sn);renderCurrentSheetMap();};
+    if(sn==='spots'){
+      const copyBtn=document.createElement('button');copyBtn.className='btn btn-p btn-sm';copyBtn.textContent='別方向用に複製';copyBtn.onclick=()=>duplicateSpot(idx);head.appendChild(copyBtn);
+    }
     head.appendChild(title);head.appendChild(spacer);head.appendChild(mapBtn);head.appendChild(delBtn);form.appendChild(head);
 
     const grid=document.createElement('div');grid.className='record-form-grid';
@@ -2016,20 +2053,27 @@ function mediaDerivedUrl(sn,colKey,id){
 }
 // URL欄が空欄でも、自動命名された音声ファイルを再生できるようにする。
 // 明示URLがある場合は、従来どおり明示URLを優先する。
-function mediaPlaybackUrl(sn,colKey,id,explicit){
-  const value=String(explicit||'').trim();
-  return value||mediaDerivedUrl(sn,colKey,String(id||'').trim());
+function editorSpotCandidates(id,colKey,explicit){
+  const row=state.spots.find(s=>s.spot_id===id)||{spot_id:id};
+  const cfg=Object.fromEntries(state.config.map(r=>[r.key,r.value]));
+  const urls=SpotMedia.candidates({...row,[colKey]:explicit},colKey,state.spots,cfg);
+  const role=colKey.match(/^audio_(.+)_url$/)?.[1];urls.fallback=role?SpotMedia.text(row,role,role==='explain'?String(row.description||'').slice(0,120):({arrive:row.spot_name+'に到着しました。',approach:'まもなく'+row.spot_name+'です。',start:'最初の目的地は'+row.spot_name+'です。',next:'次は'+row.spot_name+'です。',goal:'ゴールの'+row.spot_name+'へ向かいましょう。'})[role]):'';return urls;
 }
+function mediaPlaybackUrl(sn,colKey,id,explicit){
+  if(sn==='spots'&&(colKey==='photo_url'||/^audio_/.test(colKey)))return editorSpotCandidates(id,colKey,explicit);
+  return String(explicit||'').trim()||mediaDerivedUrl(sn,colKey,String(id||'').trim());
+}
+
 const urlExistCache=new Map();
 function checkUrlExists(url){
   if(!urlExistCache.has(url)){
-    urlExistCache.set(url,fetch(url,{method:'HEAD'}).then(r=>r.ok).catch(()=>null));
+    urlExistCache.set(url,SpotMedia.probe(url).then(status=>status==='ok'?true:status==='missing'?false:null));
   }
   return urlExistCache.get(url);
 }
 // container にステータス表示を追加し、再チェック関数を返す（対象外の列なら null）
 function attachMediaCheck(sn,colKey,getId,getVal,container){
-  if(!(MEDIA_RULES[sn]||{})[colKey])return null;
+  if(!(MEDIA_RULES[sn]||{})[colKey]&&!(sn==='spots'&&colKey==='audio_explain_url'))return null;
   const st=document.createElement('div'); st.className='media-check';
   container.appendChild(st);
   let seq=0;
@@ -2037,21 +2081,13 @@ function attachMediaCheck(sn,colKey,getId,getVal,container){
     const my=++seq;
     const explicit=String(getVal()||'').trim();
     const id=String(getId()||'').trim();
-    let url=null,label='';
-    if(explicit){
-      if(!/^https?:\/\//.test(explicit)){st.className='media-check show err';st.textContent='✗ URL形式ではありません（https:// で始まる必要）';return;}
-      url=explicit;label=explicit.split('/').pop();
-    }else{
-      url=mediaDerivedUrl(sn,colKey,id);
-      if(url)label='自動: '+url.split('/').pop();
-    }
-    if(!url){st.className='media-check';st.textContent='';return;}
-    st.className='media-check show wait';st.textContent='⏳ '+label+' を確認中…';
-    const ok=await checkUrlExists(url);
+    const urls=sn==='spots'&&(colKey==='photo_url'||/^audio_/.test(colKey))?editorSpotCandidates(id,colKey,explicit):[explicit||mediaDerivedUrl(sn,colKey,id)].filter(Boolean);
+    st.className='media-check show wait';st.textContent='素材を確認中…';
+    let unknown=false;
+    for(const url of urls){const ok=await checkUrlExists(url);if(my!==seq)return;if(ok===true){st.className='media-check show ok';st.textContent='✓ '+url+'（専用→共通の順で使用）';return;}if(ok===null)unknown=true;}
     if(my!==seq)return;
-    if(ok===true){st.className='media-check show ok';st.textContent='✓ '+label+'（ファイルあり）';}
-    else if(ok===false){st.className='media-check show err';st.textContent='✗ '+label+' が見つかりません（未アップロード？）';}
-    else{st.className='media-check show wait';st.textContent='？ '+label+'（外部URLのため確認できません）';}
+    st.className='media-check show '+(unknown?'wait':'ok');
+    st.textContent=unknown?'？ 通信・権限等で確認不能（実再生で代替を試行）':colKey==='photo_url'?'写真なしでも表示可能':'素材なし：原稿を端末で読み上げ（端末依存）';
   };
   refresh();
   return refresh;
@@ -2073,6 +2109,7 @@ const AUDIT_ROLE_LBL={
 const AUDIT_OPTIONAL=new Set(['audio_theme_url','audio_finish_url','course_audio_url','card_image_url']);
 // 音声URL列 → 対応する原稿テキスト列(AI Studio等で音声生成する際にコピーできるように)
 const AUDIT_TXT_COL={
+  audio_explain_url:'audio_explain_txt',
   audio_approach_url:'audio_approach_txt', audio_arrive_url:'audio_arrive_txt',
   audio_start_url:'audio_start_txt', audio_next_url:'audio_next_txt',
   audio_goal_url:'audio_goal_txt', audio_theme_url:'theme_text',
@@ -2080,18 +2117,17 @@ const AUDIT_TXT_COL={
 };
 async function runMediaAudit(){
   if(!state.loaded){notify('先にスプレッドシートを読み込んでください','err');return;}
-  if(!mediaRepoBase('photo')&&!mediaRepoBase('audio')){notify('CONFIGの photo_repo / audio_repo を設定してください','err');return;}
   notify('メディアを一括チェック中…');
   const jobs=[];
   const collect=(sn,rows,idKey,nameKey,groupLbl)=>{
     (rows||[]).forEach((r,rowIdx)=>{
       const id=(r[idKey]||'').trim(); if(!id)return;
-      Object.keys(MEDIA_RULES[sn]).forEach(col=>{
+      [...Object.keys(MEDIA_RULES[sn]),...(sn==='spots'?['audio_explain_url']:[])].forEach(col=>{
         const explicit=(r[col]||'').trim();
-        const url=explicit||mediaDerivedUrl(sn,col,id);
-        if(!url)return;
+        const urls=sn==='spots'&&(col==='photo_url'||/^audio_/.test(col))?editorSpotCandidates(id,col,explicit):[explicit||mediaDerivedUrl(sn,col,id)].filter(Boolean);
+        const url=urls[0];if(!url)return;
         const txtCol=AUDIT_TXT_COL[col];
-        jobs.push({group:`${groupLbl} ${r[nameKey]||''}（${id}）`, sn, rowIdx, col, url,
+        jobs.push({group:`${groupLbl} ${r[nameKey]||''}（${id}）`, sn, rowIdx, col, url, urls,
           script: txtCol?(r[txtCol]||'').trim():'',
           isAudio: !!txtCol,
           badFormat: explicit&&!/^https?:\/\//.test(explicit)});
@@ -2103,8 +2139,8 @@ async function runMediaAudit(){
   collect('facilities',state.facilities,'facility_id','facility_name','🏛');
   const results=await Promise.all(jobs.map(async j=>{
     if(j.badFormat) return {...j, ok:false, note:'URL形式エラー'};
-    const ok=await checkUrlExists(j.url);
-    return {...j, ok: ok===true};
+    let unknown=false;for(const url of j.urls){const ok=await checkUrlExists(url);if(ok===true)return {...j,url,ok:true};if(ok===null)unknown=true;}
+    return {...j,ok:false,note:unknown?'確認不能':'候補ファイルなし'};
   }));
   const missing=results.filter(r=>!r.ok);
   const okCount=results.length-missing.length;
@@ -2137,7 +2173,7 @@ async function runMediaAudit(){
     : `<div class="ttsmemo-row empty">${icon} <b>${label}：</b><span>未設定（CONFIGの「🎙 音声生成メモ」で登録できます）</span></div>`;
   const memoPlainRow=(icon,label,val)=> `<div class="ttsmemo-row plain">${icon} <b>${label}：</b>${val?esc(val):'<span>未設定（CONFIGの「🎙 音声生成メモ」で登録できます）</span>'}</div>`;
   const memoHtml=`<div class="ttsmemo"><div class="ttsmemo-head">🎙 音声生成メモ（クリックでコピー→AI Studioの各欄へ貼り付け）</div>${memoCopyRow('🎬','Scene',ttsScene)}${memoCopyRow('💬','Sample Context',ttsSampleContext)}${memoPlainRow('🗣','よく使う話者',ttsSpeakers)}</div>`;
-  ov.innerHTML=`<div class="audit-box"><div class="audit-head">🔍 メディア一括チェック結果<div class="spacer"></div><button class="btn btn-o btn-sm" onclick="window.open('https://aistudio.google.com/generate-speech','_blank')">🎙 音声作成 (AI Studio)</button><button class="btn btn-o btn-sm" onclick="this.closest('.audit-ov').remove()">閉じる</button></div><div class="audit-body">${memoHtml}<div class="audit-sum"><span class="ok">✓ ${okCount}件 OK</span>　<span class="ng">✗ ${missing.length}件 未アップロード</span>（全${results.length}件を確認）<br><small>ファイル名をクリックするとコピーできます。その名前でアップロードすれば、シートに触れず自動で反映されます。灰色は任意項目です。音声はAI Studioで生成→「⇧ メディア変換」でアップロードできます。</small></div>${missing.length?grpHtml:'<div class="audit-empty">🎉 すべてのメディアが揃っています</div>'}</div></div>`;
+  ov.innerHTML=`<div class="audit-box"><div class="audit-head">🔍 メディア一括チェック結果<div class="spacer"></div><button class="btn btn-o btn-sm" onclick="window.open('https://aistudio.google.com/generate-speech','_blank')">🎙 音声作成 (AI Studio)</button><button class="btn btn-o btn-sm" onclick="this.closest('.audit-ov').remove()">閉じる</button></div><div class="audit-body">${memoHtml}<div class="audit-sum"><span class="ok">✓ ${okCount}件 OK</span>　<span class="ng">✗ ${missing.length}件 未確認・要確認</span>（全${results.length}件を確認）<br><small>ファイル名をクリックするとコピーできます。その名前でアップロードすれば、シートに触れず自動で反映されます。灰色は任意項目です。音声はAI Studioで生成→「⇧ メディア変換」でアップロードできます。</small></div>${missing.length?grpHtml:'<div class="audit-empty">🎉 すべてのメディアが揃っています</div>'}</div></div>`;
   const copyFn=t=>{
     const legacy=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');notify('コピーしました: '+t,'ok');}catch(e){}ta.remove();};
     if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>notify('コピーしました: '+t,'ok')).catch(legacy);
@@ -2172,7 +2208,7 @@ const ID_FIELD_KEYS=['spot_id','course_id','facility_id'];
 function checkIdField(key,val,rows,idx){
   if(!ID_FIELD_KEYS.includes(key)) return null;
   if(!val) return null;
-  if(!/^[a-z][a-z0-9_]*$/.test(val)) return{ok:false,msg:'⚠ 小文字英数字と _ のみ、先頭は英字（例: manpukuji）'};
+  if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(val)) return{ok:false,msg:'⚠ 英数字と _ - のみ、先頭は英字（例: manpukuji）'};
   const dup=(rows||[]).some((r,i)=>i!==idx&&r[key]===val);
   if(dup) return{ok:false,msg:'⚠ このIDは他の行ですでに使われています'};
   return{ok:true,msg:'✓ 使用可能'};
@@ -2191,7 +2227,7 @@ function makeRecordField(sn,row,origRow,idx,col,title,listItems,rows){
     el=document.createElement('select');
     const values=col.type==='bool'?['','TRUE','FALSE']:['',...col.opts];
     values.forEach(v=>{const option=document.createElement('option');option.value=v;option.textContent=v||'—';if(v===val)option.selected=true;el.appendChild(option);});
-  }else if(['description','announce_text'].includes(col.key)){
+  }else if((['description','announce_text'].includes(col.key)||col.key.endsWith('_txt'))){
     el=document.createElement('textarea');el.rows=4;el.value=val;
   }else{
     el=document.createElement('input');el.type='text';el.value=val;
@@ -2220,6 +2256,7 @@ function makeRecordField(sn,row,origRow,idx,col,title,listItems,rows){
     const nameKey=sn==='spots'?'spot_name':'facility_name';
     const idKey=sn==='spots'?'spot_id':'facility_id';
     if(col.key===nameKey){title.textContent=el.value||`名称未設定 ${idx+1}`;listItems.children[idx]?.querySelector('.record-list-name')?.replaceChildren(document.createTextNode(el.value||`名称未設定 ${idx+1}`));}
+    if(col.key==='shared_media_id')scheduleMediaRefreshAll();
     if(col.key===idKey){listItems.children[idx]?.querySelector('.record-list-id')?.replaceChildren(document.createTextNode(el.value||'ID未設定'));scheduleMediaRefreshAll();}
     runIdCheck();
     if(mediaRefresh){clearTimeout(mediaTimer);mediaTimer=setTimeout(mediaRefresh,600);}
@@ -2331,6 +2368,22 @@ function mkRow(sn,schema,row,origRow,idx){
   return tr;
 }
 
+function openSpotAudio(id){
+  const idx=state.spots.findIndex(s=>s.spot_id===id);if(idx<0)return;
+  selectedRow.spots=idx;tableViewMode.spots='form';
+  if(typeof workspace!=='undefined'){workspace.recordTab.spots='音声';workspace.search.spots='';if(workspace.inventoryMode)workspace.inventoryMode.spots=false;}
+  showTab('spots');showSpotMap(state.spots[idx]);
+  const usage=[...new Set(state.course_spots.filter(cs=>cs.spot_id===id).map(cs=>cs.course_id))];
+  if(usage.length>1)notify('このIDは複数コースで共用中です。方向ごとに変える場合は「別方向用に複製」を使ってください');
+}
+function duplicateSpot(idx){
+  const source=state.spots[idx];if(!source)return;
+  const id=prompt('新しいスポットID（変更できます）',SpotMedia.suggest(source,state.spots));if(id===null)return;
+  let row;try{row=SpotMedia.duplicate(source,state.spots,id.trim());}catch(e){notify(e.message,'err');return;}
+  if(!confirm('「'+id+'」を複製します。位置・到着半径・出発／接近／次へ／ゴール原稿を確認してください。写真・到着・解説は共通素材ID「'+row.shared_media_id+'」を参照します。コースへの追加は別途行ってください。'))return;
+  state.spots.push(row);selectedRow.spots=state.spots.length-1;tableViewMode.spots='form';
+  recChg('spots','スポット複製','',''+id);updateBadge('spots');showTab('spots');showSpotMap(row);notify('複製しました。専用音声・位置を編集してスポットを保存後、コースの巡回順に追加してください（元コースは変更していません）');return row;
+}
 function addRow(sn){
   const schema=SCHEMAS[sn];if(!schema)return;
   const nr={};schema.forEach(c=>{nr[c.key]='';});state[sn].push(nr);
@@ -2655,28 +2708,20 @@ function driveUrl(url){if(!url)return null;const m=url.match(/\/file\/d\/([^/]+)
 
 function mkPlayBtn(getUrl,label){
   const btn=document.createElement('button');btn.className='btn-play';btn.innerHTML='▶ 再生';btn.title=label||'音声';
-  btn.onclick=e=>{e.stopPropagation();const u=getUrl();if(!u){notify('音声URLが入力されていません',true);return;}playAudio(u,label||'音声',btn);};
+  btn.onclick=e=>{e.stopPropagation();if(currentPlayBtn===btn){stopAudio();return;}const u=getUrl();if(!u){notify('音声URLが入力されていません',true);return;}playAudio(u,label||'音声',btn);};
   return btn;
 }
 
+const editorPlayer=SpotMedia.createPlayer({probe:SpotMedia.probe,Audio,speech:window.speechSynthesis,Utterance:window.SpeechSynthesisUtterance,convert:driveUrl,
+  issue:reason=>notify(reason==='blocked'?'ブラウザが音声再生を許可していません':reason.startsWith('tts')?'この端末では読み上げできません。原稿でご確認ください':'素材を再生できないため代替を確認します')});
 function playAudio(url,label,btn){
-  stopAudio();
-  const audio=new Audio(driveUrl(url));currentAudio=audio;currentPlayBtn=btn;
-  if(btn){btn.innerHTML='■ 停止';btn.classList.add('playing');}
-  document.getElementById('ab-name').textContent=label;
-  document.getElementById('audio-bar').classList.add('show');
-  audio.addEventListener('timeupdate',()=>{
-    if(!audio.duration)return;
-    document.getElementById('ab-fill').style.width=(audio.currentTime/audio.duration*100)+'%';
-    const m=Math.floor(audio.currentTime/60),s=Math.floor(audio.currentTime%60).toString().padStart(2,'0');
-    document.getElementById('ab-time').textContent=`${m}:${s}`;
-  });
-  audio.addEventListener('ended',()=>stopAudio());
-  audio.addEventListener('error',()=>{stopAudio();notify('音声の再生に失敗しました（URLを確認してください）',true);});
-  audio.play().catch(()=>{stopAudio();notify('音声の再生に失敗しました',true);});
+  stopAudio();currentPlayBtn=btn;if(btn){btn.innerHTML='■ 停止';btn.classList.add('playing');}
+  document.getElementById('ab-name').textContent=label;document.getElementById('audio-bar').classList.add('show');
+  editorPlayer.play(Array.isArray(url)?url:[url],url?.fallback||'',()=>stopAudio());
 }
 
 function stopAudio(){
+  editorPlayer.stop();
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   if(currentPlayBtn){currentPlayBtn.innerHTML='▶ 再生';currentPlayBtn.classList.remove('playing');currentPlayBtn=null;}
   document.getElementById('audio-bar').classList.remove('show');
